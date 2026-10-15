@@ -19,7 +19,7 @@ public static class AccountEndpoints
         }));
         app.MapPost("/api/auth/login", async (LoginRequest input, UserManager<AppUser> users, SignInManager<AppUser> signin) =>
         {
-            if (input.Email.Length > 254 || input.Password.Length > 256) return Results.Problem(statusCode: 400, title: "invalid_credentials");
+            if (string.IsNullOrWhiteSpace(input.Email) || input.Email.Length > 254 || string.IsNullOrEmpty(input.Password) || input.Password.Length > 256) return Results.Problem(statusCode: 400, title: "invalid_credentials");
             var user = await users.FindByEmailAsync(input.Email);
             if (user is null || user.AccountStatus != "active") return Results.Problem(statusCode: 401, title: "invalid_credentials");
             var result = await signin.PasswordSignInAsync(user, input.Password, false, lockoutOnFailure: true);

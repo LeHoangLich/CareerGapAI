@@ -4,6 +4,8 @@
 
 ## Ý tưởng dự án
 
+**Quyết định phát triển ngày 15/10/2026:** dừng deploy, ưu tiên hoàn thiện sản phẩm và kiểm thử trên localhost. Phạm vi chức năng giữ nguyên; cloud là bước sau khi sản phẩm hoàn thiện local và người dùng yêu cầu mở lại deploy. Không lấy việc thiếu hosting/domain làm điều kiện chặn phát triển local.
+
 CareerGap AI là nền tảng web hỗ trợ tuyển dụng, tìm việc và quản lý ứng viên đến bước sàng lọc. Hệ thống phục vụ cả ứng viên và nhà tuyển dụng thuộc nhiều ngành, ưu tiên ngành Công nghệ thông tin (CNTT). Dữ liệu và hoạt động đánh giá ban đầu tập trung vào CNTT; các chức năng AI không bị giới hạn quyền sử dụng theo ngành.
 
 Hệ thống tích hợp mô hình ngôn ngữ lớn có sẵn để đọc CV và mô tả công việc (JD), tìm các hồ sơ hoặc vị trí tuyển dụng phù hợp, đánh giá mức độ phù hợp trên thang điểm 100 và giải thích kết quả dựa trên nội dung hồ sơ. AI chỉ phân tích, gợi ý và xếp hạng; nhà tuyển dụng quyết định kết quả sàng lọc.
@@ -14,14 +16,14 @@ Hệ thống tích hợp mô hình ngôn ngữ lớn có sẵn để đọc CV v
 
 - **Đối với ứng viên:** tìm vị trí phù hợp với CV; hiểu lý do phù hợp hoặc chưa phù hợp; viết và trình bày CV; xác định kỹ năng cần bổ sung so với JD.
 - **Đối với nhà tuyển dụng:** tìm ứng viên trong kho CV công khai theo JD; sàng lọc hồ sơ đã ứng tuyển; xem bằng chứng phục vụ đánh giá; quản lý trạng thái và ghi chú sàng lọc.
-- **Đối với nhóm thực hiện:** xây dựng một hệ thống có luồng nghiệp vụ hoàn chỉnh, triển khai được để trải nghiệm và có thực nghiệm đánh giá chất lượng các chức năng AI.
+- **Đối với người thực hiện:** tự xây dựng một hệ thống có luồng nghiệp vụ hoàn chỉnh, triển khai được để trải nghiệm và có thực nghiệm đánh giá chất lượng các chức năng AI.
 
 ### Bối cảnh và giới hạn nguồn lực
 
 | Nội dung | Phạm vi đã xác nhận |
 | --- | --- |
 | Loại dự án | Đồ án chuyên ngành, có triển khai thực tế để demo và đánh giá thử |
-| Nhân sự và thời gian | 3 thành viên, thực hiện trong 3 tháng |
+| Nhân sự và thời gian | 1 người tự thực hiện; thời gian mục tiêu 3 tháng, cần rà khối lượng theo số giờ thực tế |
 | Người dùng mục tiêu | Mọi đối tượng tìm việc và tuyển dụng; ưu tiên ngành CNTT |
 | Mức độ ưu tiên | Ứng viên và nhà tuyển dụng đều là trọng tâm |
 | Frontend | React, TypeScript, Vite |
@@ -31,7 +33,7 @@ Hệ thống tích hợp mô hình ngôn ngữ lớn có sẵn để đọc CV v
 | Dữ liệu ban đầu | Một lượng nhỏ CV/JD mẫu, chủ yếu thuộc ngành CNTT |
 | Ngôn ngữ đầu vào | CV và JD tiếng Việt, tiếng Anh |
 | Định dạng CV | PDF có văn bản và DOCX; OCR dành cho bản scan/ảnh là phần mở rộng |
-| Triển khai dự kiến | Vercel, Render, Neon; đây là lựa chọn của nhóm, không phải yêu cầu bắt buộc của trường |
+| Triển khai dự kiến | Vercel, Render, Neon; đây là phương án của người thực hiện, không phải yêu cầu bắt buộc của trường |
 | Ngân sách vận hành | Mục tiêu không vượt khoảng 4 USD/tháng trong giai đoạn phát triển và demo |
 | Người hỗ trợ đánh giá | Giảng viên hỗ trợ đánh giá thử |
 
@@ -94,11 +96,12 @@ Hướng nghiên cứu đề xuất là so sánh phương pháp đối sánh t�
 ### 1. Tài khoản và phân quyền
 
 - Có ba vai trò nghiệp vụ: ứng viên, nhà tuyển dụng và quản trị viên.
+- Đã xác nhận: đăng ký chọn **một** vai trò Candidate hoặc Recruiter; không có tự đăng ký Admin hoặc tự chuyển/thêm vai trò trong bản đầu. Tài khoản quản trị được cấp qua quy trình có kiểm soát.
 - Các chức năng tài khoản cơ bản gồm đăng ký, đăng nhập, đăng xuất, đổi mật khẩu và khôi phục mật khẩu.
 - Ứng viên quản lý hồ sơ, CV và các đơn ứng tuyển của mình.
 - Nhà tuyển dụng quản lý thông tin tuyển dụng thuộc phạm vi của mình, tìm CV công khai và sàng lọc hồ sơ gửi đến tin tuyển dụng mình phụ trách.
 - Nhà tuyển dụng không cần được quản trị viên phê duyệt trước khi truy cập kho CV công khai.
-- Quản trị viên quản lý tài khoản, tin tuyển dụng và xử lý báo cáo nội dung. Phạm vi quyền truy cập CV riêng tư cho mục đích hỗ trợ hoặc kiểm duyệt chưa chốt; không mặc định cấp quyền đọc mọi CV.
+- Quản trị viên quản lý tài khoản, tin tuyển dụng và xử lý báo cáo nội dung; **không có quyền mặc định đọc CV riêng tư**. Không thêm đường đọc hỗ trợ/kiểm duyệt vượt quyền này khi chưa có yêu cầu riêng được xác nhận.
 - Quyền truy cập phải được kiểm tra khi đọc dữ liệu hoặc tải tài liệu, không chỉ bằng việc ẩn nút trên giao diện.
 
 ### 2. Hồ sơ ứng viên và quyền công khai
@@ -111,7 +114,7 @@ Hướng nghiên cứu đề xuất là so sánh phương pháp đối sánh t�
 | --- | --- | --- |
 | Trường profile được chủ hồ sơ cho phép hiển thị | Không được xem | Được xem |
 | Trường profile không được chia sẻ | Không được xem | Không được xem qua kho hồ sơ công khai |
-| CV được chọn công khai | Được xem; cách hiển thị liên hệ cần chốt | Được xem, bao gồm thông tin liên hệ trong CV |
+| CV được chọn công khai | Chỉ được xem bản dẫn xuất đã ẩn thông tin liên hệ | Được xem, bao gồm thông tin liên hệ trong CV |
 | CV riêng tư, chưa gửi ứng tuyển | Không được xem | Không được xem |
 | CV đã gửi ứng tuyển | Không được xem | Chỉ bên tuyển dụng phụ trách tin nhận hồ sơ được xem |
 | JD công khai | Được xem | Được xem |
@@ -121,14 +124,15 @@ Các quy tắc bổ sung được đề xuất:
 
 - CV mới tải lên ở trạng thái riêng tư cho đến khi ứng viên chủ động công khai. Gửi ứng tuyển chỉ cấp quyền xem cho bên tuyển dụng nhận đơn, không tự công khai CV.
 - Khi ẩn hoặc thay CV công khai, CV cũ không còn xuất hiện trong kho tìm kiếm và các kết quả gợi ý mới; quyền mở lại kết quả cũ cũng phải được kiểm tra theo trạng thái hiện tại.
-- Việc ẩn CV công khai không tự động thu hồi phiên bản đã chủ động gửi ứng tuyển. Chính sách rút hoặc xóa hồ sơ đã gửi cần được xác định riêng.
-- Trong bản đầu, quyền xem CV công khai áp dụng cho ứng viên và nhà tuyển dụng đã đăng nhập. Quyền của khách chưa đăng nhập chưa được xác nhận.
+- Việc ẩn CV công khai không tự động thu hồi phiên bản đã chủ động gửi ứng tuyển. Recruiter phụ trách tin vẫn đọc được snapshot của đơn đã rút/bị loại tối đa 90 ngày từ khi đơn kết thúc, trừ khi quyền bị thu hồi sớm do yêu cầu xóa tài khoản.
+- Đã xác nhận: khách chưa đăng nhập chỉ xem JD công khai; mọi đường đọc CV yêu cầu đăng nhập và đúng ngữ cảnh/quyền.
 
-**Điểm chưa chốt:** nếu ứng viên khác được mở nguyên file CV công khai, họ cũng đọc được email hoặc số điện thoại nằm trong file. Cần chọn giữa việc cho xem nguyên CV và tạo một bản hiển thị đã ẩn liên hệ. Việc ẩn trường trên trang profile không giải quyết được thông tin đã nằm trong tài liệu CV.
+**Đã chốt:** ứng viên xem CV công khai của người khác chỉ nhận bản đã ẩn liên hệ; recruiter vẫn nhận bản có liên hệ theo quyền. Việc ẩn trường profile hoặc phủ hình lên file không đủ. Thiết kế bản dẫn xuất phải loại email, số điện thoại và liên kết/thành phần chứa liên hệ khỏi nội dung được trả về, kể cả text có thể copy, link, metadata hoặc QR chứa liên hệ. Ưu tiên dựng bản hiển thị từ dữ liệu cho phép thay vì tuyên bố đã làm sạch mọi file tùy ý. Khi chưa có bản dẫn xuất được xác minh, báo bản xem này chưa sẵn sàng; tuyệt đối không fallback file gốc cho ứng viên khác. File gốc/snapshot ứng tuyển không bị sửa để thực hiện việc ẩn liên hệ.
 
 ### 3. Hồ sơ công ty và tin tuyển dụng
 
 - Nhà tuyển dụng tạo và cập nhật hồ sơ giới thiệu công ty.
+- Đã xác nhận: mỗi hồ sơ công ty có một recruiter owner; bản đầu không có mời nhiều recruiter cùng công ty hoặc chuyển owner. Số lượng công ty một recruiter được tạo chưa bị giới hạn thêm bởi quyết định này.
 - Tạo, chỉnh sửa, công khai và đóng tin tuyển dụng.
 - Tin tuyển dụng thể hiện mô tả công việc, yêu cầu, kỹ năng, kinh nghiệm, địa điểm, hình thức làm việc, quyền lợi, thông tin lương nếu có và hạn nhận hồ sơ.
 - Phân biệt yêu cầu bắt buộc và yêu cầu ưu tiên để phục vụ tìm kiếm và đánh giá CV–JD.
@@ -159,7 +163,7 @@ Các quy tắc bổ sung được đề xuất:
 - AI hỗ trợ viết phần giới thiệu, diễn đạt kinh nghiệm, mô tả dự án và kỹ năng bằng tiếng Việt hoặc tiếng Anh.
 - AI chỉ sử dụng thông tin thật đã được người dùng cung cấp; nếu thiếu dữ liệu cần yêu cầu bổ sung hoặc để trống.
 - Người dùng xem trước, sửa và chấp nhận nội dung trước khi lưu hoặc xuất bản.
-- Đề xuất bản đầu có 2–3 mẫu cố định, hỗ trợ xuất PDF. AI hỗ trợ nội dung; thiết kế mẫu do nhóm xây dựng và kiểm soát.
+- Đề xuất bản đầu có 2–3 mẫu cố định, hỗ trợ xuất PDF. AI hỗ trợ nội dung; thiết kế mẫu do người thực hiện xây dựng và kiểm soát.
 
 ### 5. Tìm việc, lưu việc và ứng tuyển
 
@@ -168,7 +172,9 @@ Các quy tắc bổ sung được đề xuất:
 - Lưu tin tuyển dụng quan tâm.
 - Chọn CV để ứng tuyển vào tin đang nhận hồ sơ, kể cả CV đang để riêng tư.
 - Xem danh sách đơn đã gửi và trạng thái sàng lọc; nhận thông báo trong hệ thống khi trạng thái thay đổi.
-- Đề xuất hỗ trợ rút đơn và ngăn gửi trùng đơn đang còn hiệu lực cho cùng một tin.
+- Đã xác nhận hỗ trợ rút đơn và nộp lại sau khi rút hoặc bị loại, trừ khi ứng viên bị recruiter chặn. Vẫn ngăn gửi trùng khi có đơn còn hiệu lực cho cùng một tin; chặn nộp lại là quyền do recruiter chủ động thực hiện, AI không tự chặn.
+- Mỗi lần nộp lại tạo đơn mới với snapshot và lịch sử riêng; không mở lại hoặc sửa đơn cũ. Cùng idempotency key vẫn trả đúng lần nộp trước; lần nộp mới dùng key mới. **Chặn chỉ áp dụng cho tin hiện tại**, do recruiter phụ trách tin đặt/bỏ chặn; không mở rộng sang tin khác hoặc toàn hệ thống.
+- Recruiter phụ trách tin vẫn được đọc snapshot của đơn đã rút/bị loại trong **90 ngày từ thời điểm đơn kết thúc**, trừ khi chủ tài khoản yêu cầu xóa và quyền này bị thu hồi sớm hơn. Ứng viên nhìn thấy rõ rút đơn không xóa/thu hồi ngay hồ sơ đã gửi. Yêu cầu xóa tài khoản thu hồi truy cập ngay, có **7 ngày để hủy yêu cầu**, sau đó xóa/ẩn danh dữ liệu chính; backup hết hạn trong tối đa **14 ngày tiếp theo**. Chi tiết và các trường hợp dùng chung file theo chính sách liên kết cuối tài liệu.
 - Đề xuất lưu một phiên bản CV tại thời điểm ứng tuyển để việc sửa CV sau đó không làm thay đổi hồ sơ nhà tuyển dụng đã nhận.
 
 ### 6. Quản lý ứng viên đến bước sàng lọc
@@ -177,6 +183,7 @@ Các quy tắc bổ sung được đề xuất:
 - Tìm kiếm, lọc, xem CV và kết quả AI phân tích độ phù hợp với JD của tin đó.
 - Thêm ghi chú nội bộ và đưa ứng viên vào danh sách phù hợp để tiếp tục xem xét.
 - Nhà tuyển dụng chủ động cập nhật kết quả sàng lọc; AI không tự đổi trạng thái.
+- Nhà tuyển dụng phụ trách tin có thể chặn/bỏ chặn ứng viên nộp vào chính tin đó; việc chặn không tự sửa/xóa hồ sơ hoặc lịch sử đã nhận, không ngăn nộp tin khác và không do AI tự quyết định.
 - Ghi chú nội bộ không hiển thị cho ứng viên hoặc nhà tuyển dụng ngoài phạm vi phụ trách.
 
 Luồng trạng thái đề xuất:
@@ -257,13 +264,20 @@ Các điểm cần xác nhận hoặc hoàn thiện ở bước thiết kế ti�
 
 | Quyết định | Trạng thái hiện tại |
 | --- | --- |
-| Thông tin liên hệ khi ứng viên xem CV công khai của người khác | Chưa chốt: xem nguyên file hay xem bản đã ẩn liên hệ |
-| Quyền xem của khách chưa đăng nhập | Chưa chốt; đề xuất JD có thể xem công khai, CV yêu cầu đăng nhập |
-| Ngôn ngữ giao diện | Chưa chốt; đề xuất giao diện tiếng Việt, xử lý CV/JD Việt–Anh và lựa chọn ngôn ngữ nội dung AI |
+| Thông tin liên hệ khi ứng viên xem CV công khai của người khác | Đã chốt: chỉ bản đã ẩn liên hệ; chưa có bản an toàn thì không trả file gốc |
+| Quyền xem của khách chưa đăng nhập | Đã chốt: chỉ JD công khai; CV yêu cầu đăng nhập và kiểm tra quyền |
+| Admin đọc CV riêng | Đã chốt: không có quyền mặc định |
+| Ngôn ngữ giao diện | Đã chốt: tiếng Việt; xử lý CV/JD Việt–Anh; chưa đồng nghĩa UI song ngữ |
+| Vai trò khi đăng ký | Đã chốt: chọn một vai trò Candidate hoặc Recruiter; Admin cấp riêng có kiểm soát |
+| Owner công ty | Đã chốt: một recruiter owner trên mỗi công ty |
+| Rút/nộp lại và đọc đơn đã rút | Đã chốt: recruiter vẫn đọc hồ sơ sau rút; được nộp lại sau rút/bị loại nếu không bị recruiter chặn |
+| Phạm vi recruiter chặn ứng viên | Đã chốt: chỉ tin tuyển dụng hiện tại; recruiter phụ trách tin đặt/bỏ chặn |
 | Mẫu CV | Đề xuất 2–3 mẫu cố định, xuất PDF; chưa chọn thiết kế cụ thể |
 | Quy tắc tính điểm | Chưa chốt trọng số, mức đáp ứng và ngưỡng phân loại; cần góp ý của giảng viên và thực nghiệm |
 | Quy mô thực nghiệm | Chưa chốt số CV/JD, số cặp đánh giá và ngưỡng đạt |
 | Hạn mức AI và tìm kiếm web | Cần đo chi phí thực tế để đáp ứng ngân sách khoảng 4 USD/tháng |
-| Lưu giữ hồ sơ đã gửi | Cần chốt chính sách khi rút đơn, xóa CV hoặc xóa tài khoản |
+| Lưu giữ hồ sơ đã gửi | Đã chốt: 90 ngày sau rút/bị loại; yêu cầu xóa tài khoản thu hồi truy cập ngay, có 7 ngày hủy yêu cầu rồi xóa/ẩn danh dữ liệu chính; backup hết hạn tối đa 14 ngày sau xóa dữ liệu chính |
 
 Các lựa chọn công nghệ chi tiết, kế hoạch thực hiện và thiết kế dữ liệu sẽ được phát triển trong các tài liệu tương ứng, dựa trên phạm vi nghiệp vụ của đặc tả này.
+
+Quyết định trong lượt xác nhận ngày 15/10/2026 chỉ cập nhật yêu cầu; chưa phải các API GĐ2 đã triển khai. Theo dõi [checklist dịch vụ](../docs/phase-01-services-checklist.md) và [chính sách lưu/xóa đã chốt](../docs/phase-01-data-retention.md).

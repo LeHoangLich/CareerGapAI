@@ -57,6 +57,14 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
         Assert.False((await user.GetFromJsonAsync<JsonElement>("/api/auth/me")).GetProperty("authenticated").GetBoolean());
     }
     [Fact]
+    public async Task NullLoginFieldsReturnValidationErrorInsteadOfServerError()
+    {
+        var client = fixture.App.CreateClient();
+        await FoundationFixture.Csrf(client);
+        var response = await client.PostAsJsonAsync("/api/auth/login", new { email = (string?)null, password = (string?)null });
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+    [Fact]
     public async Task RepeatedKeyReturnsSameJobAndDifferentInputConflicts()
     {
         var (user, uid) = await fixture.User();

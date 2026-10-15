@@ -44,7 +44,9 @@ Parser kiểm tra thời gian giữa các segment, cancellation giữa trang/đo
 
 Storage local chỉ development/testing. Adapter S3 tạo object `If-None-Match: *`, đọc có giới hạn; chưa được thử trên private bucket thật. Không có delete API hoặc tự dọn file để tránh xóa snapshot ngoài chính sách đã chốt.
 
-## Cấu hình production và kiểm chứng cloud còn thiếu
+## Cấu hình production — hoãn, chỉ tham khảo cho giai đoạn sau
+
+**Từ 15/10/2026 đã dừng deploy.** Không thực hiện cấu hình production, migration cloud hoặc redeploy theo phần dưới cho đến khi sản phẩm hoàn thiện localhost và người dùng yêu cầu mở lại. Nền tảng hiện tại dùng local PostgreSQL/storage và fake; hướng dẫn chạy ở README.
 
 Không gửi secrets qua chat hoặc `VITE_*`; đặt trong secret store của host:
 
@@ -56,12 +58,18 @@ Không gửi secrets qua chat hoặc `VITE_*`; đặt trong secret store của h
 
 Giá/model phải kiểm tra lại tài liệu/provider trước bật; không hardcode giá cũ. Client cố định host DeepSeek HTTPS, không cho client chọn URL/model tùy ý; max input/output và một retry. Giá tính bảo thủ từ prompt token toàn phần, chưa tối ưu cache discount; đối chiếu dashboard trước kết luận chi phí thực.
 
-Deploy image từ bản qua CI; chạy script/bundle migration bằng quyền riêng. Thử HTTPS login/logout/CSRF/upload; file/cookie/job sau redeploy; một DeepSeek thật trong quota. Nếu Vercel không phù hợp quyền deploy nhóm, dùng cùng image phục vụ React static; cold start vẫn cần đo. Ngày 15/10/2026 người dùng xác nhận chưa tạo remote và sẽ tự tạo/publish GitHub sau; không tự tạo/push repository thay người dùng. Chưa có CI run hoặc public demo.
+Khi đã được mở lại deploy, người thực hiện tự review và deploy image từ bản qua CI; chạy script/bundle migration bằng quyền riêng. Thử HTTPS login/logout/CSRF/upload; file/cookie/job sau redeploy; một DeepSeek thật trong quota. Nếu Vercel không phù hợp tài khoản cá nhân, dùng cùng image phục vụ React static; cold start vẫn cần đo. Ngày 15/10/2026 người dùng đã tạo/publish [repository](https://github.com/LeHoangLich/CareerGapAI); [CI run 38718678231](https://github.com/LeHoangLich/CareerGapAI/actions/runs/38718678231) của `bdb3aeb` đã success cho frontend/backend/Docker. Thay đổi local sau đó chưa có CI run mới; không tự push thay người dùng. Chưa có public demo.
+
+`compose.smoke.yaml` kiểm chứng fallback cùng origin ở localhost:9080, kết nối DB nội bộ cổng 5432. Đây là Testing/Fake/Local storage. Smoke E2E phải chọn file ID từ response upload mới, không chọn theo tên trùng với file trước đây lưu trên filesystem Windows. Bản ghi file cũ không có object ở container phải trả file_unavailable; không tạo file rỗng hoặc xem đó là storage bền vững.
 
 Backup: DB gồm DP key ring + object private + chứng thư/khóa giải mã, tách quyền đọc. Thử restore trên môi trường cô lập rồi kiểm tra cookie/file/job. Rollback app không khôi phục dữ liệu; chưa chạy full cloud backup/restore hoặc xoay chứng thư.
 
 ## Quyết định nghiệp vụ
 
-Tất cả điểm sau **chưa xác nhận**: liên hệ trong CV công khai cho ứng viên khác; quyền khách/admin; ngôn ngữ UI chính thức; nhiều role/tài khoản; owner/cộng tác công ty; trạng thái/rút/nộp lại và quyền sau rút; thời hạn giữ/xóa; ghim JD và cách phân tích lại; số/mẫu CV; rubric/ngưỡng/quy mô đánh giá. Các phần phụ thuộc GĐ2+ chưa mở. UI tiếng Việt và tài khoản seed một role chỉ là lựa chọn thử có thể đảo ngược.
+**Đã xác nhận ngày 15/10/2026:** UI tiếng Việt, CV/JD Việt–Anh; khách chỉ xem JD, CV yêu cầu đăng nhập; admin không mặc định đọc private; đăng ký một role Candidate/Recruiter, một recruiter owner/công ty. Ứng viên khác chỉ xem bản CV ẩn liên hệ, không fallback file gốc. Recruiter còn đọc snapshot sau rút trong hạn 90 ngày; nộp lại sau rút/bị loại nếu không có đơn còn hiệu lực và không bị chặn ở chính tin đó. Yêu cầu xóa tài khoản thu hồi quyền ngay, cửa sổ hủy 7 ngày, purge/ẩn danh rồi backup hết hạn thêm tối đa 14 ngày; theo [chính sách lưu/xóa](phase-01-data-retention.md).
 
-Search/email hiện mới có interface và fake (search trả rỗng, không bịa URL; fake email không gửi hoặc log token). Chưa có real adapter/API khôi phục mật khẩu sản phẩm. Người phụ trách cần xác nhận Tavily quota/điều khoản, DNS/domain và sender; chạy một search kỹ năng không PII, ghi credits; xác minh gửi email thật trước nghiệm thu GĐ2. Không tự mua domain hay bật gói có phí.
+Các quyết định này chưa phải tính năng public CV/application/block/purge đã có trong prototype. GĐ2 cần migrations/DTO/quyền/kiểm thử tương ứng; các bổ sung bảng block và metadata bản CV ẩn liên hệ ở tài liệu 04 vẫn là thiết kế đề xuất. Còn cần hoàn thiện các chuyển trạng thái sàng lọc chi tiết ngoài hành vi đã chốt, chọn JD cũ/mới khi phân tích lại, số/mẫu CV và rubric/ngưỡng/quy mô đánh giá theo mốc tương ứng; không hỏi lại quyết định đã xác nhận.
+
+**Dịch vụ chưa cung cấp:** người dùng sẽ bổ sung sau qua [checklist S01–S12](phase-01-services-checklist.md). Không suy ra chưa có tài khoản, không tự tạo/mua hoặc đọc secrets; phần độc lập tiếp tục được thực hiện.
+
+Search/email hiện mới có interface và fake (search trả rỗng, không bịa URL; fake email không gửi hoặc log token). Chưa có real adapter/API khôi phục mật khẩu sản phẩm. Người phụ trách cần xác nhận Tavily quota/điều khoản, DNS/domain và sender; chạy một search kỹ năng không PII, ghi credits; kiểm thử logic khôi phục local ở GĐ2 và xác minh gửi email thật riêng trước khi công nhận sản phẩm hoàn thiện. Không tự mua domain hay bật gói có phí.

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-test('Vite proxy: login → private CV → fake job → PDF → logout', async ({ page }) => {
+test('login → private CV → fake job → PDF → logout', async ({ page }) => {
   const email = process.env.DEMO_EMAIL;
   const password = process.env.DEMO_PASSWORD;
   const fixture = process.env.CAREERGAP_DOCX_FIXTURE;
@@ -14,8 +14,12 @@ test('Vite proxy: login → private CV → fake job → PDF → logout', async (
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
   await expect(page.getByRole('heading', { name: 'CV riêng của bạn' })).toBeVisible();
   await page.getByLabel('Chọn tài liệu').setInputFiles(fixture);
+  const uploadedResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/resumes');
   await page.getByRole('button', { name: 'Tải CV riêng tư' }).click();
-  const item = page.getByRole('listitem').filter({ hasText: path.basename(fixture) }).first();
+  const uploaded = await uploadedResponse;
+  expect(uploaded.status()).toBe(201);
+  const { fileId } = await uploaded.json();
+  const item = page.getByRole('listitem').filter({ has: page.locator(`a[href="/api/files/${fileId}"]`) });
   await expect(item).toBeVisible();
   const href = await item.getByRole('link', { name: 'Tải file' }).getAttribute('href');
   const privateFile = await page.request.get(href!);

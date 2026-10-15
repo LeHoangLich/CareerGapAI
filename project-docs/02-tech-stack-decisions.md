@@ -2,7 +2,7 @@
 
 > Cập nhật thực thi GĐ1 ngày 15/10/2026: đã có prototype local và lockfile. Xem [hợp đồng/giới hạn thực tế](../docs/phase-01-implementation.md) và [dependency/giấy phép](../docs/dependency-licenses.md). Các lựa chọn cloud/AI thật phía dưới vẫn cần kiểm chứng, không được coi là đã triển khai từ prototype.
 
-> Bối cảnh: đồ án chuyên ngành do 3 thành viên thực hiện trong 3 tháng, tập trung web, ngân sách phát triển và demo khoảng 4 USD/tháng. Phạm vi nghiệp vụ theo `01-system-specification.md`.
+> Bối cảnh đã được người dùng xác nhận: đồ án chuyên ngành do **1 người tự thực hiện**, mục tiêu 3 tháng, tập trung web, ngân sách phát triển và demo khoảng 4 USD/tháng cho toàn dự án. Phạm vi nghiệp vụ theo `01-system-specification.md`.
 >
 > **Đã xác nhận:** React + TypeScript + Vite, .NET 10 Monolith, PostgreSQL 16+, DeepSeek Cloud. **Đề xuất kỹ thuật trong tài liệu:** thư viện, cách xác thực, dịch vụ phụ trợ và cấu hình triển khai để hiện thực phạm vi đó. Các đề xuất cần được kiểm chứng bằng một bản tích hợp nhỏ trước khi áp dụng rộng; tài liệu này không có nghĩa hệ thống đã được cài đặt hoặc triển khai.
 >
@@ -10,9 +10,11 @@
 
 ## 1. Kiến trúc tổng thể
 
+**Quyết định ngày 15/10/2026:** dừng deploy; xây dựng, tích hợp và kiểm thử trên localhost trước. Dùng PostgreSQL local, storage Development/Testing và fake provider mặc định. CI chỉ build/test; Docker smoke local không phải deploy cloud. Các phương án hosting/domain, production và kiểm chứng sau deploy ở mục 3, 4.4 chỉ là tham khảo cho giai đoạn sau: chỉ thực hiện khi sản phẩm hoàn thiện local và người dùng yêu cầu mở lại deploy. Không tiếp tục migration cloud hoặc thay đổi dịch vụ đã có. DeepSeek vẫn là stack đích; thử provider thật từ localhost cần được cho phép trong ngân sách, không tự bật khi sửa tài liệu.
+
 ### 1.1. Monolith theo module nghiệp vụ
 
-Sử dụng một ứng dụng ASP.NET Core Web API, một cơ sở dữ liệu PostgreSQL và một frontend React SPA. Backend chia module theo nghiệp vụ để ba thành viên có thể làm việc song song, nhưng cùng build và triển khai thành một dịch vụ.
+Sử dụng một ứng dụng ASP.NET Core Web API, một cơ sở dữ liệu PostgreSQL và một frontend React SPA. Backend chia module theo nghiệp vụ để một người có thể phát triển, kiểm thử và bảo trì theo từng lát tích hợp; cùng build và triển khai thành một dịch vụ.
 
 ```mermaid
 flowchart LR
@@ -86,7 +88,7 @@ Lưu file gốc, văn bản trích xuất, dữ liệu được người dùng x
 | Điều hướng | React Router ở chế độ SPA | Phân trang ứng viên, nhà tuyển dụng và quản trị |
 | Dữ liệu từ API | TanStack Query + `fetch` | Cache dữ liệu phía client, quản lý trạng thái tải/lỗi, phân trang và polling |
 | Form | React Hook Form + Zod | Form profile, JD, CV; kiểm tra dữ liệu phía client |
-| Giao diện dùng chung | Tailwind CSS và các component tái sử dụng của nhóm | Thống nhất form, bảng, dialog, trạng thái tải và thiết kế responsive |
+| Giao diện dùng chung | Tailwind CSS và các component tái sử dụng trong dự án | Thống nhất form, bảng, dialog, trạng thái tải và thiết kế responsive |
 | Backend | ASP.NET Core Web API trên .NET 10 | Monolith; controllers, DI, cấu hình và logging có sẵn |
 | ORM | EF Core 10 + `Npgsql.EntityFrameworkCore.PostgreSQL` 10 | Truy cập PostgreSQL và quản lý migrations |
 | Tài khoản | ASP.NET Core Identity + cookie authentication | Quản lý mật khẩu, vai trò và token khôi phục bằng cơ chế có sẵn |
@@ -121,7 +123,7 @@ Chọn Identity để quản lý tài khoản và cookie cho phiên đăng nhậ
 
 Microsoft khuyến nghị cookie cho ứng dụng chạy trong trình duyệt và cung cấp cơ chế lưu Data Protection keys bằng EF Core. [Identity cho SPA](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/identity-api-authorization?view=aspnetcore-10.0), [Data Protection](https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/configuration/overview?view=aspnetcore-10.0)
 
-Quyền xem liên hệ trong CV công khai của ứng viên khác và quyền của khách chưa đăng nhập vẫn theo các điểm chưa chốt trong đặc tả. Không triển khai bucket công khai hoặc trả file gốc cho mọi người để tự quyết định thay chính sách nghiệp vụ.
+Đã chốt theo đặc tả: khách chỉ xem JD; CV yêu cầu đăng nhập; ứng viên khác chỉ xem bản ẩn liên hệ, recruiter xem bản có liên hệ đúng quyền, admin không có quyền mặc định đọc private. Bản dẫn xuất lưu private và được xác minh độc lập; chưa có bản an toàn thì không trả file gốc cho ứng viên khác. Không mở bucket public để thực hiện việc công khai CV.
 
 ### 2.3. Đọc CV và quản lý file
 
@@ -165,7 +167,7 @@ Gọi DeepSeek trực tiếp từ backend bằng `HttpClient`, nhận cấu trú
 Đề xuất cách tiếp cận hai bước để không gọi LLM cho từng CV trong toàn bộ hệ thống ở mỗi lần tìm kiếm:
 
 1. **Chọn tập có khả năng phù hợp:** backend lọc theo quyền/trạng thái trước, sau đó dùng kỹ năng chuẩn hóa, lĩnh vực, kinh nghiệm và từ khóa để lấy một tập kết quả giới hạn.
-2. **Phân tích sâu:** DeepSeek đối chiếu các cặp CV–JD được chọn, trả mức đáp ứng và bằng chứng theo tiêu chí; backend tính điểm bằng quy tắc đã được nhóm và giảng viên thống nhất.
+2. **Phân tích sâu:** DeepSeek đối chiếu các cặp CV–JD được chọn, trả mức đáp ứng và bằng chứng theo tiêu chí; backend tính điểm bằng quy tắc người thực hiện thống nhất với giảng viên.
 
 Các lựa chọn kỹ thuật:
 
@@ -201,7 +203,7 @@ Render Free chặn SMTP outbound trên các cổng phổ biến 25, 465 và 587,
 
 ### 3.1. PostgreSQL và lưu trữ CV
 
-- Dùng PostgreSQL 16 ở local bằng Docker và chọn cùng major trên Neon. Có thể dùng phiên bản mới hơn trong yêu cầu 16+ khi nhóm thống nhất, nhưng phải cập nhật local, CI và kiểm tra tương thích.
+- Dùng PostgreSQL 16 ở local bằng Docker và chọn cùng major trên Neon. Có thể dùng phiên bản mới hơn trong yêu cầu 16+ khi người thực hiện xác nhận, nhưng phải cập nhật local, CI và kiểm tra tương thích.
 - Chỉ một database ứng dụng cho bản đầu, gồm Identity và các module nghiệp vụ. Một `DbContext` có thể kế thừa Identity để quản lý migrations thống nhất.
 - Dữ liệu cần lọc, liên kết và ràng buộc dùng bảng/cột quan hệ. Dùng `jsonb` cho payload AI hoặc metadata có schema/version; không đưa toàn bộ nghiệp vụ vào một cột JSON.
 - Ràng buộc database hỗ trợ quy tắc một CV công khai/ứng viên, trạng thái hợp lệ và tính duy nhất của các quan hệ cần thiết; chi tiết ở tài liệu database.
@@ -225,13 +227,13 @@ Render hỗ trợ .NET bằng Docker. Container build nhiều giai đoạn, dùn
 
 Render Free hiện có 512 MB RAM, 0.1 CPU và ngủ sau 15 phút không có traffic vào; lần truy cập đầu có thể mất khoảng một phút để khởi động. File cục bộ không bền vững và không có persistent disk trên Free. Vì vậy bản đầu giới hạn tác vụ nặng đồng thời và đo bộ nhớ khi đọc CV. [Render Compute Plans](https://render.com/docs/compute-plans), [Render Free](https://render.com/docs/free)
 
-Vercel Hobby giới hạn sử dụng cá nhân, phi thương mại và có hạn chế cộng tác/deploy với repository riêng tư. Với nhóm ba người, phải thử repository và quy trình deploy thực tế trước khi chốt; không giả định mọi push của mọi thành viên đều tự deploy. Không đổi tác giả commit để né giới hạn gói. [Vercel Hobby](https://vercel.com/docs/plans/hobby), [Project Collaboration](https://vercel.com/docs/deployments/troubleshoot-project-collaboration)
+Người thực hiện dùng tài khoản sở hữu repository để kiểm chứng quyền deploy và điều kiện gói Vercel Hobby trước khi chốt. Không còn yêu cầu phối hợp tác giả commit của nhiều thành viên; vẫn không mặc định repository cá nhân sẽ tự deploy thành công hoặc phù hợp điều khoản hiện hành. Các giới hạn dịch vụ được nêu theo lần đối chiếu trong tài liệu, cần kiểm tra lại khi tạo môi trường. [Vercel Hobby](https://vercel.com/docs/plans/hobby), [Project Collaboration](https://vercel.com/docs/deployments/troubleshoot-project-collaboration)
 
-**Phương án dự phòng nếu Vercel không phù hợp quy trình nhóm:** build React thành static assets, để cùng ứng dụng .NET phục vụ giao diện và API trên Render. Vẫn giữ React/Vite và backend Monolith, nhưng cả giao diện sẽ chịu cold start của Render và không còn lợi thế phân phối static riêng. Cần cấu hình fallback SPA sau các route API. Đây là lựa chọn thay thế về hosting, không phải mở thêm dịch vụ trả phí.
+**Phương án dự phòng nếu Vercel không phù hợp:** build React thành static assets, để cùng ứng dụng .NET phục vụ giao diện và API trên Render. Vẫn giữ React/Vite và backend Monolith, nhưng cả giao diện sẽ chịu cold start của Render và không còn lợi thế phân phối static riêng. Cần cấu hình fallback SPA sau các route API. Đây là lựa chọn thay thế về hosting, không phải mở thêm dịch vụ trả phí.
 
 ### 3.3. Tên miền và cùng origin
 
-`teamnexus.cloud` xuất hiện trong khung tài liệu ban đầu, nhưng chưa có xác nhận nhóm sở hữu hoặc quản lý DNS của domain này. Các địa chỉ dưới đây là phương án phân bổ, chưa phải cấu hình đã tạo.
+`teamnexus.cloud` xuất hiện trong khung tài liệu ban đầu, nhưng chưa có xác nhận người thực hiện sở hữu hoặc quản lý DNS của domain này. Các địa chỉ dưới đây là phương án phân bổ, chưa phải cấu hình đã tạo; tên domain không có nghĩa dự án do một nhóm thực hiện.
 
 | Địa chỉ dự kiến | Mục đích | Điều kiện |
 | --- | --- | --- |
@@ -283,7 +285,7 @@ project-docs/
 .github/workflows/
 ```
 
-- Nhánh chính giữ ở trạng thái build được; mỗi tính năng làm trên nhánh riêng và được một thành viên khác review trước khi merge.
+- Nhánh chính giữ ở trạng thái build được; mỗi thay đổi có phạm vi rõ, tự review diff/quyền/dữ liệu và chạy CI trước khi merge. Có thể nhờ giảng viên hoặc người đánh giá góp ý, nhưng không yêu cầu một thành viên khác phê duyệt trong dự án một người.
 - Khóa .NET SDK bằng `global.json`, Node bằng cấu hình phiên bản của dự án, package frontend bằng lockfile. Dùng bản package ổn định tương thích, không nâng major tự động giữa giai đoạn tích hợp.
 - Commit migrations và cấu hình mẫu không có bí mật; không commit `.env`, khóa API, file CV thật hoặc dữ liệu thử chứa thông tin cá nhân.
 - Dùng dữ liệu giả hoặc đã được phép sử dụng trong fixtures; tách dữ liệu demo khỏi dữ liệu đánh giá.
@@ -370,14 +372,14 @@ Các trường hợp phải có trước khi demo:
 | Điểm cần kiểm chứng | Điều kiện để coi là đã xác nhận |
 | --- | --- |
 | Bộ phiên bản frontend và NuGet | Restore/build/test thành công trên local, CI và Docker; đã khóa phiên bản |
-| Vercel Hobby cho nhóm | Repository và tác giả commit phù hợp quy định deploy; nếu không thì dùng phương án hosting dự phòng |
+| Vercel Hobby cho cá nhân | Tài khoản sở hữu repository deploy được và phù hợp điều kiện gói; nếu không thì dùng phương án hosting dự phòng |
 | Cookie qua reverse proxy | Login/logout, CSRF, upload và quyền đọc hoạt động trên trình duyệt mục tiêu |
 | Neon Object Storage | Region, credentials, bucket private và thao tác S3 đã thử thành công |
 | Data Protection | Sau restart vẫn đọc được cookie/token hợp lệ; key ring được bảo vệ và có cách khôi phục |
 | PDF/DOCX và font CV | Bộ mẫu Việt–Anh được đọc/xuất đủ đúng để người dùng rà soát |
-| Model DeepSeek | Schema, bằng chứng, độ trễ và chi phí đạt mức nhóm chấp nhận qua thực nghiệm |
+| Model DeepSeek | Schema, bằng chứng, độ trễ và chi phí đạt mức người thực hiện chấp nhận qua thực nghiệm |
 | Tìm nguồn học | URL có nguồn thật, credits được kiểm soát, điều khoản lưu kết quả đã được xem xét |
 | Domain và email | Xác nhận quyền DNS, sender và gửi thử; chưa xác nhận thì không coi email thật đã sẵn sàng |
 | Ngân sách và mức tải | Đo usage của tác vụ điển hình, thử giới hạn đồng thời và kiểm tra cơ chế ngừng nhận tác vụ tốn phí |
 
-Các điểm nghiệp vụ còn mở như liên hệ trong CV công khai, quyền khách, ngôn ngữ giao diện, trọng số điểm và lưu giữ hồ sơ tiếp tục được theo dõi trong `01-system-specification.md`.
+Các quyết định đã chốt về CV ẩn liên hệ, khách/admin, UI tiếng Việt, vai trò đăng ký, owner công ty, nộp lại/chặn theo tin và lưu/xóa 90/7/14 ngày theo `01-system-specification.md` và [chính sách lưu/xóa](../docs/phase-01-data-retention.md). Trọng số điểm, quy mô đánh giá, mẫu CV và cách chọn JD khi phân tích lại vẫn cần hoàn thiện theo giai đoạn. Dịch vụ do người dùng cung cấp sau, ghi trong [checklist](../docs/phase-01-services-checklist.md), không tự tạo hoặc mua thay.

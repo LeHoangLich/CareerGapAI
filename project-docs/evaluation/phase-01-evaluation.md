@@ -4,7 +4,7 @@ Trạng thái: kế hoạch thử nghiệm, chưa có nhãn giảng viên hoặc
 
 ## Danh mục ban đầu
 
-Fixtures được tái tạo bằng [script](../../scripts/generate-fixtures.py), lưu `.local/fixtures/` và không commit. Nguồn: nhóm/agent tạo giả trong đợt này, cho phép sử dụng kiểm thử dự án; không lấy CV thật. ID nhóm giữ các định dạng của cùng nội dung chung split.
+Fixtures được tái tạo bằng [script](../../scripts/generate-fixtures.py), lưu `.local/fixtures/` và không commit. Nguồn: dữ liệu giả do agent tạo trong dự án cá nhân, cho phép sử dụng kiểm thử dự án; không lấy CV thật. ID nhóm dữ liệu giữ các định dạng của cùng nội dung chung split.
 
 | ID | File sinh ra | Ngôn ngữ/định dạng | Group | Mục đích/split |
 |---|---|---|---|---|
@@ -39,4 +39,4 @@ Lưu run manifest: split/hash, commit code, model/provider revision nếu có, t
 
 ## Nội dung cần trao đổi với giảng viên
 
-Quy mô/bộ ngành, mức hỗ trợ gán nhãn, rubric/trọng số/ngưỡng, top-k, chia tập và lịch đánh giá. Chưa liên hệ thay người dùng, chưa có phản hồi hoặc phê duyệt; cần nhóm chỉ định người phụ trách và cung cấp dữ liệu hợp lệ. Giới hạn dự kiến tập trung CNTT và Việt–Anh phải được báo trong thực nghiệm sau.
+Quy mô/bộ ngành, mức hỗ trợ gán nhãn, rubric/trọng số/ngưỡng, top-k, chia tập và lịch đánh giá. Người thực hiện trực tiếp thu thập dữ liệu hợp lệ và trao đổi với giảng viên. Chưa liên hệ thay người dùng, chưa có phản hồi hoặc phê duyệt; không coi giảng viên là thành viên phát triển. Giới hạn dự kiến tập trung CNTT và Việt–Anh phải được báo trong thực nghiệm sau.

@@ -1,0 +1,18 @@
+# Local HTTP smoke only. Never use Testing/Local storage as an Internet deployment.
+services:
+  api:
+    image: careergap:phase01
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Testing
+      ASPNETCORE_HTTP_PORTS: 8080
+      ConnectionStrings__Database: Host=db;Port=5432;Database=careergap;Username=careergap;Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      Storage__Provider: Local
+      Storage__Root: /tmp/careergap-files
+      Ai__Provider: Fake
+      Ai__Enabled: 'true'
+    ports:
+      - "127.0.0.1:9080:8080"

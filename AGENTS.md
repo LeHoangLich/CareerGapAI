@@ -5,7 +5,7 @@
 - Áp dụng cho phát triển, sửa lỗi, review và cập nhật tài liệu trong dự án này.
 - Tuân thủ chỉ dẫn hệ thống và yêu cầu rõ ràng của người dùng; không đặt AGENTS.md cao hơn các chỉ dẫn đó.
 - CareerGap AI là đồ án web tuyển dụng, quản lý ứng viên đến bước sàng lọc, có AI hỗ trợ.
-- Nhóm có 3 người, thời gian 3 tháng; ngân sách mục tiêu khoảng 4 USD/tháng cho toàn dự án.
+- Người dùng tự thực hiện dự án một mình; thời gian mục tiêu 3 tháng, ngân sách khoảng 4 USD/tháng cho toàn dự án. Không giả định có thêm thành viên để chia việc hoặc review bắt buộc.
 - Phục vụ nhiều ngành, ưu tiên CNTT; hỗ trợ CV/JD tiếng Việt và tiếng Anh.
 - Đọc [01 — Đặc tả](project-docs/01-system-specification.md) để xác định nghiệp vụ, phạm vi và quyền truy cập.
 - Đọc [02 — Công nghệ](project-docs/02-tech-stack-decisions.md) để xác định định hướng kỹ thuật và điều kiện kiểm chứng.
@@ -18,8 +18,9 @@
 
 ## 2. Hiện trạng và lệnh dự án
 
-- Cập nhật ngày 15/10/2026 sau đợt GĐ1 local: đã khởi tạo Git nhánh `main`, chưa commit/remote. Người dùng xác nhận sẽ tự tạo và publish GitHub sau; không tự push/tạo remote thay người dùng.
-- Có React/TypeScript/Vite trong `frontend/`, một .NET 10 API trong `backend/CareerGap.Api/`, một project test trong `tests/CareerGap.Api.Tests/`, scripts, ba migrations và Docker/CI config. Chưa có CI run hoặc public cloud demo.
+- Quyết định ngày 15/10/2026: dừng toàn bộ công việc deploy; ưu tiên xây dựng và kiểm thử sản phẩm trên localhost. Không tiếp tục cấu hình hosting/DNS, migration cloud hoặc phát hành demo. Chỉ mở lại deploy sau khi sản phẩm hoàn thiện trên localhost và người dùng yêu cầu rõ ràng. CI build/test và Docker smoke local vẫn được dùng; thiếu cloud không chặn phần phát triển local độc lập. Không tự xóa dịch vụ/dữ liệu đã có.
+- Cập nhật ngày 15/10/2026: Git nhánh `main`, remote `https://github.com/LeHoangLich/CareerGapAI.git`, commit đã publish `bdb3aeb`. Người dùng đã tự tạo/publish repository; không tự push thay người dùng khi chưa có yêu cầu.
+- Có React/TypeScript/Vite trong `frontend/`, một .NET 10 API trong `backend/CareerGap.Api/`, một project test trong `tests/CareerGap.Api.Tests/`, scripts, ba migrations và Docker/CI config. CI run `38718678231` của commit `bdb3aeb` đã success cho frontend/backend/Docker; thay đổi local sau commit đó chưa được CI chứng nhận. Chưa có public cloud demo.
 - Đã có README, lockfile npm/NuGet, `global.json` 10.0.401, `.node-version` 24.16.0. PostgreSQL local/CI chọn 16.10. Không thêm solution/class library khi chưa cần.
 - Luồng self/private local dùng Fake provider; fake usage là test_credit, không phải USD. DeepSeek/S3 thật, search/email thật, quyền nghiệp vụ GĐ2 và nghiệm thu M1 vẫn còn thiếu bằng chứng.
 - Không suy ra dịch vụ cloud, tài khoản provider, domain hay bản deploy đã tồn tại từ sơ đồ trong tài liệu.
@@ -65,14 +66,16 @@ Nguồn: tài liệu 01 mục tính năng 1–6; tài liệu 04 mục 3, 7–8.
 - Ứng viên khác không được xem profile chỉ chia sẻ cho recruiter; chính chủ vẫn xem và sửa profile của mình.
 - Recruiter chỉ thấy các trường profile được chia sẻ và hồ sơ ứng tuyển thuộc tin mình phụ trách.
 - Recruiter không cần admin phê duyệt để truy cập kho CV công khai; không thêm bước duyệt này.
-- Recruiter được xem liên hệ trong CV công khai; cách hiển thị liên hệ cho ứng viên khác còn chưa chốt.
-- Không mặc định admin được đọc mọi CV riêng tư hoặc khách chưa đăng nhập được đọc CV.
+- Recruiter được xem liên hệ trong CV công khai; ứng viên khác chỉ xem bản dẫn xuất đã ẩn liên hệ được xác minh, không fallback file gốc khi thiếu bản an toàn.
+- Admin không có quyền mặc định đọc CV riêng; khách chỉ xem JD công khai, mọi đường đọc CV yêu cầu đăng nhập và đúng quyền.
 - Backend kiểm tra role, owner, trạng thái và ngữ cảnh; ẩn nút UI không phải phân quyền.
 - Kiểm tra quyền hiện tại khi đọc file, cache, kết quả AI, notification link và tài nguyên qua ID trực tiếp.
 - CV riêng tư dùng để ứng tuyển hoặc gợi ý việc cho chính chủ không tự trở thành công khai.
 - Không đưa CV nộp riêng vào kho tìm kiếm công khai; truy vấn hồ sơ ứng tuyển phải theo đúng tin và recruiter.
 - Theo thiết kế đề xuất, ẩn/thay CV chặn đọc qua ngữ cảnh công khai cũ; không tự xóa snapshot đã gửi ứng tuyển.
-- Không tự quyết quyền recruiter đọc sau rút đơn; xử lý theo chính sách lưu giữ và truy cập đã được xác nhận.
+- Recruiter phụ trách tin còn đọc snapshot của đơn rút/bị loại tối đa 90 ngày từ khi đơn kết thúc, trừ yêu cầu xóa tài khoản thu hồi quyền sớm hơn. Cho nộp lại sau rút/bị loại nếu không có đơn còn hiệu lực và không bị chặn ở chính tin đó; mỗi lần nộp lại là đơn/snapshot mới.
+- Chặn ứng viên chỉ áp dụng cho tin hiện tại, do recruiter phụ trách tin đặt/bỏ chặn; không chặn tin khác hoặc do AI tự quyết.
+- Yêu cầu xóa tài khoản thu hồi truy cập ngay, có 7 ngày để hủy, sau đó xóa/ẩn danh dữ liệu chính; backup hết hạn tối đa 14 ngày sau purge. Theo docs/phase-01-data-retention.md; đây là chính sách đã chốt, chưa phải worker/API đã triển khai.
 - Ghi chú nội bộ không được lộ cho ứng viên, recruiter ngoài phạm vi, thông báo ứng viên hoặc kết quả AI dùng chung.
 - Lọc trường ở truy vấn/DTO; không trả nguyên profile JSON rồi chỉ giấu dữ liệu trên UI.
 - Không đọc, in hoặc commit secrets; không commit CV thật hay dữ liệu cá nhân. Fixtures dùng dữ liệu giả hoặc đã ẩn danh phù hợp.
@@ -135,7 +138,7 @@ Nguồn: tài liệu 02 mục 1.3, 3.4; tài liệu 03 mục 7; tài liệu 04 m
 - Tạo job và đặt trước ngân sách trong transaction phù hợp; dự trù cả retry, giới hạn token và số cặp phân tích.
 - Đối soát chi phí thực một lần; timeout có thể đã tính phí, không tự giải phóng phần dự trù chưa rõ kết quả.
 - Theo thiết kế 02, retry lỗi phù hợp tối đa một lần trong dự trù; không lặp vô hạn hoặc gọi lại toàn pipeline khi có kết quả hợp lệ.
-- Tổng khoảng 4 USD/tháng dùng chung cho thành viên, môi trường, thực nghiệm và demo; không nhân hạn mức theo người.
+- Tổng khoảng 4 USD/tháng bao gồm mọi môi trường, thực nghiệm và demo của người thực hiện; không cấp ngân sách riêng cho mỗi môi trường.
 - Tách USD với search credit, đối chiếu usage/hóa đơn và chu kỳ provider; quota local không kiểm soát lời gọi ngoài ứng dụng.
 - CI dùng fake LLM/search/email; API thật chỉ chạy có chủ đích trong hạn mức được phép.
 - Không tự bật pay-as-you-go, mua dịch vụ hoặc nâng gói; kiểm tra lại giá, model, quota và thông số đề xuất khi sử dụng.
@@ -182,10 +185,10 @@ Nguồn: tài liệu 02 mục 4; tài liệu 03 mục 4–7; tài liệu 04 mụ
 
 Tra tài liệu 01 mục tính năng 10, tài liệu 02 mục 5.4, tài liệu 03 mục 6.2 và tài liệu 04 mục 8.1.
 
-- Liên hệ trong CV công khai khi ứng viên khác xem: file nguyên bản hay bản đã ẩn liên hệ; giấu trường profile không xử lý nội dung trong file.
-- Quyền khách và admin đối với CV; ngôn ngữ giao diện chưa được chốt chỉ vì đầu vào hỗ trợ Việt–Anh.
-- Trạng thái/chuyển trạng thái, rút/nộp lại, quyền đọc sau rút và thời hạn lưu/xóa hồ sơ, file, cache, lịch sử khi xóa tài khoản.
+- Đã chốt: UI tiếng Việt, CV/JD Việt–Anh; khách chỉ JD; CV phải đăng nhập; admin không mặc định đọc private; ứng viên khác chỉ bản CV ẩn liên hệ. Không hỏi lại các quyết định này.
+- Đã chốt: đăng ký chọn một role Candidate/Recruiter, Admin cấp riêng; mỗi công ty một recruiter owner. Không tự thêm đa vai trò, mời thành viên hoặc chuyển owner.
+- Đã chốt nộp lại/chặn theo tin và lưu/xóa 90/7/14 ngày như mục 5; còn cần thiết kế migration/worker và kiểm chứng, không mô tả là đã hoạt động. Các chuyển trạng thái sàng lọc chi tiết ngoài những hành vi đã xác nhận cần hoàn thiện trước API tương ứng.
 - Rubric, trọng số, ngưỡng điểm, quy mô đánh giá và độ phủ CV chưa đủ revision xác nhận.
 - Số lượng/thiết kế mẫu CV; quota và mức đồng thời thực tế; hosting, domain/DNS, sender và email cần kiểm chứng.
-- Mô hình owner công ty, nhiều vai trò tài khoản và cách chọn JD cũ/mới khi phân tích lại là giả định cần xác nhận trước API phụ thuộc.
+- Cách chọn JD cũ/mới khi phân tích lại vẫn cần xác nhận trước API phụ thuộc; không hỏi lại mô hình owner/role đã chốt. Dịch vụ sẽ do người dùng cung cấp sau, theo checklist docs/phase-01-services-checklist.md; không coi Chưa cung cấp là Chưa có.
 - Chỉ chặn phần thực sự phụ thuộc quyết định còn thiếu; không dùng danh sách này để hỏi lại điều đã được xác nhận trong phiên.

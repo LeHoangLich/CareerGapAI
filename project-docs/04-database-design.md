@@ -2,11 +2,13 @@
 
 > Lát schema GĐ1 thực tế được ghi tại [hợp đồng/giới hạn](../docs/phase-01-implementation.md). Migrations local mới triển khai tài khoản/DP, owner file/CV versions, job/method và ngân sách tối thiểu; chưa hiện thực toàn bộ thiết kế bên dưới. Những khác biệt về probe output, scope quota, concurrency và đổi kỳ được ghi rõ ở tài liệu thực thi, không thay đổi thiết kế đích ngầm định.
 
-> Thiết kế dữ liệu cho CareerGap AI, thống nhất với đặc tả hệ thống, quyết định công nghệ và roadmap 12 tuần. Bối cảnh: 3 thành viên, PostgreSQL 16+, .NET 10 monolith và ngân sách phát triển/demo khoảng 4 USD/tháng.
+> Thiết kế dữ liệu cho CareerGap AI, thống nhất với đặc tả hệ thống, quyết định công nghệ và roadmap 12 tuần. Bối cảnh: 1 người tự thực hiện, PostgreSQL 16+, .NET 10 monolith và ngân sách phát triển/demo khoảng 4 USD/tháng cho toàn dự án.
 >
 > Đây là thiết kế đề xuất để triển khai EF Core migrations theo từng giai đoạn, chưa phải schema đã chạy hoặc đã được kiểm thử. Các chính sách nghiệp vụ chưa chốt được ghi riêng ở mục 8; tài liệu không tự mở rộng quyền truy cập hoặc phạm vi tuyển dụng quá bước sàng lọc.
 
 ## 1. Tổng quan
+
+**Thứ tự thực hiện từ 15/10/2026:** ưu tiên migrations và kiểm chứng trên PostgreSQL localhost; dừng deploy và migration cloud. Thiết kế dữ liệu đích giữ nguyên. Thông tin Neon đã cấu hình trong [checklist dịch vụ](../docs/phase-01-services-checklist.md) là hiện trạng đã ghi nhận, không phải môi trường phát triển mặc định hoặc quyền tiếp tục thao tác cloud. Chỉ mở lại deploy sau khi sản phẩm hoàn thiện local và người dùng yêu cầu.
 
 ### 1.1. Nguyên tắc thiết kế
 
@@ -120,7 +122,7 @@ Quan hệ từ `ai_jobs` tới data revision là tùy chọn ở phía revision:
 Sử dụng `ApplicationUser : IdentityUser<Guid>` và `IdentityRole<Guid>`. Các bảng nền gồm `AspNetUsers`, `AspNetRoles`, `AspNetUserRoles`, `AspNetUserClaims`, `AspNetRoleClaims`, `AspNetUserLogins`, `AspNetUserTokens`; giữ cấu trúc mật khẩu, security stamp, lockout và token của framework. Khóa user/role là UUID nhưng khóa claim chuẩn vẫn là `int`. Kiểm tra schema version được chọn: Identity 10 schema V3 có thêm `AspNetUserPasskeys`; passkey không phải tính năng bắt buộc của đồ án. [Identity model](https://learn.microsoft.com/en-us/aspnet/core/security/authentication/customize-identity-model?view=aspnetcore-10.0), [Identity 10 source](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/Identity/EntityFrameworkCore/src/IdentityUserContext.cs)
 
 - Bổ sung vào user: `account_status varchar(24)`, `created_at`, `updated_at`, `deletion_requested_at timestamptz?`. Dùng cơ chế concurrency của Identity cho user, không thêm hệ mật khẩu hoặc refresh token song song.
-- Vai trò: `Candidate`, `Recruiter`, `Admin`; người đăng ký không được tự cấp `Admin`. Quan hệ user–role nhiều–nhiều của Identity được giữ; chính sách một tài khoản có nhiều vai trò hay không cần chốt ở API.
+- Vai trò: `Candidate`, `Recruiter`, `Admin`; người đăng ký không được tự cấp `Admin`. Giữ schema user–role nhiều–nhiều của Identity để tương thích framework, nhưng API bản đầu chỉ cho đăng ký một vai trò Candidate hoặc Recruiter; không tự thêm/chuyển vai trò. Admin cấp riêng có kiểm soát.
 - Nếu email là định danh đăng nhập, yêu cầu email và tạo unique index cho `NormalizedEmail` khác null; kiểm tra dữ liệu trùng trước khi thêm. Không giả định index email mặc định của Identity đã unique.
 - Lưu Data Protection keys bằng EF với entity chuẩn: `Id int`, `FriendlyName text?`, `Xml text?`. Khóa phải được bảo vệ bằng chứng thư/secret theo tài liệu 02; lưu vào DB không tự mã hóa khóa. Không xóa key cũ tùy tiện khi đang có cookie/token còn dùng. [Key storage providers](https://learn.microsoft.com/en-us/aspnet/core/security/data-protection/implementation/key-storage-providers?view=aspnetcore-10.0), [DataProtectionKey source](https://github.com/dotnet/aspnetcore/blob/v10.0.0/src/DataProtection/EntityFrameworkCore/src/DataProtectionKey.cs)
 
@@ -128,7 +130,7 @@ Sử dụng `ApplicationUser : IdentityUser<Guid>` và `IdentityRole<Guid>`. Cá
 |---|---|---|
 | `candidate_profiles` | `user_id uuid` PK/FK user; `display_name varchar(150)`; `headline varchar(250)?`; `summary text?`; `location varchar(250)?`; `contact_email varchar(254)?`; `contact_phone varchar(32)?`; `desired_role varchar(150)?`; `preferred_work_mode varchar(24)?`; `experience_years numeric(5,2)?`; `details jsonb DEFAULT '{}'`; `details_schema_version int` | Bảng thay đổi được. `experience_years >= 0`; schema version > 0. `details` chứa nhóm kinh nghiệm, học vấn, dự án, chứng chỉ, kỹ năng theo schema, không phải dữ liệu JSON tùy ý. Contact của profile không đồng nghĩa email đăng nhập |
 | `candidate_profile_visibility` | `candidate_id uuid` FK profile; `field_key varchar(64)` | PK `(candidate_id, field_key)`; chỉ có `created_at`. Có hàng nghĩa là cho nhà tuyển dụng xem trường đó; xóa hàng để ngừng chia sẻ. Mặc định không chia sẻ; danh sách trường hợp lệ ở mục 4 |
-| `companies` | `id`; `owner_user_id uuid` FK user; `name varchar(200)`; `slug varchar(200)`; `description text?`; `website_url text?`; `location varchar(250)?`; `industry varchar(100)?`; `size_label varchar(50)?`; `archived_at timestamptz?` | Bảng thay đổi được; unique `slug`. Đề xuất mỗi bản ghi công ty có một recruiter sở hữu; một recruiter có thể có nhiều bản ghi. Backend kiểm tra role, không suy ra quyền từ tên công ty giống nhau |
+| `companies` | `id`; `owner_user_id uuid` FK user; `name varchar(200)`; `slug varchar(200)`; `description text?`; `website_url text?`; `location varchar(250)?`; `industry varchar(100)?`; `size_label varchar(50)?`; `archived_at timestamptz?` | Bảng thay đổi được; unique `slug`. Đã chốt mỗi công ty có một recruiter owner; thiết kế vẫn cho một recruiter nhiều bản ghi, không tự thêm giới hạn số công ty từ quyết định owner. Backend kiểm tra role, không suy ra quyền từ tên công ty giống nhau |
 
 Chưa cần bảng `recruiter_profiles` nếu thông tin người liên hệ dùng các trường chuẩn của user và hồ sơ công ty. Nếu bổ sung trường riêng cho recruiter, thêm bảng PK/FK user trong migration tương ứng. Không xây workspace, mời thành viên hoặc cộng tác nhiều recruiter trong bản đầu. Việc chuyển quyền sở hữu công ty chưa thuộc phạm vi; không mở API đổi owner trực tiếp vì sẽ ảnh hưởng quyền xem hồ sơ đã ứng tuyển.
 
@@ -143,7 +145,7 @@ Chưa cần bảng `recruiter_profiles` nếu thông tin người liên hệ dù
 | `resume_versions` | `id`; `resume_id uuid`; `candidate_id uuid`; `version_no int`; `file_id uuid`; `source varchar(24)`; `language varchar(12)`; `document_hash char(64)`; `template_code varchar(80)?`; `template_version varchar(40)?`; `editor_data jsonb?`; `editor_schema_version int?` | Unique `(resume_id, version_no)`, `(id, candidate_id)`, `(id, resume_id)`; version > 0. FK `(resume_id, candidate_id)` → resumes; FK `(file_id, candidate_id)` → stored_files `(id, owner_user_id)`. `generated` yêu cầu đủ template và editor data/schema; `uploaded` không cần. Mỗi version tham chiếu file đã sẵn sàng |
 | `resume_data_revisions` | `id`; `resume_version_id uuid`; `candidate_id uuid`; `revision_no int`; `parent_revision_id uuid?`; `origin varchar(24)`; `schema_version int`; `structured_data jsonb`; `source_text jsonb`; `evidence jsonb`; `data_hash char(64)`; `parser_version varchar(80)`; `method_version_id uuid?` FK phương pháp; `ai_job_id uuid?` FK tác vụ; `confirmed_by uuid?` FK user; `confirmed_at timestamptz?` | Unique `(resume_version_id, revision_no)`, `(id, resume_version_id)`, `(id, candidate_id)`; revision/schema > 0. FK `(resume_version_id, candidate_id)` → resume_versions. FK `(parent_revision_id, resume_version_id)` → cùng bảng bảo đảm cùng file version. Bản AI bắt buộc method/job; bản người dùng xác nhận/nhập yêu cầu người xác nhận và thời điểm |
 | `resume_revision_skills` | `resume_revision_id uuid` FK revision; `skill_id uuid` FK skill; `experience_years numeric(5,2)?`; `evidence_refs jsonb` | PK `(resume_revision_id, skill_id)`; years >= 0; danh sách evidence refs được kiểm tra theo schema. Projection bất biến để lọc/tìm kiếm, ghi cùng transaction tạo revision |
-| `candidate_public_resumes` | `candidate_id uuid` PK/FK profile; `resume_version_id uuid`; `resume_revision_id uuid?`; `published_at timestamptz` | Bảng thay đổi được; FK `(resume_version_id, candidate_id)` → resume_versions; FK `(resume_revision_id, resume_version_id)` → resume_data_revisions. PK bảo đảm mỗi ứng viên tối đa một lựa chọn công khai |
+| `candidate_public_resumes` | `candidate_id uuid` PK/FK profile; `resume_version_id uuid`; `resume_revision_id uuid?`; `published_at timestamptz`; bổ sung GĐ2 đề xuất: `redacted_file_id uuid?`, `redaction_source_hash char(64)?`, `redaction_method_version varchar(80)?`, `redaction_verified_at timestamptz?` | Bảng thay đổi được; FK `(resume_version_id, candidate_id)` → resume_versions; FK `(resume_revision_id, resume_version_id)` → resume_data_revisions. FK `(redacted_file_id, candidate_id)` → stored_files `(id, owner_user_id)` cho bản ẩn liên hệ. PK bảo đảm tối đa một lựa chọn công khai; nhóm metadata redaction cùng null hoặc cùng đủ, kiểm tra đúng source version trong service/transaction |
 
 **Quy tắc phiên bản và dữ liệu:**
 
@@ -153,6 +155,8 @@ Chưa cần bảng `recruiter_profiles` nếu thông tin người liên hệ dù
 - Công khai ghim một **file version cụ thể** và revision được chọn, không tự đổi sang bản mới vừa tải lên. Revision công khai, nếu có, phải là bản chính chủ đã xác nhận; công khai lại khi muốn đổi dữ liệu hiển thị/phân tích.
 - Có thể công khai CV chưa có revision xác nhận. Nếu đã có bản trích xuất từ đúng file version, chỉ dùng source_text gốc cho tìm nội dung, không lấy user_statement bổ sung sau đó. Nếu chưa trích xuất được, vẫn xem file/tìm theo metadata và hiển thị đang chờ xử lý nội dung. Không gán điểm sâu cho CV chưa đủ dữ liệu; hoàn tất xác nhận rồi cập nhật lựa chọn công khai để bật phân tích đầy đủ.
 - Ẩn CV là xóa lựa chọn công khai; không xóa version đã gửi ứng tuyển. Mặc định tải file qua backend kiểm tra quyền theo tài liệu 02. Nếu sau này chọn cấp URL có chữ ký ngắn hạn, kiểm tra quyền trước khi cấp và ghi nhận URL đã cấp vẫn có hiệu lực tới lúc hết hạn; không hứa thu hồi tức thì liên kết đó.
+
+**Bản CV ẩn liên hệ — yêu cầu đã chốt, schema bổ sung còn là đề xuất GĐ2:** ứng viên khác không nhận file gốc, source_text hoặc dữ liệu phụ có liên hệ. Bản dẫn xuất là stored_file riêng, private, đã xác minh và bất biến; không phủ hình lên PDF rồi để text/link/metadata gốc còn đọc được. `redaction_source_hash` phải khớp document_hash của version đang công khai; chỉ gắn con trỏ sau xác minh nội dung và hash, không chỉ kiểm tra cùng owner. Nếu chưa có bản an toàn, ứng viên khác nhận trạng thái chưa sẵn sàng; recruiter còn quyền có thể xem bản có liên hệ. Thay version/công khai lại phải tạo/chọn đúng bản dẫn xuất mới; ẩn CV/đổi quyền chặn cả đường dẫn cũ. Dọn object phải xét cả tham chiếu redacted_file_id; không xóa/sửa file gốc đã dùng ứng tuyển.
 
 ### 3.3. Kỹ năng, JD và lưu việc
 
@@ -186,7 +190,11 @@ Các phiên bản tại thời điểm gửi là dữ liệu tham chiếu bất 
 
 Ứng tuyển không chờ AI: revision có thể null nhưng file version và JD version bắt buộc. Khi phân tích sau đó, dùng đúng tài liệu đã ghim; nếu chưa có revision lúc nộp, chỉ tạo/chọn revision trích xuất từ chính tài liệu đó, không tự lấy phần ứng viên bổ sung sau thời điểm gửi. Job AI lưu revision thực sự đã dùng; không điền lại con trỏ submitted_* để làm thay đổi lịch sử.
 
-Các trạng thái còn hiệu lực là `submitted`, `reviewing`, `shortlisted`. Database ngăn hai đơn còn hiệu lực cho cùng cặp ứng viên–tin; quyền nộp lại sau `rejected`/`withdrawn` do chính sách API quyết định sau khi chốt, không mặc nhiên cho phép vì index không chặn. Rút đơn đổi trạng thái và withdrawn_at, không xóa file hoặc lịch sử. CHECK bảo đảm withdrawn_at có giá trị khi và chỉ khi status là withdrawn.
+Các trạng thái còn hiệu lực là `submitted`, `reviewing`, `shortlisted`. Database ngăn hai đơn còn hiệu lực cho cùng cặp ứng viên–tin. Đã chốt cho nộp lại sau rejected/withdrawn nếu không bị recruiter chặn ở chính tin đó; mỗi lần là application mới, submission_key/hash và snapshot riêng. Cùng key trả lại đơn cũ hoặc conflict nếu khác hash; không tái dùng key để giả lần nộp mới. Rút đơn đổi trạng thái và withdrawn_at, không xóa file hoặc lịch sử. CHECK bảo đảm withdrawn_at có giá trị khi và chỉ khi status là withdrawn.
+
+**Bổ sung thiết kế GĐ2 do quyết định mới, chưa có migration:** `job_candidate_blocks` có PK `(job_id, candidate_id)`, FK tới jobs/candidate_profiles, created_by FK user và created_at UTC. Chỉ recruiter phụ trách job được đặt/bỏ chặn; hàng tồn tại chặn nộp mới vào job đó, không lan sang tin khác cùng recruiter/công ty. Ghi đơn phải kiểm tra block, trạng thái/deadline và chống đơn trùng trong transaction có phối hợp khóa với luồng chặn; không để kiểm tra rồi insert ở transaction khác. Block không sửa snapshot/trạng thái đơn cũ, không do AI thực hiện.
+
+**Lưu/xóa đã chốt:** withdrawn/rejected hết quyền đọc qua application sau 90 ngày từ status_changed_at kết thúc của chính đơn; recruiter phụ trách tin còn đọc trước mốc đó nếu tài khoản chưa yêu cầu xóa. Đề xuất bổ sung retention_expires_at cho application và trạng thái purge/deletion request có thể đối soát ở GĐ2, không backfill bằng thời điểm hiện tại khi đã biết mốc kết thúc thật. Yêu cầu xóa tài khoản thu hồi truy cập ngay, cho 7 ngày hủy rồi purge/ẩn danh dữ liệu chính, backup chứa dữ liệu đó hết hạn thêm tối đa 14 ngày; chính sách xóa tài khoản ưu tiên hơn hạn application. Xem [chính sách đầy đủ](../docs/phase-01-data-retention.md). File còn được ngữ cảnh hợp lệ khác tham chiếu không bị xóa chỉ vì một đơn hết hạn; mọi lần đọc vẫn kiểm tra đúng ngữ cảnh. Purge là quy trình riêng có review, không dùng cascade hoặc UPDATE API thông thường để vượt immutable guards.
 
 ### 3.5. Tác vụ AI, kết quả và nguồn học
 
@@ -233,7 +241,7 @@ Riêng write_cv từ form, input_options chứa schema version, snapshot các th
 
 ### 3.6. Hạn mức và chi phí dịch vụ ngoài
 
-**GĐ1; dùng chung cho phát triển, thực nghiệm và demo.** Hạn mức tháng khoảng 4 USD là ngân sách tổng của dự án, không nhân theo thành viên hoặc môi trường. Phân bổ API/hosting/search theo tài liệu 02; số giới hạn được cấu hình sau khi kiểm tra tài khoản thực tế. Tách đơn vị USD và search credit; không cộng hai đơn vị thành một con số.
+**GĐ1; dùng chung cho phát triển, thực nghiệm và demo.** Hạn mức tháng khoảng 4 USD là ngân sách tổng của dự án một người, không nhân theo môi trường. Phân bổ API/hosting/search theo tài liệu 02; số giới hạn được cấu hình sau khi kiểm tra tài khoản thực tế. Tách đơn vị USD và search credit; không cộng hai đơn vị thành một con số.
 
 | Bảng | Cột chính | Ràng buộc và ý nghĩa |
 |---|---|---|
@@ -285,7 +293,7 @@ Nhật ký chỉ ghi ID, thao tác, thay đổi trạng thái và mã lỗi cầ
 
 Allowlist của `candidate_profile_visibility.field_key`: `display_name`, `headline`, `summary`, `location`, `contact_email`, `contact_phone`, `desired_role`, `preferred_work_mode`, `experience_years`, `skills`, `experience`, `education`, `projects`, `certifications`. Các key cuối ánh xạ tới nhóm tương ứng trong details; API lọc từng nhóm, không trả nguyên JSON rồi chỉ ẩn bằng frontend.
 
-Chuyển trạng thái đề xuất: submitted → reviewing/shortlisted/rejected; reviewing → shortlisted/rejected; shortlisted → reviewing/rejected. Ứng viên có thể rút đơn còn hiệu lực sang withdrawn. Rejected/withdrawn là kết thúc trong bản đầu; việc mở lại/nộp lại cần chính sách riêng. Backend kiểm tra actor, trạng thái hiện tại và concurrency token; CHECK enum chỉ kiểm tra giá trị, không kiểm tra ai được chuyển trạng thái.
+Chuyển trạng thái sàng lọc chi tiết vẫn là đề xuất: submitted → reviewing/shortlisted/rejected; reviewing → shortlisted/rejected; shortlisted → reviewing/rejected. Đã chốt ứng viên có thể rút đơn còn hiệu lực sang withdrawn; rejected/withdrawn kết thúc đơn cũ, nộp lại tạo application mới nếu không có đơn hiệu lực và không bị block ở tin đó. Không mở lại đơn cũ để nộp lại. Backend kiểm tra actor, trạng thái hiện tại và concurrency token; CHECK enum chỉ kiểm tra giá trị, không kiểm tra ai được chuyển trạng thái.
 
 JSON phải đúng schema version, giới hạn kích thước/số phần tử, chứa ID bằng chứng hợp lệ và đúng phiên bản tài liệu. `jsonb` chỉ bảo đảm JSON có cú pháp hợp lệ, không thay thế validation nghiệp vụ. Kết quả AI sai schema hoặc chưa có kết quả là trạng thái lỗi/chưa sẵn sàng, không tạo match_result giả với score = 0.
 
@@ -457,14 +465,14 @@ Các số tổng hợp budget phải đối soát được với reservations/al
 
 | Nội dung | Cách thể hiện trong thiết kế | Việc cần chốt |
 |---|---|---|
-| Công ty và recruiter | Một owner cho mỗi bản ghi công ty; owner quản lý tin và hồ sơ gửi tới tin đó | Xác nhận mô hình tối thiểu; nhiều thành viên/mời/chuyển owner là thay đổi phạm vi |
-| Nhiều vai trò một tài khoản | Giữ quan hệ nhiều–nhiều của Identity | Quy tắc đăng ký/chuyển vai trò trước triển khai API tương ứng |
+| Công ty và recruiter | Đã chốt một recruiter owner/công ty | Hiện thực quyền GĐ2; không tự thêm nhiều recruiter/mời/chuyển owner |
+| Vai trò tài khoản | Giữ schema nhiều–nhiều Identity, API chỉ đăng ký một role Candidate/Recruiter | Đã chốt; Admin cấp riêng, không API tự chuyển/thêm role |
 | CV công khai | Một lựa chọn ghim version/revision; cập nhật nội dung cần chọn công khai lại | Xác nhận cách hiển thị và thao tác công khai lại, không tự công khai mọi bản mới |
-| Liên hệ trong CV công khai | Recruiter được xem ngay; file lưu trong bucket riêng tư | Ứng viên khác xem file gốc hay bản đã ẩn liên hệ. Nếu cần bản ẩn, bổ sung file dẫn xuất/quy trình kiểm tra; không chỉ giấu trường profile |
-| Khách/admin xem CV | Không có cờ mặc định cấp quyền đọc tất cả CV | Quyền khách chưa đăng nhập và admin với CV riêng tư theo tài liệu 01 |
+| Liên hệ trong CV công khai | Đã chốt ứng viên khác chỉ bản ẩn liên hệ, recruiter bản có liên hệ | Bổ sung file dẫn xuất/private/metadata kiểm chứng GĐ2; chưa có bản an toàn thì không fallback file gốc |
+| Khách/admin xem CV | Đã chốt khách chỉ JD, CV phải đăng nhập; admin không mặc định đọc private | Hiện thực truy vấn/DTO/file/cache đúng quyền, không mở bucket public |
 | Snapshot đơn | Ghim CV và đề xuất ghim JD tại thời điểm nộp; revision được phép null | Cách chọn JD cũ/mới khi phân tích lại và hiển thị cho người dùng |
-| Rút đơn/nộp lại | Rút là đổi trạng thái; unique chỉ giới hạn đơn còn hiệu lực | Quyền nộp lại sau rút/bị loại; quyền recruiter còn được xem sau rút và thời hạn giữ |
-| Xóa tài khoản/dữ liệu | Deletion request, archive và RESTRICT giữ toàn vẹn trong lúc xử lý | Thời hạn giữ file, source_text, lịch sử, AI cache và usage; ẩn danh/xóa tham chiếu theo chính sách cụ thể |
+| Rút đơn/nộp lại | Đã chốt được nộp lại trừ block theo job; mỗi lần là đơn mới; recruiter đọc snapshot sau rút trong hạn | Bổ sung job_candidate_blocks và hạn đọc 90 ngày, test cạnh tranh/chặn chỉ đúng tin |
+| Xóa tài khoản/dữ liệu | Đã chốt thu hồi ngay, 7 ngày hủy, purge/ẩn danh rồi backup hết hạn thêm tối đa 14 ngày | Bổ sung deletion request/purge ledger, kiểm tra mọi tham chiếu/file dẫn xuất và restore; chưa coi đã có worker/API |
 | Trọng số chấm điểm | Phương pháp bất biến, criteria có bằng chứng và schema | Rubric, trọng số, ngưỡng hiển thị thống nhất với giảng viên; không hardcode một thang tùy ý vào schema |
 | Kho CV chưa có revision | Công khai/xem vẫn được; phân biệt tình trạng chưa đủ dữ liệu phân tích | Luồng xác nhận dữ liệu và mục tiêu độ phủ tìm kiếm/chấm sâu trước nghiệm thu GĐ4 |
 | Search và ngân sách | Metadata có TTL nếu được phép, quota theo provider/unit | Điều khoản lưu kết quả, quota thực tế, phân bổ từ tổng khoảng 4 USD/tháng |

@@ -1,16 +1,16 @@
 # CareerGap AI – Roadmap Phát triển
 
-> Theo dõi thực thi GĐ1: [task](../docs/tasks/phase-01-foundation.md). Đợt local ngày 15/10/2026 chưa đồng nghĩa đạt M1; người dùng sẽ tự tạo/publish GitHub sau. Các điều kiện cloud, CI thật và AI thật vẫn phải có bằng chứng nghiệm thu.
+> Theo dõi thực thi GĐ1: [task](../docs/tasks/phase-01-foundation.md), [report](../docs/report/phase-01-foundation-report.md). Người dùng đã publish GitHub; CI run `38718678231` của commit `bdb3aeb` thành công. M1 localhost chưa nghiệm thu đầy đủ; cloud được hoãn theo quyết định mới, không còn là điều kiện M1; xem report để phân biệt kết quả local, CI theo commit và phần chưa kiểm chứng.
 
 > Roadmap ở mức giai đoạn lớn (chưa chia task chi tiết). Mỗi giai đoạn kèm các yêu cầu hoàn thiện để coi là "xong" trước khi chuyển sang giai đoạn kế tiếp.
 
-> Kế hoạch đề xuất cho nhóm **3 thành viên**, thời gian **3 tháng**, quy đổi thành **12 tuần làm việc**. Tuần 1 bắt đầu từ ngày nhóm thống nhất khởi động, không mặc định là ngày viết tài liệu. Chưa có thông tin số giờ mỗi thành viên có thể dành cho dự án; cần rà lại khối lượng sau giai đoạn đầu.
+> Người dùng xác nhận dự án do **1 người tự thực hiện**. Giữ mục tiêu **3 tháng / 12 tuần làm việc**; đây chưa phải cam kết đủ nguồn lực. Tuần 1 tính từ ngày người thực hiện khởi động, không mặc định ngày viết tài liệu. Chưa xác nhận số giờ mỗi tuần; cần rà khối lượng theo năng lực thực tế, không chia tiến độ cho ba người hoặc tự cắt chức năng cốt lõi.
 >
 > Phạm vi nghiệp vụ theo `01-system-specification.md`; lựa chọn và điều kiện công nghệ theo `02-tech-stack-decisions.md`. Các mốc dưới đây là mục tiêu kế hoạch, **không phải trạng thái đã hoàn thành**. Các quyết định nghiệp vụ còn mở vẫn cần được chốt trước phần triển khai phụ thuộc.
 
 ## 1. Mục tiêu và nguyên tắc thực hiện
 
-Đến cuối tuần 12, nhóm cần có một bản web triển khai được, phục vụ hai phía ứng viên và nhà tuyển dụng, có quản lý ứng viên đến sàng lọc, các chức năng AI cốt lõi và báo cáo thực nghiệm có thể đối chiếu với dữ liệu đã sử dụng.
+Mục tiêu cuối tuần 12 là một bản web hoàn thiện và chạy được trên localhost, phục vụ hai phía ứng viên và nhà tuyển dụng, có quản lý ứng viên đến sàng lọc, các chức năng AI cốt lõi và báo cáo thực nghiệm có thể đối chiếu với dữ liệu đã sử dụng.
 
 Ba luồng phải hoàn chỉnh:
 
@@ -21,17 +21,18 @@ Ba luồng phải hoàn chỉnh:
 Nguyên tắc tổ chức:
 
 - Mỗi giai đoạn tạo ra một phần hệ thống chạy được từ giao diện đến API và dữ liệu. Không chờ hoàn thiện toàn bộ frontend hoặc backend mới tích hợp.
-- Kiểm chứng triển khai, xử lý file và lời gọi AI nhỏ từ đầu để phát hiện sớm vấn đề về quyền, tài nguyên và chi phí.
+- Dừng deploy từ 15/10/2026; ưu tiên tích hợp và kiểm thử localhost. Chỉ mở lại deploy khi sản phẩm hoàn thiện local và người dùng yêu cầu rõ ràng. Không tiếp tục cấu hình hosting/DNS hoặc migration cloud; giữ nguyên dịch vụ và dữ liệu đã có.
+- Fake provider là mặc định cho phát triển/CI. Kiểm chứng AI/search/email thật từ localhost khi có đầu vào và ngân sách được cho phép; không dùng fake làm bằng chứng chất lượng hoặc tích hợp thật.
 - Chuẩn bị dữ liệu, gán nhãn và viết báo cáo xuyên suốt; không dồn nghiên cứu AI vào cuối kỳ.
-- Ngân sách khoảng **4 USD/tháng** áp dụng chung cho phát triển, dùng thử, thực nghiệm và demo của cả nhóm; không phải hạn mức riêng cho từng người.
-- Các công việc độc lập có thể bắt đầu song song. Phần phụ thuộc chỉ được coi là hoàn tất khi điều kiện đầu vào tương ứng đã đạt; hết tuần không tự đồng nghĩa giai đoạn đã xong.
+- Ngân sách khoảng **4 USD/tháng** áp dụng cho toàn bộ phát triển, dùng thử, thực nghiệm và demo của một người; không tách ngân sách theo môi trường.
+- Người thực hiện ưu tiên một lát tích hợp tại mỗi thời điểm; build/CI có thể chạy trong lúc chuẩn bị dữ liệu hoặc tài liệu. Không lập kế hoạch nhiều nhánh cần nhiều người cùng làm. Phần phụ thuộc chỉ hoàn tất khi đầu vào đạt; hết tuần không tự đồng nghĩa giai đoạn đã xong.
 - Dành tuần 11–12 cho đánh giá cuối, sửa lỗi, khôi phục dữ liệu và chuẩn bị bảo vệ. Không lên kế hoạch thêm chức năng cốt lõi mới trong hai tuần này.
 
 ## 2. Tổng quan 12 tuần
 
 | Giai đoạn | Thời gian | Trọng tâm | Mốc đầu ra |
 | --- | --- | --- | --- |
-| GĐ1 | Tuần 1–2 | Chốt quyết định ưu tiên, nền tảng kỹ thuật, thử tích hợp trên cloud, chuẩn bị dữ liệu | M1: luồng đăng nhập–file–AI tối thiểu chạy trên môi trường demo; có kế hoạch dữ liệu và đánh giá |
+| GĐ1 | Tuần 1–2 | Chốt quyết định ưu tiên, nền tảng kỹ thuật localhost, chuẩn bị dữ liệu | M1: luồng đăng nhập–file–job fake tối thiểu chạy trên localhost; có kế hoạch dữ liệu và đánh giá |
 | GĐ2 | Tuần 3–4 | Tài khoản, profile, công ty/JD, CV, ứng tuyển và sàng lọc thủ công | M2: hai vai trò hoàn thành luồng tuyển dụng cơ bản; baseline từ khóa chạy được |
 | GĐ3 | Tuần 5–6 | Trích xuất CV/JD, xác nhận dữ liệu, phiên bản và tạo CV từ mẫu | M3: dữ liệu đầu vào cho matching được kiểm tra; có CV PDF tạo từ mẫu và kết quả đánh giá trích xuất ban đầu |
 | GĐ4 | Tuần 7–8 | Đối sánh hai chiều, điểm 0–100, bằng chứng và thực nghiệm sơ bộ | M4: ứng viên tìm việc và nhà tuyển dụng tìm người bằng AI trên bản tích hợp |
@@ -49,7 +50,7 @@ flowchart LR
     P5 --> P6[GĐ6: Đánh giá và bàn giao]
 ```
 
-Sơ đồ thể hiện phụ thuộc nghiệm thu, không yêu cầu mọi công việc phải nối tiếp tuyệt đối. Mẫu CV và tìm kiếm web được thử sớm; dữ liệu, kiểm thử, triển khai và báo cáo chạy song song qua các giai đoạn.
+Sơ đồ thể hiện phụ thuộc nghiệm thu. Mẫu CV và tìm kiếm web được thử sớm; người thực hiện dành phần công việc dữ liệu, kiểm thử localhost và báo cáo trong từng giai đoạn, không đợi cuối kỳ và không mặc định có thêm người làm song song.
 
 
 ## 3. Các giai đoạn phát triển
@@ -60,24 +61,24 @@ Sơ đồ thể hiện phụ thuộc nghiệm thu, không yêu cầu mọi công
 
 Phạm vi thực hiện:
 
-- Rà các quyết định còn mở: liên hệ khi ứng viên xem CV công khai, quyền khách, quyền quản trị trên CV riêng tư, ngôn ngữ giao diện, trạng thái sàng lọc và chính sách hồ sơ đã gửi. Ghi quyết định vào đặc tả thay vì để mỗi thành viên tự hiểu khác nhau.
+- Rà các quyết định còn mở: liên hệ khi ứng viên xem CV công khai, quyền khách, quyền quản trị trên CV riêng tư, ngôn ngữ giao diện, trạng thái sàng lọc và chính sách hồ sơ đã gửi. Ghi quyết định đã xác nhận vào đặc tả để triển khai và nghiệm thu nhất quán.
 - Hoàn thiện mô hình dữ liệu tổng quan trong tài liệu database cho tài khoản, profile, công ty, tin, CV/phiên bản, đơn ứng tuyển và tác vụ AI. Chốt hợp đồng API tối thiểu trước khi làm các luồng phụ thuộc.
-- Khởi tạo repository, frontend, backend, PostgreSQL local, quản lý cấu hình và pipeline build/test cơ bản; triển khai một bản nhỏ lên môi trường demo.
-- Thử luồng đăng nhập → tải một file vào kho private → đọc lại theo quyền → gửi một tác vụ DeepSeek có hạn mức → xem kết quả. Thử cả PDF có văn bản và DOCX Việt–Anh trong bộ mẫu nhỏ.
-- Kiểm chứng cookie/CSRF qua proxy, Data Protection sau redeploy, file bền vững, trạng thái tác vụ sau restart và khả năng deploy từ quy trình repository của nhóm. Nếu cấu hình hosting không phù hợp, chọn phương án dự phòng đã nêu ở tài liệu công nghệ.
-- Thử xuất một PDF có dấu tiếng Việt và một truy vấn nguồn học. Kiểm tra quyền sử dụng domain/sender cho email tài khoản từ giai đoạn này, không chờ hoàn thiện toàn bộ giao diện.
+- Khởi tạo repository, frontend, backend, PostgreSQL local, quản lý cấu hình và pipeline build/test cơ bản; chạy bản tích hợp nhỏ trên localhost.
+- Thử luồng đăng nhập → tải một file vào kho private → đọc lại theo quyền → gửi một tác vụ fake có hạn mức → xem kết quả. Thử cả PDF có văn bản và DOCX Việt–Anh trong bộ mẫu nhỏ.
+- Kiểm chứng cookie/CSRF qua Vite proxy hoặc Docker smoke local, Data Protection và job sau restart; kiểm tra đọc file local theo quyền. Kiểm chứng HTTPS/hosting/storage cloud và redeploy được hoãn đến giai đoạn deploy.
+- Thử xuất PDF có dấu tiếng Việt; xác định hợp đồng search/email và hành vi fake. Kiểm chứng provider thật được theo dõi riêng, không yêu cầu hosting/domain để đóng nền tảng localhost.
 - Kiểm kê dữ liệu được phép dùng, xác định cách gán nhãn và nhóm dữ liệu điều chỉnh/đánh giá; trao đổi sớm với giảng viên về quy mô, tiêu chí và thời gian hỗ trợ đánh giá.
 
-**Đầu ra:** bản tích hợp nhỏ trên cloud, các quyết định ưu tiên đã ghi nhận, mô hình dữ liệu/API ban đầu, danh mục dữ liệu và kế hoạch đánh giá dự kiến.
+**Đầu ra:** bản tích hợp nhỏ trên localhost, các quyết định ưu tiên đã ghi nhận, mô hình dữ liệu/API ban đầu, danh mục dữ liệu và kế hoạch đánh giá dự kiến.
 
 Điều kiện hoàn thành M1:
 
-- Cả ba thành viên chạy được dự án theo hướng dẫn; CI build được và có bản demo truy cập được.
-- Có ít nhất một lần chạy xuyên suốt thành công trên môi trường triển khai: đăng nhập → lưu và đọc file đúng quyền → nhận kết quả AI thật trong hạn mức. Các tình huống lỗi liên quan đã được thử; lỗi còn lại không chặn đầu ra M1.
-- Có giới hạn lời gọi thật, ghi usage và cách ngừng tác vụ tốn phí; không lộ khóa dịch vụ trong frontend hoặc repository.
+- Người thực hiện dựng lại được dự án theo README trong môi trường sạch; CI build được đúng commit và có bản localhost truy cập được. Không yêu cầu xác nhận của ba thành viên.
+- Có ít nhất một lần chạy xuyên suốt thành công trên localhost: đăng nhập → lưu và đọc file đúng quyền → nhận kết quả job fake trong hạn mức test_credit. Các tình huống lỗi liên quan đã được thử; lỗi còn lại không chặn đầu ra M1.
+- Có kiểm thử quota, timeout, restart và cách ngừng dispatch trên fake; phân biệt test_credit với USD, mặc định không gọi provider thật và không lộ secrets. Đối soát provider thật phải có bằng chứng riêng trước khi công nhận tích hợp thật.
 - Có quyết định về những quyền cần cho GĐ2. Nếu còn chưa chốt, xác định rõ phần phụ thuộc chưa được mở, thay vì tự công khai dữ liệu để hoàn thành demo.
 - Bộ dữ liệu mẫu có nguồn, ngôn ngữ, định dạng và mục đích sử dụng; có kế hoạch gán nhãn và trao đổi với giảng viên. Việc giảng viên chưa phản hồi không được ghi thành đã duyệt.
-- Có kết luận thử nghiệm hoặc phương án xử lý cụ thể cho hosting nhóm, storage, đọc file, xuất PDF, search và email. Tích hợp nhỏ thành công chưa có nghĩa các chức năng sản phẩm đã hoàn tất.
+- Có kết luận thử nghiệm hoặc phương án xử lý cụ thể cho storage local, đọc file, xuất PDF và hợp đồng fake search/email; ghi riêng các kiểm chứng provider/production được hoãn. Tích hợp nhỏ thành công chưa có nghĩa các chức năng sản phẩm đã hoàn tất.
 
 ### GĐ2 — Hoàn thành nghiệp vụ tuyển dụng cơ bản
 
@@ -101,7 +102,7 @@ Phạm vi thực hiện:
 - CV riêng tư không tự công khai khi ứng tuyển. Sửa CV không làm thay đổi bản đã gửi; tin đóng không nhận đơn mới.
 - Kiểm thử quyền giữa hai ứng viên và hai nhà tuyển dụng cho profile, file, đơn và ghi chú; gửi trực tiếp request sai quyền vẫn bị chặn.
 - Nhà tuyển dụng truy cập kho CV công khai theo quyền đã thống nhất, không có bước bắt buộc admin duyệt tài khoản tuyển dụng.
-- Khôi phục mật khẩu được kiểm tra từ email thật trên môi trường demo, bao gồm trường hợp token hết hạn/không hợp lệ. Fake email ở local/CI không thay thế điều kiện này; nếu sender chưa sẵn sàng thì ghi rõ phần tài khoản chưa hoàn tất.
+- Khôi phục mật khẩu được kiểm tra trên localhost, gồm token hết hạn/không hợp lệ. Fake email chỉ nghiệm thu logic local; giao nhận email thật được theo dõi riêng và phải kiểm chứng trước khi công nhận sản phẩm hoàn thiện. Thiếu sender không chặn các luồng độc lập.
 - Baseline chạy lại được trên cùng dữ liệu và lưu cách tính/xếp hạng; bộ dữ liệu dùng điều chỉnh được phân biệt với tập đánh giá cuối.
 
 ### GĐ3 — Trích xuất có xác nhận và tạo CV từ dữ liệu thật
@@ -164,7 +165,7 @@ Phạm vi thực hiện:
 - Hoàn thiện tìm tài liệu theo kỹ năng còn thiếu, có tên, nguồn, URL, ngôn ngữ và lý do đề xuất. Xử lý không có kết quả hoặc hết credits độc lập với việc xem điểm CV–JD.
 - Hoàn thiện quản trị tài khoản/tin, báo cáo nội dung và màn hình theo dõi lỗi/usage ở mức cần thiết cho đồ án. Quyền admin tuân theo quyết định đã chốt.
 - Rà đầy đủ các luồng tài khoản, công khai hồ sơ, tìm/lưu việc, ứng tuyển, sàng lọc, thông báo và dữ liệu đã gửi. Hoàn tất các điểm còn thiếu từ giai đoạn trước.
-- Dùng thử tích hợp với nhóm và giảng viên theo lịch đã sắp xếp; sửa lỗi từ phản hồi. Kiểm tra các trường hợp đồng thời, file lỗi, nguồn web lỗi, cache, quota và restart.
+- Người thực hiện dùng thử tích hợp và sắp xếp giảng viên/người đánh giá góp ý; sửa lỗi từ phản hồi. Kiểm tra các trường hợp đồng thời, file lỗi, nguồn web lỗi, cache, quota và restart.
 - Chốt phiên bản tính năng, model, prompt, schema và quy tắc tính điểm cho đánh giá chính thức; chuẩn bị dữ liệu demo tách khỏi dữ liệu đánh giá cuối.
 - Hoàn thành phần phương pháp, thiết kế thực nghiệm và hướng dẫn chạy của báo cáo; lập danh sách lỗi còn lại và kế hoạch tuần 11–12.
 
@@ -172,7 +173,7 @@ Phạm vi thực hiện:
 
 Điều kiện hoàn thành M5:
 
-- Cả ba luồng ở mục 1 chạy xuyên suốt trên môi trường triển khai, không dựa vào mock ở bước cần chứng minh tính năng thật.
+- Cả ba luồng ở mục 1 chạy xuyên suốt trên localhost, không dựa vào mock ở bước cần chứng minh tính năng thật.
 - AI viết CV không tự thêm kinh nghiệm/chứng chỉ; nguồn học có URL thực từ kết quả công cụ và không giả mạo việc đã đọc nội dung nguồn.
 - Các tính năng cốt lõi, bao gồm tạo CV và tìm nguồn học, đã tích hợp; không đẩy sang tuần cuối dưới nhãn mở rộng.
 - Không còn lỗi đã biết làm lộ dữ liệu trái quyền, mất đơn ứng tuyển, ghi đè bản CV đã nộp hoặc tự ý thay đổi kết quả sàng lọc.
@@ -199,11 +200,11 @@ Phạm vi thực hiện:
 
 Điều kiện hoàn thành M6:
 
-- Mọi chức năng cốt lõi trong phạm vi đã thống nhất có bằng chứng chạy và kiểm thử; phần đánh giá bắt buộc đã hoàn tất. Nếu còn thiếu chức năng hoặc đánh giá thì M6 chưa đạt, dù nhóm đã bàn giao được hiện trạng; chỉ các giới hạn/lỗi không chặn phạm vi được ghi nhận như tồn đọng.
+- Mọi chức năng cốt lõi trong phạm vi đã thống nhất có bằng chứng chạy và kiểm thử; phần đánh giá bắt buộc đã hoàn tất. Nếu còn thiếu chức năng hoặc đánh giá thì M6 chưa đạt, dù người thực hiện đã bàn giao được hiện trạng; chỉ các giới hạn/lỗi không chặn phạm vi được ghi nhận như tồn đọng.
 - Có dữ liệu kết quả, quy tắc gán nhãn, cấu hình và phiên bản mã đủ để kiểm tra lại cách tính; phân biệt kết quả đo thật, dữ liệu minh họa và kết quả lưu từ lần chạy trước.
 - Kết luận nghiên cứu phản ánh kết quả, kể cả khi phương pháp có LLM không cải thiện một tiêu chí; không sửa phương pháp theo tập cuối rồi gọi đó là đánh giá độc lập chưa từng xem.
-- Không còn lỗi chặn ba luồng chính hoặc sai quyền nghiêm trọng. Bản bàn giao đã được kiểm tra sau lần triển khai cuối.
-- Hướng dẫn chạy và khôi phục đã được thử, tài liệu phù hợp bản triển khai; thông tin bí mật được quản lý riêng.
+- Không còn lỗi chặn ba luồng chính hoặc sai quyền nghiêm trọng. Bản bàn giao đã được kiểm tra trên localhost ở commit bàn giao.
+- Hướng dẫn chạy và khôi phục đã được thử, tài liệu phù hợp bản localhost bàn giao; thông tin bí mật được quản lý riêng.
 - Nhóm diễn tập được kịch bản của cả ứng viên và nhà tuyển dụng, trả lời được cơ sở điểm số, giới hạn AI, chi phí và kết quả thực nghiệm.
 
 ## 4. Dữ liệu, thực nghiệm và báo cáo xuyên suốt
@@ -219,7 +220,7 @@ Phạm vi thực hiện:
 | Tuần 9–10 | Dùng thử, chốt giao thức và phương pháp cho đánh giá cuối | Cấu hình cố định, tập đánh giá, tiêu chí và dự toán lượt gọi |
 | Tuần 11–12 | Đánh giá chính thức, phân tích giới hạn và hoàn thiện báo cáo | Dữ liệu đo, bảng/biểu kết quả, nhận xét giảng viên, hướng dẫn kiểm tra lại |
 
-Quy mô mẫu và ngưỡng chất lượng chưa được xác nhận. Nhóm đề xuất quy mô khả thi từ dữ liệu có sẵn ngay GĐ1 và thống nhất với giảng viên trước các đợt đánh giá; không ghi một tỷ lệ chính xác mục tiêu như cam kết đã được chứng minh.
+Quy mô mẫu và ngưỡng chất lượng chưa được xác nhận. Người thực hiện đề xuất quy mô khả thi từ dữ liệu có sẵn ngay GĐ1 và thống nhất với giảng viên trước các đợt đánh giá; không ghi một tỷ lệ chính xác mục tiêu như cam kết đã được chứng minh.
 
 ### 4.2. Quy tắc giữ thực nghiệm có ý nghĩa
 
@@ -238,7 +239,7 @@ Quy mô mẫu và ngưỡng chất lượng chưa được xác nhận. Nhóm đ
 
 | Nhóm yêu cầu | Giai đoạn chính | Bằng chứng hoàn thành |
 | --- | --- | --- |
-| Tài khoản, phân quyền, khôi phục mật khẩu | GĐ1–2 | Đăng nhập, email khôi phục và kiểm tra sai quyền trên bản deploy |
+| Tài khoản, phân quyền, khôi phục mật khẩu | GĐ1–2 | Đăng nhập, logic email khôi phục và kiểm tra sai quyền trên localhost; giao nhận thật ghi riêng |
 | Profile ứng viên, thông tin công ty | GĐ2 | Hai vai trò quản lý đúng dữ liệu, trường profile hiển thị đúng quyền |
 | JD, tìm/lọc/lưu việc | GĐ2 | Tin công khai tìm được; tin đóng không nhận đơn mới |
 | Nhiều CV, một CV công khai, phiên bản lúc nộp | GĐ2–3 | Kiểm tra quyền file, đổi/ẩn CV và không ghi đè bản đã gửi |
@@ -249,17 +250,17 @@ Quy mô mẫu và ngưỡng chất lượng chưa được xác nhận. Nhóm đ
 | Điểm 0–100, bằng chứng và khoảng cách kỹ năng | GĐ4 | Giải thích truy được tiêu chí/nguồn, không có điểm giả khi xử lý lỗi |
 | Tìm nguồn học bằng công cụ web | Thử GĐ1, tích hợp GĐ4–5 | Nguồn/URL thực, lý do đề xuất và xử lý hết credits |
 | Quản trị tài khoản/tin, báo cáo nội dung | Khung quyền GĐ1–2, hoàn thiện GĐ5 | Người có quyền xử lý được các trường hợp mẫu |
-| Triển khai, kiểm soát quota, phục hồi | Từ GĐ1, hoàn thiện GĐ5–6 | Bản demo, kiểm tra restart/quota, backup/restore và hướng dẫn |
+| Localhost, kiểm soát quota, phục hồi | Từ GĐ1, hoàn thiện GĐ5–6 | Bản local, kiểm tra restart/quota, backup/restore và hướng dẫn; deploy sau khi hoàn thiện và người dùng yêu cầu |
 | Báo cáo và đánh giá thực nghiệm | GĐ1–6 | Dữ liệu và cấu hình có phiên bản, kết quả thật, nhận xét và giới hạn |
 
 ### 5.2. Thời điểm cần xử lý các quyết định còn mở
 
 | Quyết định | Mốc cần xử lý | Nếu chưa có kết luận |
 | --- | --- | --- |
-| Liên hệ khi ứng viên xem CV công khai của người khác; quyền khách; quyền admin trên CV riêng tư | Trước khi mở luồng hiển thị liên quan ở GĐ2 | Tiếp tục luồng chính chủ và các quyền đã rõ; chưa nghiệm thu/mở rộng quyền của phần chưa chốt |
-| Ngôn ngữ giao diện | GĐ1 | Chỉ dựng khung thử; chưa coi đề xuất giao diện tiếng Việt là xác nhận của người dùng |
-| Trạng thái sàng lọc, rút đơn, lưu/xóa hồ sơ đã gửi | Trước migrations và API tương ứng ở GĐ2 | Không dùng hành vi xóa/thu hồi ngầm định; ghi phần còn thiếu vào đặc tả |
-| Domain, email và quy trình deploy của nhóm | Kiểm chứng GĐ1, hoàn tất trước mốc tài khoản GĐ2 | Áp dụng phương án hosting phù hợp; email thật chưa có thì chưa đạt phần khôi phục tài khoản |
+| Liên hệ CV công khai; khách/admin | Chốt GĐ1, hiện thực GĐ2 | Đã chốt: ứng viên chỉ bản ẩn liên hệ, khách chỉ JD, admin không mặc định đọc private; cần bản dẫn xuất/kiểm tra quyền trước mở API |
+| Ngôn ngữ giao diện, role đăng ký, owner công ty | Chốt GĐ1 | Đã chốt UI tiếng Việt, một role Candidate/Recruiter khi đăng ký, một recruiter owner/công ty; không hỏi lại |
+| Rút/nộp lại, chặn và lưu/xóa | Chốt chính sách GĐ1, migrations/API tương ứng GĐ2 | Đã chốt recruiter đọc sau rút trong hạn 90 ngày, nộp lại nếu không bị chặn ở tin đó; xóa tài khoản 7 ngày/backup thêm 14 ngày. Các chuyển trạng thái chi tiết còn lại hoàn thiện trước API, không coi worker đã triển khai |
+| Domain/hosting và deploy | Hoãn đến sau khi sản phẩm hoàn thiện localhost và người dùng yêu cầu | Kiểm chứng production riêng, không chặn M1 local; giao nhận email thật vẫn phải xác minh trước khi công nhận sản phẩm hoàn thiện |
 | Số lượng/mẫu CV | Chốt thiết kế ở GĐ1–2, trước xây GĐ3 | Theo dõi kế hoạch cơ sở 2 mẫu như đề xuất, không coi số lượng là đã được xác nhận |
 | Quy mô dữ liệu, rubric và cách chia tập | Bắt đầu GĐ1, cần rõ trước các đợt đánh giá | Báo rõ phần đang thử nghiệm; xin góp ý giảng viên, không tự ghi ngưỡng đã được duyệt |
 | Trọng số và cách tính điểm | Bản thử trước GĐ4; cố định cho đánh giá cuối ở M5 | Có thể thử trên tập điều chỉnh, chưa tuyên bố đã đạt chất lượng cuối |
@@ -273,8 +274,8 @@ Các quyết định được chốt cần cập nhật về tài liệu đặc 
 
 Mỗi mốc M1–M6 cần được kiểm tra theo cùng nguyên tắc:
 
-- Có đầu ra đúng phạm vi của giai đoạn, được tích hợp vào phiên bản chung và có người khác trong nhóm kiểm tra.
-- Có bằng chứng từ bản triển khai phù hợp, gồm trường hợp thành công, sai quyền và lỗi đầu vào/dịch vụ liên quan.
+- Có đầu ra đúng phạm vi của giai đoạn, tích hợp vào phiên bản chạy được; người thực hiện tự review diff, chạy checklist và lưu bằng chứng. Góp ý của giảng viên/người đánh giá được ghi riêng, không giả định đã có một thành viên khác kiểm tra.
+- Có bằng chứng từ bản localhost phù hợp, gồm trường hợp thành công, sai quyền và lỗi đầu vào/dịch vụ liên quan.
 - Các kiểm thử cần thiết đã chạy; lỗi còn lại được phân loại và không làm sai kết luận hoàn thành mốc.
 - Tài liệu, cấu hình, migration và dữ liệu mẫu cần thiết được cập nhật cùng thay đổi; không đưa secrets hoặc CV cá nhân vào repository công khai.
 - Các tác vụ có phí có usage và chi phí để đối chiếu; thực nghiệm không vượt dự toán còn lại của tháng.
@@ -285,13 +286,13 @@ Không cần lặp mọi test hoặc gọi lại AI thật sau một thay đổi
 
 | Rủi ro | Cách xử lý trong kế hoạch |
 | --- | --- |
-| Hosting/proxy/storage không hoạt động như dự kiến | Phát hiện bằng thử tích hợp GĐ1, quyết định phương án dự phòng trong tài liệu công nghệ trước khi xây nhiều màn hình phụ thuộc |
+| Hosting/proxy/storage không hoạt động như dự kiến | Hoãn kiểm chứng cloud; giữ ranh giới adapter và kiểm tra proxy/storage local. Khi mở lại deploy phải thử tích hợp production trước phát hành, chấp nhận rủi ro cần chỉnh cấu hình lúc đó |
 | Email chưa xác minh sender/domain | Giải quyết từ GĐ1; giữ kiểm thử local bằng fake, nhưng báo riêng phần email thật chưa hoàn tất và xử lý trước mốc tài khoản |
 | CV nhiều cột/định dạng gây trích xuất sai | Thu thập mẫu từ đầu, giữ nguồn để rà soát và cho người dùng sửa; ghi lỗi trong đánh giá và giữ OCR ngoài phạm vi hiện tại |
 | Dữ liệu ít hoặc giảng viên chưa sắp xếp được lịch | Đặt lịch và chuẩn bị rubric sớm; điều chỉnh quy mô có ghi nhận, mô tả giới hạn thay vì tuyên bố độ chính xác cho mọi ngành |
 | AI tốn phí hoặc chậm | Giảm số cặp phân tích mỗi lượt, dùng cache hợp lệ, giới hạn output/retry; ưu tiên các lần chạy đem lại bằng chứng cần thiết |
 | Tác vụ gián đoạn do dịch vụ ngủ/restart | Lưu trạng thái và phục hồi theo tài liệu công nghệ; giao diện cho biết đang chờ hoặc cần thử lại, không hứa xử lý nền liên tục |
-| Một mảng chậm hơn phần còn lại | Chuyển người hỗ trợ tại mốc demo tuần; tích hợp theo hợp đồng đã thống nhất, không đợi ba nhánh độc lập đến cuối kỳ |
+| Một mảng chậm hơn phần còn lại | Giảm việc đang làm đồng thời, ưu tiên phụ thuộc của luồng chính và rà lại lịch mỗi tuần; hoãn phần phụ theo thứ tự bên dưới, không giả định có người khác hỗ trợ |
 | Tính năng cốt lõi chưa xong ở tuần 10 | Ghi rõ mốc chưa đạt, lập lại kế hoạch và trao đổi phạm vi; không xóa thời gian thực nghiệm hoặc tự nhận đã hoàn thành |
 
 Thứ tự giảm khối lượng khi cần: hoãn mẫu CV thứ ba, trang trí giao diện, bộ lọc phụ và các tối ưu chưa có nhu cầu; giữ các mẫu cơ sở, luồng nghiệp vụ chính và kiểm chứng. Không tự cắt một chiều matching, giải thích điểm, tạo CV, tìm nguồn học hoặc báo cáo thực nghiệm để bảo đảm mốc trên giấy.
@@ -300,8 +301,8 @@ OCR, mobile, chat thời gian thực, quản lý phỏng vấn/offer/hợp đồ
 
 ### 6.3. Bảo vệ ngân sách và chuẩn bị demo
 
-- Một bảng theo dõi chung cho chi phí DeepSeek, credits tìm kiếm và quota hạ tầng; phân bổ cả thử nghiệm của ba thành viên, dùng thử của giảng viên và lần chạy cuối.
-- Dự trù trước đợt thực nghiệm và chỉ chạy trong phần ngân sách tháng còn lại, gồm các lần retry có thể phát sinh. Không nhân hạn mức 4 USD theo người hoặc theo môi trường.
+- Một bảng theo dõi chi phí DeepSeek, credits tìm kiếm và quota hạ tầng; bao gồm thử nghiệm của người thực hiện, dùng thử của giảng viên và lần chạy cuối.
+- Dự trù trước đợt thực nghiệm và chỉ chạy trong phần ngân sách tháng còn lại, gồm các lần retry có thể phát sinh. Không nhân hạn mức 4 USD theo môi trường.
 - Giữ một phần ngân sách cho kiểm tra bản bàn giao và demo; số cụ thể quyết định sau khi có số đo ở GĐ1, không giả định mọi lượt AI đều có cùng giá.
 - Kịch bản demo có dữ liệu mẫu phù hợp, tài khoản các vai trò và một luồng dự phòng chạy local hoặc bản ghi khi dịch vụ ngoài không khả dụng.
 - Kết quả đã lưu hoặc video phải được giới thiệu đúng là kết quả/lần chạy trước, không trình bày như API đang hoạt động trực tiếp. Không dùng dữ liệu mô phỏng để thay số liệu thực nghiệm.
@@ -310,11 +311,17 @@ OCR, mobile, chat thời gian thực, quản lý phỏng vấn/offer/hợp đồ
 
 | Nhóm đầu ra | Nội dung cần có |
 | --- | --- |
-| Mã nguồn và triển khai | Phiên bản cuối frontend/backend, migrations, cấu hình mẫu, hướng dẫn chạy và địa chỉ demo thực tế |
+| Mã nguồn và triển khai | Phiên bản cuối frontend/backend, migrations, cấu hình mẫu, hướng dẫn chạy và địa chỉ localhost; URL public chỉ bổ sung sau khi deploy thật |
 | Dữ liệu và quyền | Dữ liệu demo được phép dùng, chính sách công khai/lưu giữ đã chốt, cách tạo tài khoản thử và quản lý secrets riêng |
 | Tài liệu dự án | Đặc tả, quyết định công nghệ, roadmap cập nhật tiến độ và thiết kế database phù hợp với hệ thống thực tế |
 | Thực nghiệm AI | Danh mục dữ liệu, rubric/nhãn, cách chia tập, baseline, cấu hình model/prompt/quy tắc, kết quả và giới hạn |
 | Kiểm thử và vận hành | Kết quả kiểm thử chính, lỗi còn biết, usage/chi phí, hướng dẫn backup/restore và xử lý lỗi thường gặp |
 | Bảo vệ đồ án | Báo cáo, slide, kịch bản demo hai vai trò và cải thiện CV, bản ghi dự phòng |
 
-Việc hoàn thiện tài liệu roadmap không đồng nghĩa các mốc M1–M6 đã đạt. Khi thực hiện, nhóm ghi ngày nghiệm thu thực tế, phiên bản đầu ra và các thay đổi phạm vi tại từng mốc để kế hoạch phản ánh đúng tiến độ.
+Việc hoàn thiện tài liệu roadmap không đồng nghĩa các mốc M1–M6 đã đạt. Người thực hiện ghi ngày nghiệm thu thực tế, phiên bản đầu ra và các thay đổi phạm vi tại từng mốc để kế hoạch phản ánh đúng tiến độ.
+
+## 9. Điều kiện mở lại deploy
+
+Deploy không nằm trong công việc hiện tại và không tự khởi động lại khi hết tuần 12. Trước khi đề xuất mở lại: ba luồng cốt lõi phải hoàn thiện trên localhost, kiểm thử quyền/snapshot/job/quota và build phải có bằng chứng ở phiên bản bàn giao, các tích hợp AI/search/email thật cần thiết phải được kiểm chứng riêng trong ngân sách, không còn lỗi chặn hoặc sai quyền nghiêm trọng. Fake không thay thế đánh giá chất lượng AI.
+
+Sau khi người dùng yêu cầu mở lại, mới rà hosting, giá/quota, secrets, HTTPS, private storage, Data Protection và backup/restore; kiểm chứng production rồi phát hành có kiểm soát. Các điều kiện cloud cũ được chuyển sang bước này, không bị coi là đã đạt hoặc bị loại bỏ khỏi kiểm tra trước phát hành.
