@@ -1,0 +1,10 @@
+.git
+.env*
+.local
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/TestResults
+docs
+project-docs

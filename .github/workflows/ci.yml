@@ -1,0 +1,59 @@
+name: foundation
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.16.0'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint && npm run typecheck && npm test && npm run build
+      - run: npm audit --audit-level=high
+  backend:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:16.10-bookworm
+        env:
+          POSTGRES_USER: careergap
+          POSTGRES_PASSWORD: ci-only-ephemeral-database
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U careergap -d postgres"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      CAREERGAP_TEST_DATABASE: Host=localhost;Database=postgres;Username=careergap;Password=ci-only-ephemeral-database
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.401'
+      - run: dotnet restore tests/CareerGap.Api.Tests/CareerGap.Api.Tests.csproj --locked-mode
+      - run: dotnet build tests/CareerGap.Api.Tests/CareerGap.Api.Tests.csproj --no-restore -c Release
+      - run: dotnet test tests/CareerGap.Api.Tests/CareerGap.Api.Tests.csproj --no-build -c Release --logger trx
+      - run: dotnet list backend/CareerGap.Api/CareerGap.Api.csproj package --vulnerable --include-transitive
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-results
+          path: tests/**/TestResults/*.trx
+  docker:
+    needs: [frontend, backend]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t careergap:ci .

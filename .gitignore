@@ -1,0 +1,15 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/TestResults/
+.local/
+.env
+.env.*
+!.env.example
+**/appsettings.Local.json
+*.pfx
+*.pem
+*.key
+playwright-report/
+test-results/
