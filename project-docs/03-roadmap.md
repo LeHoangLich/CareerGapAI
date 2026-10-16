@@ -1,6 +1,6 @@
 # CareerGap AI – Roadmap Phát triển
 
-> Theo dõi thực thi GĐ1: [task](../docs/tasks/phase-01-foundation.md), [report](../docs/report/phase-01-foundation-report.md). Người dùng đã publish GitHub; CI run `38718678231` của commit `bdb3aeb` thành công. M1 localhost chưa nghiệm thu đầy đủ; cloud được hoãn theo quyết định mới, không còn là điều kiện M1; xem report để phân biệt kết quả local, CI theo commit và phần chưa kiểm chứng.
+> Theo dõi thực thi GĐ1: [task](tasks/phase-01-foundation.md), [report](report/phase-01-foundation-report.md). Người dùng đã publish GitHub; CI run `38774073395` của commit `5f4defe` thành công, cùng run cũ `38718678231` của `bdb3aeb`. L01–L09 có implementation local ngày 16/10; 13 migrations L01–L08 đã áp dụng PostgreSQL, L09 không đổi schema. `./scripts/test.ps1` đạt 47 backend/3 frontend; evaluator smoke chỉ kiểm tra chạy lại trên synthetic data. M1/M2 tổng thể chưa được tuyên bố nghiệm thu; working tree chưa được CI chứng nhận. Cloud được hoãn và không còn là điều kiện cho các lát local; xem report để phân biệt kết quả local, CI theo commit và phần chưa kiểm chứng.
 
 > Roadmap ở mức giai đoạn lớn (chưa chia task chi tiết). Mỗi giai đoạn kèm các yêu cầu hoàn thiện để coi là "xong" trước khi chuyển sang giai đoạn kế tiếp.
 
@@ -259,7 +259,7 @@ Quy mô mẫu và ngưỡng chất lượng chưa được xác nhận. Người
 | --- | --- | --- |
 | Liên hệ CV công khai; khách/admin | Chốt GĐ1, hiện thực GĐ2 | Đã chốt: ứng viên chỉ bản ẩn liên hệ, khách chỉ JD, admin không mặc định đọc private; cần bản dẫn xuất/kiểm tra quyền trước mở API |
 | Ngôn ngữ giao diện, role đăng ký, owner công ty | Chốt GĐ1 | Đã chốt UI tiếng Việt, một role Candidate/Recruiter khi đăng ký, một recruiter owner/công ty; không hỏi lại |
-| Rút/nộp lại, chặn và lưu/xóa | Chốt chính sách GĐ1, migrations/API tương ứng GĐ2 | Đã chốt recruiter đọc sau rút trong hạn 90 ngày, nộp lại nếu không bị chặn ở tin đó; xóa tài khoản 7 ngày/backup thêm 14 ngày. Các chuyển trạng thái chi tiết còn lại hoàn thiện trước API, không coi worker đã triển khai |
+| Rút/nộp lại, chặn và lưu/xóa | Chốt chính sách GĐ1, migrations/API tương ứng GĐ2 | L06 đã triển khai status matrix recruiter owner được xác nhận 16/10, candidate withdraw, block/reapply theo tin và retention 90 ngày. Xóa tài khoản 7 ngày/backup thêm 14 ngày đã chốt nhưng worker/purge chưa triển khai; không coi đã hoạt động |
 | Domain/hosting và deploy | Hoãn đến sau khi sản phẩm hoàn thiện localhost và người dùng yêu cầu | Kiểm chứng production riêng, không chặn M1 local; giao nhận email thật vẫn phải xác minh trước khi công nhận sản phẩm hoàn thiện |
 | Số lượng/mẫu CV | Chốt thiết kế ở GĐ1–2, trước xây GĐ3 | Theo dõi kế hoạch cơ sở 2 mẫu như đề xuất, không coi số lượng là đã được xác nhận |
 | Quy mô dữ liệu, rubric và cách chia tập | Bắt đầu GĐ1, cần rõ trước các đợt đánh giá | Báo rõ phần đang thử nghiệm; xin góp ý giảng viên, không tự ghi ngưỡng đã được duyệt |

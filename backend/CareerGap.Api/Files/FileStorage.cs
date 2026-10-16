@@ -8,6 +8,7 @@ public interface IFileStorage
     string Provider { get; }
     Task PutAsync(string key, byte[] bytes, string contentType, CancellationToken ct);
     Task<byte[]> ReadAsync(string key, CancellationToken ct);
+    Task DeleteAsync(string key, CancellationToken ct);
 }
 public sealed class LocalFileStorage(IWebHostEnvironment env, IConfiguration config) : IFileStorage
 {
@@ -25,6 +26,13 @@ public sealed class LocalFileStorage(IWebHostEnvironment env, IConfiguration con
         await stream.WriteAsync(bytes, ct);
     }
     public Task<byte[]> ReadAsync(string key, CancellationToken ct) => File.ReadAllBytesAsync(Resolve(key), ct);
+    public Task DeleteAsync(string key, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var path = Resolve(key);
+        if (File.Exists(path)) File.Delete(path);
+        return Task.CompletedTask;
+    }
 }
 public sealed class S3FileStorage : IFileStorage, IDisposable
 {
@@ -58,5 +66,6 @@ public sealed class S3FileStorage : IFileStorage, IDisposable
         }
         return output.ToArray();
     }
+    public async Task DeleteAsync(string key, CancellationToken ct) => await client.DeleteObjectAsync(bucket, key, ct);
     public void Dispose() => client.Dispose();
 }

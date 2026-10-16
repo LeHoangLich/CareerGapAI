@@ -1,6 +1,6 @@
 # CareerGap AI – Quyết định Công nghệ & Lưu ý Phát triển
 
-> Cập nhật thực thi GĐ1 ngày 15/10/2026: đã có prototype local và lockfile. Xem [hợp đồng/giới hạn thực tế](../docs/phase-01-implementation.md) và [dependency/giấy phép](../docs/dependency-licenses.md). Các lựa chọn cloud/AI thật phía dưới vẫn cần kiểm chứng, không được coi là đã triển khai từ prototype.
+> Cập nhật thực thi GĐ1 ngày 15/10/2026: đã có prototype local và lockfile. Xem [hợp đồng/giới hạn thực tế](phase-01-implementation.md) và [dependency/giấy phép](dependency-licenses.md). Các lựa chọn cloud/AI thật phía dưới vẫn cần kiểm chứng, không được coi là đã triển khai từ prototype.
 
 > Bối cảnh đã được người dùng xác nhận: đồ án chuyên ngành do **1 người tự thực hiện**, mục tiêu 3 tháng, tập trung web, ngân sách phát triển và demo khoảng 4 USD/tháng cho toàn dự án. Phạm vi nghiệp vụ theo `01-system-specification.md`.
 >
@@ -382,4 +382,4 @@ Các trường hợp phải có trước khi demo:
 | Domain và email | Xác nhận quyền DNS, sender và gửi thử; chưa xác nhận thì không coi email thật đã sẵn sàng |
 | Ngân sách và mức tải | Đo usage của tác vụ điển hình, thử giới hạn đồng thời và kiểm tra cơ chế ngừng nhận tác vụ tốn phí |
 
-Các quyết định đã chốt về CV ẩn liên hệ, khách/admin, UI tiếng Việt, vai trò đăng ký, owner công ty, nộp lại/chặn theo tin và lưu/xóa 90/7/14 ngày theo `01-system-specification.md` và [chính sách lưu/xóa](../docs/phase-01-data-retention.md). Trọng số điểm, quy mô đánh giá, mẫu CV và cách chọn JD khi phân tích lại vẫn cần hoàn thiện theo giai đoạn. Dịch vụ do người dùng cung cấp sau, ghi trong [checklist](../docs/phase-01-services-checklist.md), không tự tạo hoặc mua thay.
+Các quyết định đã chốt về CV ẩn liên hệ, khách/admin, UI tiếng Việt, vai trò đăng ký, owner công ty, nộp lại/chặn theo tin và lưu/xóa 90/7/14 ngày theo `01-system-specification.md` và [chính sách lưu/xóa](phase-01-data-retention.md). Trọng số điểm, quy mô đánh giá, mẫu CV và cách chọn JD khi phân tích lại vẫn cần hoàn thiện theo giai đoạn. Dịch vụ do người dùng cung cấp sau, ghi trong [checklist](phase-01-services-checklist.md), không tự tạo hoặc mua thay.

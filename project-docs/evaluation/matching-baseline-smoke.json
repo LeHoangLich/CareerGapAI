@@ -1,0 +1,117 @@
+{
+  "datasetId": "synthetic-matching-smoke-v1",
+  "split": "smoke",
+  "resumes": [
+    {
+      "id": "synthetic-resume-backend",
+      "groupId": "synthetic-person-backend",
+      "language": "vi",
+      "text": "CV giả lập: kỹ sư backend, C#, .NET, PostgreSQL, REST API. Không chứa dữ liệu cá nhân.",
+      "confirmedRevision": {
+        "origin": "user_confirmed",
+        "schemaVersion": 1,
+        "confirmedByOwner": true,
+        "skills": [
+          { "name": "C#", "sourceType": "document_span" },
+          { "name": "PostgreSQL", "sourceType": "document_span" },
+          { "name": "REST API", "sourceType": "document_span" }
+        ]
+      }
+    },
+    {
+      "id": "synthetic-resume-frontend",
+      "groupId": "synthetic-person-frontend",
+      "language": "vi",
+      "text": "CV giả lập: frontend React, TypeScript, accessibility. Không chứa dữ liệu cá nhân.",
+      "confirmedRevision": {
+        "origin": "user_confirmed",
+        "schemaVersion": 1,
+        "confirmedByOwner": true,
+        "skills": [
+          { "name": "React", "sourceType": "document_span" },
+          { "name": "TypeScript", "sourceType": "document_span" },
+          { "name": "accessibility", "sourceType": "user_statement" }
+        ]
+      }
+    },
+    {
+      "id": "synthetic-resume-operations",
+      "groupId": "synthetic-person-operations",
+      "language": "en",
+      "text": "Synthetic operations resume: Docker, Linux, monitoring, incident response. No personal data.",
+      "confirmedRevision": {
+        "origin": "user_confirmed",
+        "schemaVersion": 1,
+        "confirmedByOwner": true,
+        "skills": [
+          { "name": "Docker", "sourceType": "document_span" },
+          { "name": "Linux", "sourceType": "document_span" },
+          { "name": "monitoring", "sourceType": "document_span" }
+        ]
+      }
+    }
+  ],
+  "jobs": [
+    {
+      "id": "synthetic-job-dotnet",
+      "groupId": "synthetic-job-dotnet",
+      "language": "vi",
+      "title": "Kỹ sư backend .NET",
+      "requirements": "C#, PostgreSQL, REST API",
+      "description": "Tin giả lập; dùng để kiểm tra thứ tự từ khóa, không phải dữ liệu đánh giá.",
+      "confirmedRevision": {
+        "origin": "user_confirmed",
+        "schemaVersion": 1,
+        "confirmedByOwner": true,
+        "requirements": [
+          { "text": "C#", "importance": "required", "sourceType": "document_text" },
+          { "text": "PostgreSQL", "importance": "required", "sourceType": "document_text" },
+          { "text": "REST API", "importance": "optional", "sourceType": "user_statement" }
+        ]
+      }
+    },
+    {
+      "id": "synthetic-job-react",
+      "groupId": "synthetic-job-react",
+      "language": "vi",
+      "title": "Frontend React",
+      "requirements": "React, TypeScript, accessibility",
+      "description": "Tin giả lập; dùng để kiểm tra thứ tự từ khóa.",
+      "confirmedRevision": {
+        "origin": "user_confirmed",
+        "schemaVersion": 1,
+        "confirmedByOwner": true,
+        "requirements": [
+          { "text": "React", "importance": "required", "sourceType": "document_text" },
+          { "text": "TypeScript", "importance": "required", "sourceType": "document_text" },
+          { "text": "accessibility", "importance": "unspecified", "sourceType": "document_text" }
+        ]
+      }
+    },
+    {
+      "id": "synthetic-job-operations",
+      "groupId": "synthetic-job-operations",
+      "language": "en",
+      "title": "Operations Engineer",
+      "requirements": "Docker, Linux, monitoring",
+      "description": "Synthetic smoke job only.",
+      "confirmedRevision": {
+        "origin": "user_confirmed",
+        "schemaVersion": 1,
+        "confirmedByOwner": true,
+        "requirements": [
+          { "text": "Docker", "importance": "required", "sourceType": "document_text" },
+          { "text": "Linux", "importance": "required", "sourceType": "document_text" },
+          { "text": "monitoring", "importance": "optional", "sourceType": "document_text" }
+        ]
+      }
+    }
+  ],
+  "labels": [
+    { "resumeGroupId": "synthetic-person-backend", "jobGroupId": "synthetic-job-dotnet", "relevance": 3 },
+    { "resumeGroupId": "synthetic-person-frontend", "jobGroupId": "synthetic-job-dotnet", "relevance": 0 },
+    { "resumeGroupId": "synthetic-person-frontend", "jobGroupId": "synthetic-job-react", "relevance": 3 },
+    { "resumeGroupId": "synthetic-person-operations", "jobGroupId": "synthetic-job-operations", "relevance": 3 },
+    { "resumeGroupId": "synthetic-person-backend", "jobGroupId": "synthetic-job-operations", "relevance": 1 }
+  ]
+}

@@ -186,11 +186,15 @@ Các quy tắc bổ sung được đề xuất:
 - Nhà tuyển dụng phụ trách tin có thể chặn/bỏ chặn ứng viên nộp vào chính tin đó; việc chặn không tự sửa/xóa hồ sơ hoặc lịch sử đã nhận, không ngăn nộp tin khác và không do AI tự quyết định.
 - Ghi chú nội bộ không hiển thị cho ứng viên hoặc nhà tuyển dụng ngoài phạm vi phụ trách.
 
-Luồng trạng thái đề xuất:
+**Ma trận đã được người dùng xác nhận ngày 16/10/2026** (recruiter owner của tin):
 
-`Đã nộp → Đang xem xét → Qua sàng lọc / Không phù hợp`
+| Trạng thái hiện tại | Chuyển tiếp recruiter được phép |
+|---|---|
+| Đã nộp (`submitted`) | Đang xem xét (`reviewing`), Qua sàng lọc (`shortlisted`), Không phù hợp (`rejected`) |
+| Đang xem xét (`reviewing`) | Qua sàng lọc (`shortlisted`), Không phù hợp (`rejected`) |
+| Qua sàng lọc (`shortlisted`) | Đang xem xét (`reviewing`), Không phù hợp (`rejected`) |
 
-`Đã rút` là trạng thái riêng khi ứng viên rút đơn. “Qua sàng lọc” không có nghĩa là đã được tuyển. Lịch phỏng vấn, quản lý offer, hợp đồng và nhân sự sau tuyển dụng không nằm trong phạm vi bản đồ án.
+Candidate có thể rút mọi đơn còn hiệu lực (`submitted`, `reviewing`, `shortlisted`) sang `withdrawn`. `rejected` và `withdrawn` là trạng thái kết thúc của đơn cũ; không mở lại đơn. Có thể nộp lại bằng application/snapshot/key mới nếu không có đơn còn hiệu lực và không bị chặn ở tin đó. “Qua sàng lọc” không có nghĩa là đã được tuyển. Lịch phỏng vấn, quản lý offer, hợp đồng và nhân sự sau tuyển dụng không nằm trong phạm vi bản đồ án.
 
 ### 7. AI đối sánh CV–JD và gợi ý hai chiều
 
@@ -280,4 +284,4 @@ Các điểm cần xác nhận hoặc hoàn thiện ở bước thiết kế ti�
 
 Các lựa chọn công nghệ chi tiết, kế hoạch thực hiện và thiết kế dữ liệu sẽ được phát triển trong các tài liệu tương ứng, dựa trên phạm vi nghiệp vụ của đặc tả này.
 
-Quyết định trong lượt xác nhận ngày 15/10/2026 chỉ cập nhật yêu cầu; chưa phải các API GĐ2 đã triển khai. Theo dõi [checklist dịch vụ](../docs/phase-01-services-checklist.md) và [chính sách lưu/xóa đã chốt](../docs/phase-01-data-retention.md).
+Quyết định trong lượt xác nhận ngày 15/10/2026 chỉ cập nhật yêu cầu; chưa phải các API GĐ2 đã triển khai. Theo dõi [checklist dịch vụ](phase-01-services-checklist.md) và [chính sách lưu/xóa đã chốt](phase-01-data-retention.md).

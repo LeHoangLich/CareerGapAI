@@ -64,6 +64,136 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
         var response = await client.PostAsJsonAsync("/api/auth/login", new { email = (string?)null, password = (string?)null });
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
+
+    [Fact]
+    public async Task RegistrationCreatesOnlyAllowedRolesAndCandidateProfileAtomically()
+    {
+        var csrfless = fixture.App.CreateClient();
+        var csrflessEmail = $"csrf-register-{Guid.NewGuid():N}@example.invalid";
+        var csrflessRequest = new { email = csrflessEmail, password = "Synthetic!Password2026", role = "Candidate" };
+        Assert.Equal(HttpStatusCode.BadRequest, (await csrfless.PostAsJsonAsync("/api/auth/register", csrflessRequest)).StatusCode);
+        await FoundationFixture.Csrf(csrfless);
+        Assert.Equal(HttpStatusCode.Created, (await csrfless.PostAsJsonAsync("/api/auth/register", csrflessRequest)).StatusCode);
+
+        var client = fixture.App.CreateClient();
+        await FoundationFixture.Csrf(client);
+        var email = $"register-{Guid.NewGuid():N}@example.invalid";
+        const string password = "Synthetic!Password2026";
+        var registered = await client.PostAsJsonAsync("/api/auth/register", new { email, password, role = "Candidate", displayName = "Ứng viên giả" });
+        Assert.Equal(HttpStatusCode.Created, registered.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await client.PostAsJsonAsync("/api/auth/register", new { email, password, role = "Recruiter" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/register", new { email = $"admin-{Guid.NewGuid():N}@example.invalid", password, role = "Admin" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/register", new { email = $"weak-{Guid.NewGuid():N}@example.invalid", password = "short", role = "Candidate" })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/register", new { email = $"bad-{Guid.NewGuid():N}@example.invalid", password, role = "Candidate", displayName = "x".PadRight(151, 'x') })).StatusCode);
+
+        await FoundationFixture.Csrf(client);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login", new { email, password })).StatusCode);
+        var session = await client.GetFromJsonAsync<JsonElement>("/api/auth/me");
+        Assert.Contains("Candidate", session.GetProperty("roles").EnumerateArray().Select(x => x.GetString()));
+        var profile = await client.GetFromJsonAsync<JsonElement>("/api/profile/me");
+        Assert.Equal("Ứng viên giả", profile.GetProperty("displayName").GetString());
+        Assert.Equal(0, profile.GetProperty("rowVersion").GetInt64());
+
+        var recruiter = fixture.App.CreateClient();
+        await FoundationFixture.Csrf(recruiter);
+        var recruiterEmail = $"recruiter-{Guid.NewGuid():N}@example.invalid";
+        Assert.Equal(HttpStatusCode.Created, (await recruiter.PostAsJsonAsync("/api/auth/register", new { email = recruiterEmail, password, role = "Recruiter" })).StatusCode);
+        await FoundationFixture.Csrf(recruiter);
+        Assert.Equal(HttpStatusCode.NoContent, (await recruiter.PostAsJsonAsync("/api/auth/login", new { email = recruiterEmail, password })).StatusCode);
+        Assert.Contains("Recruiter", (await recruiter.GetFromJsonAsync<JsonElement>("/api/auth/me")).GetProperty("roles").EnumerateArray().Select(x => x.GetString()));
+        Assert.Equal(HttpStatusCode.Forbidden, (await recruiter.GetAsync("/api/profile/me")).StatusCode);
+    }
+
+    [Fact]
+    public async Task CandidateProfileReadsAreOwnerOnlyAndRecruiterDtoFiltersUnsharedFields()
+    {
+        var (owner, ownerId) = await fixture.User();
+        var (otherCandidate, _) = await fixture.User();
+        var (recruiter, _) = await fixture.User("Recruiter");
+        var (admin, _) = await fixture.User("Admin");
+
+        var before = await owner.GetFromJsonAsync<JsonElement>("/api/profile/me");
+        var update = new
+        {
+            rowVersion = before.GetProperty("rowVersion").GetInt64(),
+            displayName = "Tên ứng viên", headline = "Backend Developer", summary = "Tóm tắt riêng",
+            location = "Hà Nội", contactEmail = "private@example.invalid", contactPhone = "0900000000",
+            desiredRole = "Backend", preferredWorkMode = "hybrid", experienceYears = 3.25m,
+            details = new { skills = new[] { "C#", "PostgreSQL" }, projects = new[] { "Dự án riêng" } },
+            sharedFields = new[] { "display_name", "headline", "skills" }
+        };
+        var saved = await owner.PutAsJsonAsync("/api/profile/me", update);
+        Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+        Assert.Equal(1, (await saved.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("rowVersion").GetInt64());
+        Assert.Equal(HttpStatusCode.Conflict, (await owner.PutAsJsonAsync("/api/profile/me", update)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await otherCandidate.GetAsync($"/api/profiles/{ownerId}")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await admin.GetAsync($"/api/profiles/{ownerId}")).StatusCode);
+        var publicView = await recruiter.GetFromJsonAsync<JsonElement>($"/api/profiles/{ownerId}");
+        Assert.Equal("Tên ứng viên", publicView.GetProperty("displayName").GetString());
+        Assert.Equal("Backend Developer", publicView.GetProperty("headline").GetString());
+        Assert.Equal(JsonValueKind.Null, publicView.GetProperty("contactEmail").ValueKind);
+        Assert.Equal(JsonValueKind.Null, publicView.GetProperty("contactPhone").ValueKind);
+        Assert.False(publicView.TryGetProperty("userId", out _));
+        Assert.True(publicView.GetProperty("details").TryGetProperty("skills", out _));
+        Assert.False(publicView.GetProperty("details").TryGetProperty("projects", out _));
+
+        Assert.Equal(HttpStatusCode.Forbidden, (await recruiter.PutAsJsonAsync("/api/profile/me", update)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await owner.PutAsJsonAsync("/api/profile/me", new
+        {
+            rowVersion = 1L, displayName = update.displayName, headline = update.headline, summary = update.summary,
+            location = update.location, contactEmail = update.contactEmail, contactPhone = update.contactPhone,
+            desiredRole = update.desiredRole, preferredWorkMode = update.preferredWorkMode, experienceYears = update.experienceYears,
+            details = update.details, sharedFields = new[] { "password_hash" }
+        })).StatusCode);
+    }
+
+    [Fact]
+    public async Task PasswordChangeAndFakeRecoveryUseSingleUseIdentityTokenWithoutEmailEnumeration()
+    {
+        var client = fixture.App.CreateClient();
+        await FoundationFixture.Csrf(client);
+        var email = $"recovery-{Guid.NewGuid():N}@example.invalid";
+        const string originalPassword = "Synthetic!Password2026";
+        Assert.Equal(HttpStatusCode.Created, (await client.PostAsJsonAsync("/api/auth/register", new { email, password = originalPassword, role = "Candidate" })).StatusCode);
+        await FoundationFixture.Csrf(client);
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/login", new { email, password = originalPassword })).StatusCode);
+        await FoundationFixture.Csrf(client);
+        const string changedPassword = "Changed!Password2026";
+        Assert.Equal(HttpStatusCode.NoContent, (await client.PostAsJsonAsync("/api/auth/password/change", new { currentPassword = originalPassword, newPassword = changedPassword })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.PostAsJsonAsync("/api/auth/password/change", new { currentPassword = originalPassword, newPassword = "Another!Password2026" })).StatusCode);
+
+        var request = fixture.App.CreateClient();
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/password/forgot", new { email })).StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/password/forgot", new { email = "unknown@example.invalid" })).StatusCode);
+        var outbox = await request.GetFromJsonAsync<JsonElement[]>("/api/dev/mailbox");
+        var recoveryLink = new Uri(outbox!.Single().GetProperty("link").GetString()!);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(recoveryLink.Query);
+        var token = query["resetToken"].ToString();
+        var resetEmail = query["resetEmail"].ToString();
+        const string resetPassword = "Reset!Password2026";
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.BadRequest, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = resetEmail, token = "invalid-token", newPassword = resetPassword })).StatusCode);
+        await Task.Delay(TimeSpan.FromSeconds(6));
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.BadRequest, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = resetEmail, token, newPassword = resetPassword })).StatusCode);
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/password/forgot", new { email })).StatusCode);
+        var renewed = await request.GetFromJsonAsync<JsonElement[]>("/api/dev/mailbox");
+        var renewedLink = new Uri(renewed!.Single().GetProperty("link").GetString()!);
+        var renewedQuery = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(renewedLink.Query);
+        var renewedToken = renewedQuery["resetToken"].ToString();
+        var renewedEmail = renewedQuery["resetEmail"].ToString();
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = renewedEmail, token = renewedToken, newPassword = resetPassword })).StatusCode);
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.BadRequest, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = renewedEmail, token = renewedToken, newPassword = "Reused!Password2026" })).StatusCode);
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await request.PostAsJsonAsync("/api/auth/login", new { email, password = originalPassword })).StatusCode);
+        await FoundationFixture.Csrf(request);
+        Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/login", new { email, password = resetPassword })).StatusCode);
+    }
     [Fact]
     public async Task RepeatedKeyReturnsSameJobAndDifferentInputConflicts()
     {
@@ -95,6 +225,13 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
         var saved = await db.AiJobs.SingleAsync(x => x.Id == job.Id);
         Assert.Equal("succeeded", saved.Status);
         Assert.Contains("React", saved.OutputJson);
+        var revision = await db.ResumeDataRevisions.SingleAsync(x => x.AiJobId == job.Id);
+        Assert.Equal("ai_extracted", revision.Origin);
+        Assert.Equal(1, revision.RevisionNo);
+        Assert.Equal(DocumentParser.Version + "+" + ResumeRevisionFactory.StructuredParserVersion, revision.ParserVersion);
+        Assert.Contains("Synthetic testing only", revision.SourceText);
+        Assert.Contains("React", revision.StructuredData);
+        Assert.Contains("document_span", revision.Evidence);
         var attempt = await db.ExternalCallAttempts.SingleAsync(x => x.AiJobId == job.Id);
         var reservation = await db.BudgetReservations.SingleAsync(x => x.AiJobId == job.Id);
         Assert.Equal(0m, reservation.ReservedRemaining);
@@ -166,7 +303,8 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
         db.StoredFiles.Add(crossFile); await db.SaveChangesAsync();
         var resumeId = file.GetProperty("id").GetGuid();
         var fail = await Assert.ThrowsAsync<PostgresException>(() => db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO resume_versions (id, resume_id, candidate_id, file_id, version_no, document_hash, created_at) SELECT {Guid.NewGuid()}, resume_id, candidate_id, {crossFile.Id}, 2, document_hash, now() FROM resume_versions WHERE id = {version}"));
-        Assert.Equal("23503", fail.SqlState);
+        // The resume-version readiness trigger rejects the cross-owner file before the composite FK is evaluated.
+        Assert.Equal("23514", fail.SqlState);
         var guard = await Assert.ThrowsAsync<PostgresException>(() => db.Database.ExecuteSqlInterpolatedAsync($"UPDATE stored_files SET sha256 = repeat('a',64) WHERE id = {fileId}"));
         Assert.Equal("23514", guard.SqlState);
     }

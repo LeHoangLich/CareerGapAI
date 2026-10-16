@@ -73,7 +73,8 @@ public sealed class JobWorker(IServiceScopeFactory scopes, JobWakeup wakeup, ILo
             reply = await client.ExtractAsync(doc, parameters, timeout.Token);
             var output = OutputValidator.Validate(reply.Json, doc);
             await service.Settle(attemptId.Value, reply, true, stoppingToken);
-            await service.Finish(jobId, owner, generation, JsonSerializer.Serialize(output, OutputValidator.Json), null, false, stoppingToken);
+            await service.Finish(jobId, owner, generation, JsonSerializer.Serialize(output, OutputValidator.Json), null,
+                false, stoppingToken, doc, output);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { /* lease expires; a restart reclaims and accounts for the unknown call */ }
         catch (Exception ex) when (ex is not OutOfMemoryException)

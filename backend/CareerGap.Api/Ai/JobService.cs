@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using CareerGap.Api.Data;
+using CareerGap.Api.Files;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -12,6 +13,8 @@ public sealed class JobError(string code, int status) : Exception(code) { public
 public sealed record CreateJobRequest(Guid ResumeVersionId, Guid IdempotencyKey);
 public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfiguration config, JobWakeup wakeup)
 {
+    private const string PromptVersion = "extract-probe-v2";
+    private const string OutputSchemaVersion = "skills-evidence-v2";
     private static string Hash(string value) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
     private async Task<AiJob> LockJob(Guid id, CancellationToken ct) => await db.AiJobs.FromSqlInterpolated($"SELECT * FROM ai_jobs WHERE id = {id} FOR UPDATE").SingleAsync(ct);
     private async Task<BudgetReservation> LockReservation(Guid jobId, CancellationToken ct) => await db.BudgetReservations.FromSqlInterpolated($"SELECT * FROM budget_reservations WHERE ai_job_id = {jobId} FOR UPDATE").SingleAsync(ct);
@@ -33,7 +36,7 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         if (file.Status != "ready" || file.Sha256 != version.DocumentHash) throw new JobError("file_unavailable", 409);
         var existing = await db.AiJobs.SingleOrDefaultAsync(x => x.RequestedBy == uid && x.IdempotencyKey == input.IdempotencyKey, ct);
         // Request identity excludes mutable provider configuration. A retry returns its original method.
-        var inputHash = Hash($"extract-probe-v1:{version.Id}:{version.DocumentHash}");
+        var inputHash = Hash($"{PromptVersion}:{version.Id}:{version.DocumentHash}");
         if (existing is not null)
         {
             if (existing.InputHash != inputHash) throw new JobError("idempotency_conflict", 409);
@@ -41,11 +44,12 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         }
         var parameters = opt.Provider == "Fake" ? new MethodParameters("fake-keyword-v1", 16000, 512, 0, 0, "not-applicable") : opt.Snapshot();
         var raw = JsonSerializer.Serialize(parameters, OutputValidator.Json);
-        var configHash = Hash($"{opt.Provider}:extract-probe-v1:skills-evidence-v1:{Files.DocumentParser.Version}:{DeepSeekClient.Prompt}:{raw}");
+        var configHash = Hash($"{opt.Provider}:{PromptVersion}:{OutputSchemaVersion}:{OutputValidator.Version}:{Files.DocumentParser.Version}:{DeepSeekClient.Prompt}:{raw}");
         var method = await db.AiMethods.SingleOrDefaultAsync(x => x.ConfigHash == configHash, ct);
         if (method is null)
         {
-            method = new AiMethod { ConfigHash = configHash, Provider = opt.Provider, Model = parameters.Model, Parameters = raw };
+            method = new AiMethod { ConfigHash = configHash, Provider = opt.Provider, Model = parameters.Model,
+                PromptVersion = PromptVersion, SchemaVersion = OutputSchemaVersion, Parameters = raw };
             db.AiMethods.Add(method);
         }
         var now = await Now(ct);
@@ -152,7 +156,8 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         reservation.ReservedRemaining -= reservation.UnallocatedAmount;
         reservation.UnallocatedAmount = 0;
     }
-    public async Task<bool> Finish(Guid id, string owner, long generation, string? output, string? error, bool retry, CancellationToken ct)
+    public async Task<bool> Finish(Guid id, string owner, long generation, string? output, string? error, bool retry,
+        CancellationToken ct, ParsedDocument? sourceDocument = null, SkillOutput? structuredOutput = null)
     {
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var job = await LockJob(id, ct);
@@ -160,6 +165,30 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         if (!HasLease(job, owner, generation, now)) return false;
         var active = await db.Users.AnyAsync(x => x.Id == job.RequestedBy && x.AccountStatus == "active", ct);
         if (!active) { output = null; error = "access_revoked"; retry = false; }
+        if (output is not null)
+        {
+            if (job.ResumeVersionId is not { } versionId || sourceDocument is null || structuredOutput is null)
+            { output = null; error = "revision_input_missing"; retry = false; }
+            else
+            {
+                var version = await db.ResumeVersions.FromSqlInterpolated(
+                    $"SELECT * FROM resume_versions WHERE id = {versionId} AND candidate_id = {job.RequestedBy} FOR UPDATE")
+                    .AsNoTracking().SingleOrDefaultAsync(ct);
+                if (version is null) { output = null; error = "access_revoked"; retry = false; }
+                else
+                {
+                    var parent = await db.ResumeDataRevisions.Where(x => x.ResumeVersionId == versionId)
+                        .OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
+                    if (parent?.RevisionNo == int.MaxValue) { output = null; error = "resume_revision_limit"; retry = false; }
+                    else
+                    {
+                        db.ResumeDataRevisions.Add(ResumeRevisionFactory.FromAi(job.RequestedBy, versionId,
+                            parent?.Id, (parent?.RevisionNo ?? 0) + 1, job.MethodVersionId, job.Id, sourceDocument,
+                            structuredOutput, now));
+                    }
+                }
+            }
+        }
         if (retry && job.AttemptCount < job.MaxAttempts)
         { job.Status = "queued"; job.AvailableAt = now.AddSeconds(5); job.ErrorCode = error; }
         else
