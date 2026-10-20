@@ -66,15 +66,17 @@ public sealed class JobWorker(IServiceScopeFactory scopes, JobWakeup wakeup, ILo
             var bytes = await storage.ReadAsync(file.ObjectKey, timeout.Token);
             if (Convert.ToHexStringLower(SHA256.HashData(bytes)) != version.DocumentHash) throw new ProviderError("file_unavailable", false);
             var doc = sp.GetRequiredService<DocumentParser>().Parse(bytes, file.OriginalName, timeout.Token);
-            if (method.Provider == "DeepSeek" && System.Text.Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(doc.Segments, OutputValidator.Json) + DeepSeekClient.Prompt) + 1024 > parameters.MaxInputTokens) throw new ProviderError("ai_input_limit", false);
+            if (method.Provider == "DeepSeek" && System.Text.Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(doc.Segments, OutputValidator.Json) + (parameters.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt)) + 1024 > parameters.MaxInputTokens) throw new ProviderError("ai_input_limit", false);
             attemptId = await service.StartAttempt(jobId, owner, generation, timeout.Token);
             if (attemptId is null) return;
             ILlmClient client = method.Provider == "Fake" ? sp.GetRequiredService<FakeLlmClient>() : sp.GetRequiredService<DeepSeekClient>();
             reply = await client.ExtractAsync(doc, parameters, timeout.Token);
-            var output = OutputValidator.Validate(reply.Json, doc);
+            CompletionValidator.Validate(reply);
+            var full = parameters.Contract == FullCvExtraction.Contract ? FullCvExtraction.Validate(reply.Json, doc) : null;
+            var output = full is null ? OutputValidator.Validate(reply.Json, doc) : null;
             await service.Settle(attemptId.Value, reply, true, stoppingToken);
-            await service.Finish(jobId, owner, generation, JsonSerializer.Serialize(output, OutputValidator.Json), null,
-                false, stoppingToken, doc, output);
+            await service.Finish(jobId, owner, generation, full is null ? JsonSerializer.Serialize(output, OutputValidator.Json) : reply.Json, null,
+                false, stoppingToken, doc, output, full);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) { /* lease expires; a restart reclaims and accounts for the unknown call */ }
         catch (Exception ex) when (ex is not OutOfMemoryException)

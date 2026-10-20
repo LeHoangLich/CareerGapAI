@@ -1,5 +1,9 @@
 # GĐ1 — Dữ liệu và kế hoạch đánh giá
 
+> B/P09 đã có [evaluator trước sửa synthetic/Fake](../phase-03-extraction-contract.md#đánh-giá-trước-sửa) và [kết quả/giới hạn](../report/stage-b-2026-10-16.md). Bốn biến thể cùng một CV gốc, không phải quality corpus; JD có nhãn cấu trúc synthetic riêng. Không chuyển smoke thành final evaluation.
+
+> Giai đoạn A đã bổ sung [giao thức/công cụ/manifest v0.1](stage-a-corpus-protocol.md) và [chuẩn bị provider](deepseek-probe-runbook.md). Chủ dự án xác nhận chưa có corpus được xác nhận quyền, dùng synthetic để phát triển; dành 28 giờ/tuần cho dữ liệu/gán nhãn. Không coi synthetic là bằng chứng chất lượng, không probe trả phí khi chưa được phép.
+
 Trạng thái: evaluator L09 và bộ smoke giả đã chạy local ngày 16/10/2026; L12 thêm thống kê đối chiếu các revision được đánh dấu owner-confirmed; **chưa có nhãn giảng viên, dataset thật hay kết quả chất lượng AI**. Nguồn yêu cầu: [đặc tả](../../project-docs/01-system-specification.md), [roadmap](../../project-docs/03-roadmap.md).
 
 ## Danh mục ban đầu

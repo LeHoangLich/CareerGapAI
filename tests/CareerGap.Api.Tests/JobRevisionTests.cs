@@ -49,7 +49,7 @@ public sealed class JobRevisionTests(FoundationFixture fixture) : IClassFixture<
         var extracted = await extractResponse.Content.ReadFromJsonAsync<JsonElement>();
         var firstRevisionId = extracted.GetProperty("id").GetGuid();
         Assert.Equal("local_extracted", extracted.GetProperty("origin").GetString());
-        Assert.Equal("jd-lines-importance-hints-v1", extracted.GetProperty("parserVersion").GetString());
+        Assert.Equal(CareerGap.Api.Recruitment.JobRevisionFactory.ParserVersion, extracted.GetProperty("parserVersion").GetString());
         var sourceRequirements = extracted.GetProperty("structuredData").GetProperty("requirements");
         Assert.Equal(3, sourceRequirements.GetArrayLength());
         Assert.Equal("required", sourceRequirements[0].GetProperty("importance").GetString());

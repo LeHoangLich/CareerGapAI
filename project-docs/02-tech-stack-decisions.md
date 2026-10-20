@@ -1,5 +1,7 @@
 # CareerGap AI – Quyết định Công nghệ & Lưu ý Phát triển
 
+> Trạng thái triển khai và bằng chứng mới: [current-status](current-status.md), [ma trận schema/hợp đồng](schema-implementation-status.md). Các lựa chọn đề xuất dưới đây không tự trở thành dependency/hạ tầng đã dùng.
+
 > Cập nhật thực thi GĐ1 ngày 15/10/2026: đã có prototype local và lockfile. Xem [hợp đồng/giới hạn thực tế](phase-01-implementation.md) và [dependency/giấy phép](dependency-licenses.md). Các lựa chọn cloud/AI thật phía dưới vẫn cần kiểm chứng, không được coi là đã triển khai từ prototype.
 
 > Bối cảnh đã được người dùng xác nhận: đồ án chuyên ngành do **1 người tự thực hiện**, mục tiêu 3 tháng, tập trung web, ngân sách phát triển và demo khoảng 4 USD/tháng cho toàn dự án. Phạm vi nghiệp vụ theo `01-system-specification.md`.

@@ -1,0 +1,12 @@
+{
+  "datasetId": "jd-atomic-synthetic-v1",
+  "synthetic": true,
+  "split": "smoke",
+  "qualityEvidence": false,
+  "labelsReviewedByTeacher": false,
+  "documents": [
+    {"id": "jd-vi-001", "groupId": "jd-synthetic-001", "language": "vi", "text": "Bắt buộc: React; TypeScript\nTối thiểu 3-5 năm Java hoặc C#\nƯu tiên: Docker, Linux", "expectedCount": 5, "requiredCount": 3, "optionalCount": 2, "anyOfCount": 1, "minimumYears": 3},
+    {"id": "jd-en-001", "groupId": "jd-synthetic-001", "language": "en", "text": "Required: React; TypeScript\nMinimum 3-5 years Java or C#\nPreferred: Docker, Linux", "expectedCount": 5, "requiredCount": 3, "optionalCount": 2, "anyOfCount": 1, "minimumYears": 3},
+    {"id": "jd-unknown-001", "groupId": "jd-synthetic-002", "language": "en", "text": "Communication skills\nSQL or PostgreSQL", "expectedCount": 2, "requiredCount": 0, "optionalCount": 0, "anyOfCount": 1, "minimumYears": null}
+  ]
+}

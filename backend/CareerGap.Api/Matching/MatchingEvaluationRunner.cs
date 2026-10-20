@@ -180,7 +180,7 @@ public static class MatchingEvaluationRunner
     private static MatchingEvaluationRequirement[]? ValidRequirements(MatchingEvaluationConfirmedJobRevision? revision)
     {
         if (revision is null || revision.Origin != "user_confirmed" || !revision.ConfirmedByOwner ||
-            revision.SchemaVersion != JobRevisionFactory.SchemaVersion || revision.Requirements is null ||
+            revision.SchemaVersion is not (1 or JobRevisionFactory.SchemaVersion) || revision.Requirements is null ||
             revision.Requirements.Length > JobRevisionFactory.MaxRequirements ||
             revision.Requirements.Any(x => x is null || string.IsNullOrWhiteSpace(x.Text) || x.Text.Length > 2000 ||
                 x.Importance is not ("required" or "optional" or "unspecified") ||

@@ -22,7 +22,7 @@ export type ResumeBuilderContent = {
 Font.register({ family: 'NotoCV', src: '/fonts/NotoSans-Regular.ttf' });
 
 const styles = StyleSheet.create({
-  page: { paddingTop: 42, paddingBottom: 46, paddingHorizontal: 48, color: '#17312c', fontFamily: 'NotoCV', fontSize: 10, lineHeight: 1.45 },
+  page: { paddingTop: 42, paddingBottom: 46, paddingHorizontal: 48, color: '#17312c', fontFamily: 'NotoCV', fontSize: 10 },
   name: { fontSize: 24, lineHeight: 1.2, fontWeight: 700, color: '#164c3b' },
   headline: { marginTop: 5, fontSize: 12, color: '#52665e' },
   contact: { marginTop: 7, color: '#52665e', fontSize: 9 },
@@ -32,7 +32,7 @@ const styles = StyleSheet.create({
   itemTitle: { fontSize: 10, fontWeight: 700 },
   detail: { marginTop: 2, color: '#52665e' },
   skills: { color: '#214f3e' },
-  footer: { position: 'absolute', bottom: 20, left: 48, right: 48, fontSize: 8, color: '#809087', textAlign: 'center' }
+  footer: { position: 'absolute', bottom: 20, height: 12, left: 48, right: 48, fontSize: 8, color: '#809087', textAlign: 'center' }
 });
 
 function nonempty(...values: string[]) { return values.map(value => value.trim()).filter(Boolean).join(' · '); }

@@ -1,10 +1,14 @@
 # CareerGap AI – Roadmap Phát triển
 
-> Theo dõi thực thi GĐ1: [task](tasks/phase-01-foundation.md), [report](report/phase-01-foundation-report.md). Người dùng đã publish GitHub; CI run `38774073395` của commit `5f4defe` thành công, cùng run cũ `38718678231` của `bdb3aeb`. L01–L09 có implementation local ngày 16/10; 13 migrations L01–L08 đã áp dụng PostgreSQL, L09 không đổi schema. `./scripts/test.ps1` đạt 47 backend/3 frontend; evaluator smoke chỉ kiểm tra chạy lại trên synthetic data. M1/M2 tổng thể chưa được tuyên bố nghiệm thu; working tree chưa được CI chứng nhận. Cloud được hoãn và không còn là điều kiện cho các lát local; xem report để phân biệt kết quả local, CI theo commit và phần chưa kiểm chứng.
+> Bổ sung local B ngày 19/10: [report](report/stage-b-followup-2026-10-19.md), [checklist M3](phase-03-acceptance.md). Công cụ replay/capture và probe v3 sẵn sàng local; provider/corpus và đánh giá chất lượng chưa có, không tự đóng M3 hoặc bắt đầu C.
+
+> Cập nhật sau B/P04–P09: [report](report/stage-b-2026-10-16.md), [hợp đồng GĐ3](phase-03-extraction-contract.md). Đã có lát local full CV v3/parser cô lập/JD v2/builder recovery/projection và smoke trước sửa; M3 vẫn chưa nghiệm thu chất lượng. Chủ dự án chốt một mẫu một cột simple-v1 cho GĐ3, thêm mẫu sau.
+
+> Hiện trạng và CI đúng SHA: [current-status](current-status.md). L01–L13, 15 migrations; GĐ3 đang thực hiện. [Báo cáo giai đoạn A](report/stage-a-2026-10-16.md) ghi checklist M1/M2 đạt/chưa đạt, kiểm tra mới và dữ liệu/provider còn chờ. Các mốc bên dưới là điều kiện nghiệm thu, không phải danh sách đã hoàn tất.
 
 > Roadmap ở mức giai đoạn lớn (chưa chia task chi tiết). Mỗi giai đoạn kèm các yêu cầu hoàn thiện để coi là "xong" trước khi chuyển sang giai đoạn kế tiếp.
 
-> Người dùng xác nhận dự án do **1 người tự thực hiện**. Giữ mục tiêu **3 tháng / 12 tuần làm việc**; đây chưa phải cam kết đủ nguồn lực. Tuần 1 tính từ ngày người thực hiện khởi động, không mặc định ngày viết tài liệu. Chưa xác nhận số giờ mỗi tuần; cần rà khối lượng theo năng lực thực tế, không chia tiến độ cho ba người hoặc tự cắt chức năng cốt lõi.
+> Người dùng xác nhận dự án do **1 người tự thực hiện**. Giữ mục tiêu **3 tháng / 12 tuần làm việc**; đây chưa phải cam kết đủ nguồn lực. Tuần 1 tính từ ngày người thực hiện khởi động, không mặc định ngày viết tài liệu. Chủ dự án đã xác nhận 28 giờ/tuần riêng cho dữ liệu và gán nhãn (giai đoạn A); tổng giờ phát triển chưa xác nhận; cần rà khối lượng theo năng lực thực tế, không chia tiến độ cho ba người hoặc tự cắt chức năng cốt lõi.
 >
 > Phạm vi nghiệp vụ theo `01-system-specification.md`; lựa chọn và điều kiện công nghệ theo `02-tech-stack-decisions.md`. Các mốc dưới đây là mục tiêu kế hoạch, **không phải trạng thái đã hoàn thành**. Các quyết định nghiệp vụ còn mở vẫn cần được chốt trước phần triển khai phụ thuộc.
 
@@ -115,7 +119,7 @@ Phạm vi thực hiện:
 - DeepSeek trích xuất dữ liệu có cấu trúc; backend kiểm tra schema, người dùng kiểm tra và sửa trước khi dùng để đối sánh.
 - Hoàn thiện trạng thái tác vụ, timeout/retry có giới hạn, phục hồi khi ứng dụng khởi động lại và tránh chạy lại chỉ vì tải lại trang.
 - Phân biệt file gốc, kết quả AI trước chỉnh sửa và dữ liệu đã được người dùng xác nhận. Kết quả luôn gắn đúng phiên bản nội dung.
-- Xây trình tạo CV từ form, các mẫu cố định và xuất PDF. Số lượng mẫu chốt theo đặc tả; kế hoạch cơ sở dành chỗ cho 2 mẫu, mẫu thứ ba là ưu tiên sau.
+- Xây trình tạo CV từ form, các mẫu cố định và xuất PDF. Theo xác nhận chủ dự án trong B: chốt một mẫu một cột simple-v1 cho GĐ3; các mẫu thêm để sau, không là điều kiện chặn hiện tại.
 - Đưa AI hỗ trợ viết một phần nội dung vào thử nghiệm trên dữ liệu thật đã cung cấp; người dùng có quyền sửa/từ chối trước khi lưu. Hoàn thiện luồng viết CV ở GĐ5.
 - Đo chất lượng trích xuất ban đầu, phân tích lỗi theo ngôn ngữ/định dạng; cập nhật rubric và quy tắc chấm điểm dự kiến với giảng viên trước GĐ4.
 
@@ -259,9 +263,9 @@ Quy mô mẫu và ngưỡng chất lượng chưa được xác nhận. Người
 | --- | --- | --- |
 | Liên hệ CV công khai; khách/admin | Chốt GĐ1, hiện thực GĐ2 | Đã chốt: ứng viên chỉ bản ẩn liên hệ, khách chỉ JD, admin không mặc định đọc private; cần bản dẫn xuất/kiểm tra quyền trước mở API |
 | Ngôn ngữ giao diện, role đăng ký, owner công ty | Chốt GĐ1 | Đã chốt UI tiếng Việt, một role Candidate/Recruiter khi đăng ký, một recruiter owner/công ty; không hỏi lại |
-| Rút/nộp lại, chặn và lưu/xóa | Chốt chính sách GĐ1, migrations/API tương ứng GĐ2 | L06 đã triển khai status matrix recruiter owner được xác nhận 16/10, candidate withdraw, block/reapply theo tin và retention 90 ngày. Xóa tài khoản 7 ngày/backup thêm 14 ngày đã chốt nhưng worker/purge chưa triển khai; không coi đã hoạt động |
+| Rút/nộp lại, chặn và lưu/xóa | Chốt chính sách GĐ1, migrations/API tương ứng GĐ2 | L06 đã triển khai status matrix recruiter owner được xác nhận 16/10, candidate withdraw, block/reapply theo tin và retention 90 ngày. L08 đã có worker/purge và restore ledger được kiểm chứng local; backup expiry thêm tối đa 14 ngày còn runbook thủ công, chưa scheduler/offsite/production proof |
 | Domain/hosting và deploy | Hoãn đến sau khi sản phẩm hoàn thiện localhost và người dùng yêu cầu | Kiểm chứng production riêng, không chặn M1 local; giao nhận email thật vẫn phải xác minh trước khi công nhận sản phẩm hoàn thiện |
-| Số lượng/mẫu CV | Chốt thiết kế ở GĐ1–2, trước xây GĐ3 | Theo dõi kế hoạch cơ sở 2 mẫu như đề xuất, không coi số lượng là đã được xác nhận |
+| Số lượng/mẫu CV | Chốt thiết kế ở GĐ1–2, trước xây GĐ3 | Đã chốt trong B: một mẫu một cột simple-v1 cho GĐ3, thêm mẫu sau; không hỏi lại |
 | Quy mô dữ liệu, rubric và cách chia tập | Bắt đầu GĐ1, cần rõ trước các đợt đánh giá | Báo rõ phần đang thử nghiệm; xin góp ý giảng viên, không tự ghi ngưỡng đã được duyệt |
 | Trọng số và cách tính điểm | Bản thử trước GĐ4; cố định cho đánh giá cuối ở M5 | Có thể thử trên tập điều chỉnh, chưa tuyên bố đã đạt chất lượng cuối |
 | Hạn mức AI/search và số tác vụ đồng thời | Giới hạn nhỏ từ GĐ1, điều chỉnh theo số đo | Chặn tác vụ vượt dự trù, vẫn cho phép các chức năng không cần dịch vụ ngoài |

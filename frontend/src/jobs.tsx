@@ -5,7 +5,7 @@ import { CandidateKeywordRecommendations, RecruiterKeywordResumeSearch } from '.
 type Session = { authenticated: boolean; userId?: string; roles: string[] };
 type Company = { id: string; name: string; slug: string; description: string | null; websiteUrl: string | null; location: string | null; industry: string | null; sizeLabel: string | null; rowVersion: number };
 type JobVersion = { id: string; versionNo: number; title: string; description: string; requirementsText: string; benefitsText: string | null; industry: string | null; location: string | null; employmentType: string; workMode: string; experienceMin: number | null; experienceMax: number | null; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null; language: string; contentHash: string };
-type JobRequirement = { requirementId: string; text: string; importance: string; sourceType: string };
+type JobRequirement = { minimumYears?: number | null; relation?: string; alternatives?: string[]; needsReview?: boolean; requirementId: string; text: string; importance: string; sourceType: string };
 type JobRequirementEvidence = { requirementId: string; sourceType: string; startOffset: number | null; endOffset: number | null; quote: string | null; statement: string | null };
 type JobDataRevision = { id: string; jobVersionId: string; revisionNo: number; parentRevisionId: string | null; origin: string; structuredData: { schemaVersion: number; requirements: JobRequirement[] }; sourceText: { requirementsText: string }; evidence: JobRequirementEvidence[]; dataHash: string; parserVersion: string; confirmedBy: string | null; confirmedAt: string | null; createdAt: string };
 type Job = { id: string; status: string; companyId: string; company: Company; version: JobVersion; applicationDeadline: string | null; acceptingApplications: boolean; rowVersion: number; publishedAt: string | null; closedAt: string | null };
@@ -283,6 +283,9 @@ function JobRequirementReview({ job }: { job: Job }) {
             {Object.entries(importanceLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
           </select> : <span>{importanceLabels[item.importance] ?? item.importance}</span>}
           {evidence?.quote && <small>Nguồn JD · ký tự {evidence.startOffset}–{evidence.endOffset}: “{evidence.quote}”</small>}
+          {item.minimumYears != null && <small>Kinh nghiệm nêu trong nguồn: tối thiểu {item.minimumYears} năm.</small>}
+          {item.relation === 'any_of' && <small>Một trong các lựa chọn: {item.alternatives?.join(' | ')}. Không yêu cầu đồng thời tất cả.</small>}
+          {item.needsReview && <small>Cần rà soát cách tách/quan hệ; nếu chưa đúng, bỏ mục này và bổ sung yêu cầu đã sửa bên dưới.</small>}
           {evidence?.sourceType === 'user_statement' && <small>Recruiter bổ sung · không phải trích dẫn từ JD: “{evidence.statement}”</small>}
         </li>;
       })}</ul>

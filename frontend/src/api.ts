@@ -18,7 +18,12 @@ export function errorMessage(code: string, status: number): string {
   if (code === 'resume_builder_content_required') return 'Hãy nhập ít nhất một nội dung nghề nghiệp trước khi lưu CV.';
   if (code === 'resume_builder_content_too_large') return 'Nội dung CV vượt giới hạn lưu của bản thử nghiệm.';
   if (code === 'resume_revision_limit') return 'Phiên bản CV đã đạt giới hạn revision.';
-  if (code === 'invalid_revision_confirmation') return 'Hãy chọn kỹ năng đã trích xuất và kiểm tra các dòng kỹ năng bạn tự bổ sung.';
+  if (code === 'invalid_revision_confirmation') return 'Hãy kiểm tra các trường dữ liệu và thông tin bạn tự bổ sung trước khi xác nhận.';
+  if (code === 'parse_timeout') return 'Tài liệu mất quá nhiều thời gian để đọc. Hãy dùng bản PDF/DOCX đơn giản hơn hoặc nhập thông tin thủ công.';
+  if (code === 'parser_unavailable') return 'Bộ đọc tài liệu chưa sẵn sàng. Hãy thử lại sau.';
+  if (code === 'full_cv_output_budget_required') return 'Phân tích CV đầy đủ chưa được cấu hình hạn mức đầu ra. Bạn vẫn có thể nhập CV thủ công.';
+  if (code === 'ai_output_truncated') return 'Phản hồi phân tích chưa đầy đủ nên chưa được lưu. Hãy thử tài liệu ngắn hơn hoặc nhập thông tin thủ công.';
+  if (code === 'ai_completion_invalid' || code === 'ai_output_empty') return 'Dịch vụ chưa trả được kết quả phân tích đầy đủ. Hãy thử lại sau hoặc nhập thông tin thủ công.';
   if (code === 'revision_data_unavailable') return 'Bản trích xuất này không còn đọc được. Hãy chạy lại trích xuất trên đúng phiên bản CV.';
   if (code === 'job_revision_conflict') return 'Phiên bản JD vừa được cập nhật. Hãy tải lại danh sách yêu cầu trước khi xác nhận.';
   if (code === 'invalid_job_revision_confirmation') return 'Hãy chọn yêu cầu và phân loại bắt buộc, tùy chọn hoặc chưa xác định hợp lệ.';

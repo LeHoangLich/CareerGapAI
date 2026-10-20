@@ -13,9 +13,9 @@ test('login → private CV → fake job → PDF → logout', async ({ page }) =>
   // Playwright failure snapshots can include input values; clear credentials immediately after submit.
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
   await expect(page.getByRole('heading', { name: 'CV riêng của bạn' })).toBeVisible();
-  await page.getByLabel('Chọn tài liệu').setInputFiles(fixture);
+  await page.getByLabel('Thêm vào CV', { exact: true }).setInputFiles(fixture);
   const uploadedResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/resumes');
-  await page.getByRole('button', { name: 'Tải CV riêng tư' }).click();
+  await page.getByRole('button', { name: 'Tạo CV riêng tư', exact: true }).click();
   const uploaded = await uploadedResponse;
   expect(uploaded.status()).toBe(201);
   const { fileId } = await uploaded.json();
@@ -25,7 +25,7 @@ test('login → private CV → fake job → PDF → logout', async ({ page }) =>
   const privateFile = await page.request.get(href!);
   expect(privateFile.status()).toBe(200);
   expect(privateFile.headers()['cache-control']).toContain('no-store');
-  await item.getByRole('button', { name: 'Thử trích xuất' }).click();
+  await item.getByRole('button', { name: 'Thử trích xuất v1', exact: true }).click();
   await expect(page.getByText('Đã xử lý', { exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.getByText('Mô phỏng bằng từ khóa · không gọi AI thật')).toBeVisible();
   const download = page.waitForEvent('download');

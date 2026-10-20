@@ -17,6 +17,17 @@ public static class ResumeRevisionEndpoints
         app.MapGet("/api/resume-versions/{versionId:guid}/revisions", GetAsync).RequireAuthorization();
         app.MapPost("/api/resume-versions/{versionId:guid}/revisions/{revisionId:guid}/confirm", ConfirmAsync).RequireAuthorization();
         app.MapPost("/api/resume-versions/{versionId:guid}/revisions/manual", SaveBuilderRevisionAsync).RequireAuthorization();
+        app.MapPost("/api/resume-versions/{versionId:guid}/revisions/{revisionId:guid}/confirm-full", ConfirmFullAsync).RequireAuthorization();
+        app.MapGet("/api/resume-versions/{versionId:guid}/builder-content", BuilderContentAsync).RequireAuthorization();
+        app.MapGet("/api/resume-versions/{versionId:guid}/extraction-status", async (Guid versionId, ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
+        {
+            if (!TryCandidate(user, out var candidate)) return Results.Forbid();
+            if (!await db.ResumeVersions.AnyAsync(x => x.Id == versionId && x.CandidateId == candidate, ct)) return Results.NotFound();
+            var job = await (from item in db.AiJobs.AsNoTracking() join method in db.AiMethods.AsNoTracking() on item.MethodVersionId equals method.Id
+                where item.ResumeVersionId == versionId && item.RequestedBy == candidate && method.SchemaVersion == FullCvExtraction.Contract
+                orderby item.CreatedAt descending select new { item.Id, item.Status, item.ErrorCode }).FirstOrDefaultAsync(ct);
+            return Results.Ok(new { job });
+        }).RequireAuthorization();
     }
 
     private static async Task<IResult> GetAsync(Guid versionId, ClaimsPrincipal user, AppDb db, CancellationToken ct)
@@ -112,5 +123,41 @@ public static class ResumeRevisionEndpoints
     {
         candidateId = default;
         return user.IsInRole("Candidate") && Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out candidateId);
+    }
+
+    private static async Task<IResult> ConfirmFullAsync(Guid versionId, Guid revisionId, ConfirmFullCvRequest input,
+        ClaimsPrincipal user, AppDb db, TimeProvider clock, CancellationToken ct)
+    {
+        if (!TryCandidate(user, out var candidate)) return Results.Forbid();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var version = await db.ResumeVersions.FromSqlInterpolated($"SELECT * FROM resume_versions WHERE id = {versionId} AND candidate_id = {candidate} FOR UPDATE")
+            .AsNoTracking().SingleOrDefaultAsync(ct);
+        if (version is null) return Results.NotFound();
+        var latest = await db.ResumeDataRevisions.AsNoTracking().Where(x => x.ResumeVersionId == versionId && x.CandidateId == candidate)
+            .OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
+        if (latest is null || latest.Id != revisionId || latest.RevisionNo != input.BaseRevisionNo || latest.RevisionNo == int.MaxValue)
+            return Results.Conflict(new { title = "resume_revision_conflict" });
+        if (!FullCvExtraction.TryConfirm(latest, candidate, input, clock.GetUtcNow(), out var revision))
+            return Results.Problem(statusCode: 400, title: "invalid_revision_confirmation");
+        db.ResumeDataRevisions.Add(revision!); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
+        return Results.Created($"/api/resume-versions/{versionId}/revisions", ToDto(revision!));
+    }
+
+    private static async Task<IResult> BuilderContentAsync(Guid versionId, ClaimsPrincipal user, AppDb db, CancellationToken ct)
+    {
+        if (!TryCandidate(user, out var candidate)) return Results.Forbid();
+        if (!await db.ResumeVersions.AnyAsync(x => x.Id == versionId && x.CandidateId == candidate, ct)) return Results.NotFound();
+        var revision = await db.ResumeDataRevisions.AsNoTracking().Where(x => x.ResumeVersionId == versionId && x.CandidateId == candidate &&
+            x.Origin == "user_confirmed" && x.ConfirmedBy == candidate && x.SchemaVersion == 3).OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
+        if (revision is null || !FullCvExtraction.TryRead(revision, out var fields, out _)) return Results.NotFound();
+        // Draft conversion leaves absent facts blank; builder validation still runs before PDF/save.
+        var map = fields.ToDictionary(x => x.Path, x => x.Value, StringComparer.Ordinal);
+        string Get(string path) => map.GetValueOrDefault(path) ?? "";
+        string[] Items(string key) => Enumerable.Range(0, 20).Select(i => Get($"{key}[{i}]")).Where(x => x.Length > 0).ToArray();
+        bool Has(string key, int i) => fields.Any(x => x.Path.StartsWith($"{key}[{i}].", StringComparison.Ordinal));
+        return Results.Ok(new ResumeBuilderStructuredContent(2, "simple-v1", Get("displayName"), Get("email"), Get("phone"), Get("location"), Get("headline"), Get("summary"),
+            Items("skills"), Enumerable.Range(0, 10).Where(i => Has("experience", i)).Select(i => new ResumeBuilderExperience(Get($"experience[{i}].role"), Get($"experience[{i}].organization"), Get($"experience[{i}].period"), Get($"experience[{i}].description"))).ToArray(),
+            Enumerable.Range(0, 10).Where(i => Has("education", i)).Select(i => new ResumeBuilderEducation(Get($"education[{i}].program"), Get($"education[{i}].institution"), Get($"education[{i}].period"), Get($"education[{i}].details"))).ToArray(),
+            Enumerable.Range(0, 10).Where(i => Has("projects", i)).Select(i => new ResumeBuilderProject(Get($"projects[{i}].name"), Get($"projects[{i}].context"), Get($"projects[{i}].description"))).ToArray(), Items("certifications")));
     }
 }

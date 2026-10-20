@@ -135,7 +135,7 @@ public sealed class MatchingTests(FoundationFixture fixture) : IClassFixture<Fou
         Assert.Equal("weighted-keyword-overlap-v1", run.GetProperty("methodVersion").GetString());
         var match = Assert.Single(run.GetProperty("items").EnumerateArray(), x => x.GetProperty("jobId").GetGuid() == jobId);
         var structured = match.GetProperty("confirmedRevisionMatch");
-        Assert.Equal("confirmed-revision-term-overlap-diagnostic-v1", structured.GetProperty("methodVersion").GetString());
+        Assert.Equal("confirmed-revision-term-overlap-diagnostic-v2", structured.GetProperty("methodVersion").GetString());
         Assert.Equal("ready", structured.GetProperty("status").GetString());
         Assert.Equal(2, structured.GetProperty("matchedRequiredRequirementCount").GetInt32());
         Assert.Equal(2, structured.GetProperty("matchedRequirementCount").GetInt32());

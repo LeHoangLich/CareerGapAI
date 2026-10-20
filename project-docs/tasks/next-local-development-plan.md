@@ -1,5 +1,9 @@
 # Kế hoạch công việc tiếp theo — hoàn thiện nghiệp vụ trên localhost
 
+> Sau yêu cầu thực hiện B: [P04–P09/L14 đã triển khai và kiểm thử local](../report/stage-b-2026-10-16.md). Giữ lịch sử từng L bên dưới; mục L14 “tiếp theo” cũ không còn là trạng thái mới nhất. Chưa thực hiện C hoặc probe trả phí, M3 quality còn mở.
+
+> Theo dõi mới: [current-status](../current-status.md), [giai đoạn A](../report/stage-a-2026-10-16.md), [kế hoạch A–E](CareerGapAI-danh-gia-va-ke-hoach-2026-10-16.md). L01–L13 thuộc baseline đã publish/CI; các đoạn theo lát bên dưới là **nhật ký lịch sử** với số test/SHA tại thời điểm đó. L12 hiện đã tiêu thụ revision L10/L11 cho diagnostic; L14 tiếp tục ở giai đoạn B.
+
 Ngày lập: 15/10/2026. Cập nhật 16/10 sau L13: **L01–L13 có các lát local; L10/L11 lưu revision CV/JD theo version và xác nhận người dùng; L12 đọc revision hợp lệ cho diagnostic term-overlap cạnh baseline; L13 thêm schema CV do ứng viên nhập và một flow template/PDF xem lại được. GĐ3 vẫn đang làm.** Kết quả smoke không thay cho đánh giá trên dữ liệu thật; M1/M2/M3 tổng thể chưa được tuyên bố nghiệm thu. Một người thực hiện, một lát UI–API–DB tại mỗi thời điểm. Không deploy hoặc gọi provider thật.
 
 Rà soát 16/10 trên localhost: L01–L09 regression đạt 52 backend PostgreSQL tests, 3 frontend tests và 5 E2E (`accounts`, `jobs`, `resumes`, `applications`, `account-deletion`); evaluator L09 smoke chạy offline trên synthetic dataset, hai chiều. Docker build local đạt. Chi tiết và giới hạn ở [report, mục 23](../report/phase-01-foundation-report.md#23-kiểm-tra-hồi-quy-l01l09-trên-localhost-hiện-tại-16102026). CI chỉ xác nhận commit `5f4defe`, không phải working tree hiện tại.

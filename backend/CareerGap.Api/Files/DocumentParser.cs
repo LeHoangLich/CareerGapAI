@@ -9,24 +9,25 @@ using UglyToad.PdfPig.DocumentLayoutAnalysis.WordExtractor;
 
 namespace CareerGap.Api.Files;
 
-public sealed record SourceSegment(string Id, string Text);
+public sealed record SourceSegment(string Id, string Text, int? Page = null, int? Paragraph = null, string? Region = null);
 public sealed record ParsedDocument(string MimeType, IReadOnlyList<SourceSegment> Segments);
 public sealed class DocumentError(string code) : Exception(code) { public string Code { get; } = code; }
 public sealed class DocumentParser
 {
     public const int MaxBytes = 4 * 1024 * 1024;
-    public const string Version = "pdfpig-0.1.16-openxml-3.5.1-v1";
-    public ParsedDocument Parse(byte[] bytes, string name, CancellationToken ct)
+    public const string Version = "pdfpig-0.1.16-openxml-3.5.1-v2-isolated";
+    public ParsedDocument Parse(byte[] bytes, string name, CancellationToken ct) => ParserProcess.Parse(bytes, name, ct);
+    internal ParsedDocument ParseCore(byte[] bytes, string name, CancellationToken ct)
     {
         if (bytes.Length is 0 or > MaxBytes) throw new DocumentError("file_size");
         var watch = Stopwatch.StartNew();
         var segments = new List<SourceSegment>();
-        void Add(string id, string text)
+        void Add(string id, string text, int? page = null, int? paragraph = null, string? region = null)
         {
             ct.ThrowIfCancellationRequested();
             if (watch.Elapsed > TimeSpan.FromSeconds(10)) throw new DocumentError("parse_timeout");
             if (segments.Count >= 500 || segments.Sum(x => x.Text.Length) + text.Length > 24000) throw new DocumentError("text_limit");
-            if (!string.IsNullOrWhiteSpace(text)) segments.Add(new(id, text.Trim()));
+            if (!string.IsNullOrWhiteSpace(text)) segments.Add(new(id, text.Trim(), page, paragraph, region));
         }
         try
         {
@@ -43,7 +44,7 @@ public sealed class DocumentParser
                             var words = NearestNeighbourWordExtractor.Instance.GetWords(page.Letters);
                             var blocks = DocstrumBoundingBoxes.Instance.GetBlocks(words);
                             var index = 0;
-                            foreach (var block in UnsupervisedReadingOrderDetector.Instance.Get(blocks)) Add($"page-{page.Number}-block-{++index}", block.Text);
+                            foreach (var block in UnsupervisedReadingOrderDetector.Instance.Get(blocks)) Add($"page-{page.Number}-block-{++index}", block.Text, page.Number, null, "body");
                         }
                     }
                     if (segments.Sum(x => x.Text.Length) < 20) throw new DocumentError("no_text_ocr_unsupported");
@@ -59,7 +60,13 @@ public sealed class DocumentParser
                         if (doc.DocumentType != DocumentFormat.OpenXml.WordprocessingDocumentType.Document) throw new DocumentError("file_format");
                         var body = doc.MainDocumentPart?.Document?.Body ?? throw new DocumentError("file_format");
                         var index = 0;
-                        foreach (var paragraph in body.Descendants<Paragraph>()) Add($"paragraph-{++index}", paragraph.InnerText);
+                        foreach (var paragraph in body.Descendants<Paragraph>()) Add($"paragraph-{++index}", paragraph.InnerText, null, index, "body");
+                        var partIndex = 0;
+                        foreach (var header in doc.MainDocumentPart!.HeaderParts)
+                        { var i = 0; foreach (var paragraph in header.Header?.Descendants<Paragraph>() ?? []) Add($"header-{partIndex}-paragraph-{++i}", paragraph.InnerText, null, i, "header"); partIndex++; }
+                        partIndex = 0;
+                        foreach (var footer in doc.MainDocumentPart.FooterParts)
+                        { var i = 0; foreach (var paragraph in footer.Footer?.Descendants<Paragraph>() ?? []) Add($"footer-{partIndex}-paragraph-{++i}", paragraph.InnerText, null, i, "footer"); partIndex++; }
                     }
                     if (segments.Sum(x => x.Text.Length) < 20) throw new DocumentError("no_text");
                     return new("application/vnd.openxmlformats-officedocument.wordprocessingml.document", segments);

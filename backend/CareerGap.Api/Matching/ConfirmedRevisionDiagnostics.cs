@@ -12,7 +12,7 @@ public sealed record ConfirmedRevisionDiagnostics(string MethodVersion, string S
 
 public static class ConfirmedRevisionMatcher
 {
-    public const string MethodVersion = "confirmed-revision-term-overlap-diagnostic-v1";
+    public const string MethodVersion = "confirmed-revision-term-overlap-diagnostic-v2";
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
 
     public static ConfirmedRevisionDiagnostics Evaluate(ResumeDataRevision? resumeRevision,
@@ -46,7 +46,7 @@ public static class ConfirmedRevisionMatcher
         IReadOnlyList<string> skills, IReadOnlyList<JobStructuredRequirement> requirements,
         KeywordBaselineOptions options)
     {
-        var skillTerms = skills.Select(x => KeywordBaselineScorer.PrepareResumeTerms(x, options)).ToArray();
+        var skillTerms = skills.Select(x => ResumeSkillProjection.CanonicalTerms(KeywordBaselineScorer.PrepareResumeTerms(x, options))).ToArray();
         var matched = 0;
         var required = 0;
         var matchedRequired = 0;
@@ -55,7 +55,7 @@ public static class ConfirmedRevisionMatcher
         {
             if (requirement.Importance == "required") required++;
             if (requirement.Importance == "optional") optional++;
-            var terms = KeywordBaselineScorer.PrepareResumeTerms(requirement.Text, options);
+            var terms = ResumeSkillProjection.CanonicalTerms(KeywordBaselineScorer.PrepareResumeTerms(requirement.Text, options));
             if (terms.Count == 0 || !skillTerms.Any(skill => skill.Overlaps(terms))) continue;
             matched++;
             if (requirement.Importance == "required") matchedRequired++;
@@ -74,6 +74,7 @@ public static class ConfirmedRevisionMatcher
     private static bool TryReadResume(ResumeDataRevision revision, bool publicScope, out List<string> skills)
     {
         skills = [];
+        if (revision.SchemaVersion is 2 or 3) return ResumeSkillProjection.TryRead(revision, publicScope, out skills);
         if (revision.Origin != "user_confirmed" || revision.ConfirmedBy is null || revision.ConfirmedAt is null ||
             revision.SchemaVersion != ResumeRevisionFactory.SchemaVersion) return false;
         try
@@ -121,14 +122,14 @@ public static class ConfirmedRevisionMatcher
     {
         requirements = [];
         if (revision.Origin != "user_confirmed" || revision.ConfirmedBy is null || revision.ConfirmedAt is null ||
-            revision.SchemaVersion != JobRevisionFactory.SchemaVersion) return false;
+            revision.SchemaVersion is not (1 or JobRevisionFactory.SchemaVersion)) return false;
         try
         {
             var data = JsonSerializer.Deserialize<JobStructuredRequirements>(revision.StructuredData, Json);
             var evidence = JsonSerializer.Deserialize<JobRequirementEvidence[]>(revision.Evidence, Json);
             using var source = JsonDocument.Parse(revision.SourceText);
             var sourceText = source.RootElement.GetProperty("requirementsText").GetString();
-            if (data?.SchemaVersion != JobRevisionFactory.SchemaVersion || data.Requirements is null ||
+            if (data?.SchemaVersion is not (1 or JobRevisionFactory.SchemaVersion) || data.Requirements is null ||
                 data.Requirements.Count > JobRevisionFactory.MaxRequirements || data.Requirements.Any(x => x is null) ||
                 evidence is null || evidence.Length != data.Requirements.Count || evidence.Any(x => x is null) ||
                 sourceText is null) return false;

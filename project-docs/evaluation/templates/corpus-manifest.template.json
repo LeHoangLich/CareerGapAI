@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "corpus_id": "replace-in-private-copy",
+  "status": "draft_not_approved",
+  "split_locked_at_utc": null,
+  "label_protocol_version": "stage-a-v0.1",
+  "documents": [],
+  "document_record_fields": {
+    "document_id": "pseudonymous-id",
+    "group_id": "same-origin-all-variants",
+    "kind": "cv_or_jd",
+    "industry": "it_or_actual_industry",
+    "language": "vi_or_en_or_mixed",
+    "format": "pdf_or_docx_or_text",
+    "layout": "single_column_or_multi_column_or_table_or_no_text",
+    "sha256": "64-lowercase-hex-of-original-bytes",
+    "hash_kind": "file_sha256",
+    "synthetic": false,
+    "private_source_ref": "private-file-reference",
+    "rights_status": "pending_or_verified_or_withdrawn",
+    "rights_evidence_ref": "private-consent-or-license-reference",
+    "allowed_uses": ["local_evaluation"],
+    "provider_transfer_allowed": false,
+    "retention_until_utc": null,
+    "split": "demo_or_tuning_or_final_or_smoke",
+    "split_assignment_reason": "record-before-tuning",
+    "label_version": null,
+    "review_status": "pending"
+  }
+}

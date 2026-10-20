@@ -17,13 +17,17 @@ test('candidate registers, controls profile sharing, changes password, and recov
   const profilePanel = page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Hồ sơ và quyền chia sẻ' }) });
 
   await profilePanel.getByLabel('Tiêu đề nghề nghiệp', { exact: true }).fill('Backend Developer');
-  await page.getByRole('textbox', { name: 'Email liên hệ', exact: true }).fill('candidate-contact@example.invalid');
+  await profilePanel.getByRole('textbox', { name: 'Email liên hệ', exact: true }).fill('candidate-contact@example.invalid');
   await page.getByLabel('Kỹ năng, ngăn cách bằng dấu phẩy', { exact: true }).fill('C#, PostgreSQL');
   await page.getByRole('checkbox', { name: 'Tiêu đề', exact: true }).check();
   await page.getByRole('checkbox', { name: 'Kỹ năng', exact: true }).check();
   await page.getByRole('button', { name: 'Lưu hồ sơ', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Hồ sơ đã được lưu.' })).toBeVisible();
   await expect(profilePanel.getByLabel('Tiêu đề nghề nghiệp', { exact: true })).toHaveValue('Backend Developer');
+  await page.reload();
+  await expect(profilePanel.getByLabel('Tiêu đề nghề nghiệp', { exact: true })).toHaveValue('Backend Developer');
+  await expect(profilePanel.getByRole('textbox', { name: 'Email liên hệ', exact: true })).toHaveValue('candidate-contact@example.invalid');
+  await expect(page.getByRole('checkbox', { name: 'Tiêu đề', exact: true })).toBeChecked();
 
   await page.getByLabel('Mật khẩu hiện tại', { exact: true }).fill(initialPassword);
   await page.getByLabel('Mật khẩu mới', { exact: true }).fill(changedPassword);

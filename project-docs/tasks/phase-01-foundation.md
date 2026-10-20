@@ -1,5 +1,7 @@
 # GĐ1 — Nền tảng, quyền và đánh giá
 
+> Điểm đọc hiện tại: [current-status](../current-status.md) và [checklist M1/M2 giai đoạn A](../report/stage-a-2026-10-16.md). Trạng thái “Chưa bắt đầu” và yêu cầu gốc bên dưới được giữ theo thời điểm lịch sử, không mô tả baseline hiện tại.
+
 > **Quyết định mới ngày 15/10/2026:** dừng deploy, ưu tiên hoàn thiện localhost. Kế hoạch và nhật ký cũ bên dưới được giữ để truy vết; các yêu cầu cloud/AI thật trên demo và danh sách G1-R01–R08 cũ không còn là thứ tự thực hiện hiện tại. Xem mục cuối **Ưu tiên hiện tại — localhost** và điều kiện M1 mới trong roadmap. Chưa tự đánh dấu M1 đạt.
 
 Ngày lập: 15/10/2026. Trạng thái ban đầu: **Chưa bắt đầu**. Người dùng đã xác nhận **tự thực hiện một mình**. Lịch mục tiêu: tuần 1–2 tính từ ngày người thực hiện khởi động, chưa gán ngày thực tế; không mặc định có nhiều người để chia việc.

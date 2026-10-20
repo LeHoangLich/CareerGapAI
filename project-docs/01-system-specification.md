@@ -163,7 +163,7 @@ Các quy tắc bổ sung được đề xuất:
 - AI hỗ trợ viết phần giới thiệu, diễn đạt kinh nghiệm, mô tả dự án và kỹ năng bằng tiếng Việt hoặc tiếng Anh.
 - AI chỉ sử dụng thông tin thật đã được người dùng cung cấp; nếu thiếu dữ liệu cần yêu cầu bổ sung hoặc để trống.
 - Người dùng xem trước, sửa và chấp nhận nội dung trước khi lưu hoặc xuất bản.
-- Đề xuất bản đầu có 2–3 mẫu cố định, hỗ trợ xuất PDF. AI hỗ trợ nội dung; thiết kế mẫu do người thực hiện xây dựng và kiểm soát.
+- Xác nhận chủ dự án ngày 16/10/2026 trong giai đoạn B: chốt **một mẫu một cột `simple-v1` cho GĐ3**, hỗ trợ xuất PDF; thêm mẫu sau. Đề xuất 2–3 mẫu trước đó không còn là điều kiện chặn GĐ3. AI hỗ trợ nội dung ở giai đoạn sau; thiết kế mẫu do người thực hiện kiểm soát.
 
 ### 5. Tìm việc, lưu việc và ứng tuyển
 

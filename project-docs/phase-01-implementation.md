@@ -1,5 +1,9 @@
 # GĐ1 — Hợp đồng, quyết định và vận hành
 
+> API bổ sung và hợp đồng mới sau B: [GĐ3 extraction/builder](phase-03-extraction-contract.md), [kiểm chứng B](report/stage-b-2026-10-16.md). Các mô tả skills-only bên dưới giữ cho luồng v1 tương thích; v3 là contract riêng, không thay đổi snapshot/version đã lưu.
+
+> Hiện trạng chuẩn và CI: [current-status](current-status.md). Hợp đồng schema/API thực dùng được đối chiếu ở [ma trận](schema-implementation-status.md); báo cáo các lượt cũ không thay cho [kiểm tra A](report/stage-a-2026-10-16.md).
+
 Ngày 15/10/2026. Nguồn yêu cầu: [đặc tả](../project-docs/01-system-specification.md), [công nghệ](../project-docs/02-tech-stack-decisions.md), [database](../project-docs/04-database-design.md). Đây là mô tả lát triển khai local, không phê duyệt toàn bộ các đề xuất trong tài liệu gốc.
 
 ## API hiện có
@@ -67,7 +71,7 @@ CV vẫn private theo mặc định, không tự public khi upload hoặc nộp 
 
 Parser kiểm tra thời gian giữa các segment, cancellation giữa trang/đoạn. **Chưa có hard timeout cô lập process** cho một thao tác đồng bộ trong thư viện, chưa đọc đầy đủ header/footer DOCX; cần đo trên bộ mẫu khó trước khi nhận file không tin cậy trên cloud. Bộ giả nhiều cột không chứng minh parser tốt trên mọi bố cục.
 
-Storage local chỉ development/testing. Adapter S3 tạo object `If-None-Match: *`, đọc có giới hạn; chưa được thử trên private bucket thật. Recruiter tải CV snapshot qua kiểm tra owner job/status/retention ở backend; endpoint file ID trực tiếp vẫn chỉ chính chủ. Chưa có delete API hoặc tự dọn file để tránh xóa snapshot ngoài chính sách đã chốt.
+Storage local chỉ development/testing. Adapter S3 tạo object `If-None-Match: *`, đọc có giới hạn; chưa được thử trên private bucket thật. Recruiter tải CV snapshot qua kiểm tra owner job/status/retention ở backend; endpoint file ID trực tiếp vẫn chỉ chính chủ. L08 đã có OrphanFileCleanupWorker dọn pending không tham chiếu sau 24 giờ, kiểm tra tham chiếu và retry; chưa có API xóa CV tùy ý. File failed chưa chốt retention; object key ngoài metadata chưa được sweep. Không xóa snapshot ngoài chính sách.
 
 ## Cấu hình production — hoãn, chỉ tham khảo cho giai đoạn sau
 

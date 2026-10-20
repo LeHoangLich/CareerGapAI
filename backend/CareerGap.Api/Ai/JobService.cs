@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 namespace CareerGap.Api.Ai;
 
 public sealed class JobError(string code, int status) : Exception(code) { public int Status { get; } = status; public string Code { get; } = code; }
-public sealed record CreateJobRequest(Guid ResumeVersionId, Guid IdempotencyKey);
+public sealed record CreateJobRequest(Guid ResumeVersionId, Guid IdempotencyKey, string Contract = "skills-v1");
 public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfiguration config, JobWakeup wakeup)
 {
     private const string PromptVersion = "extract-probe-v2";
@@ -24,10 +24,12 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
     public async Task<AiJob> Enqueue(Guid uid, CreateJobRequest input, CancellationToken ct)
     {
         if (input.IdempotencyKey == Guid.Empty) throw new JobError("idempotency_key_required", 400);
+        if (input.Contract is not ("skills-v1" or FullCvExtraction.Contract)) throw new JobError("invalid_extraction_contract", 400);
         var opt = options.Value;
         if (!opt.Enabled) throw new JobError("ai_disabled", 503);
         if (opt.Provider is not ("Fake" or "DeepSeek")) throw new JobError("provider_not_configured", 503);
         if (opt.Provider == "DeepSeek" && (!opt.RealIsConfigured() || string.IsNullOrWhiteSpace(config["Ai:ApiKey"]))) throw new JobError("provider_not_configured", 503);
+        if (opt.Provider == "DeepSeek" && !opt.SupportsContract(input.Contract)) throw new JobError("full_cv_output_budget_required", 503);
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         // Serialize only short admission transactions: method/period creation and idempotency.
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(341017)", ct);
@@ -36,20 +38,23 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         if (file.Status != "ready" || file.Sha256 != version.DocumentHash) throw new JobError("file_unavailable", 409);
         var existing = await db.AiJobs.SingleOrDefaultAsync(x => x.RequestedBy == uid && x.IdempotencyKey == input.IdempotencyKey, ct);
         // Request identity excludes mutable provider configuration. A retry returns its original method.
-        var inputHash = Hash($"{PromptVersion}:{version.Id}:{version.DocumentHash}");
+        var inputHash = Hash($"{PromptVersion}:{version.Id}:{version.DocumentHash}" + (input.Contract == "skills-v1" ? "" : ":" + input.Contract));
         if (existing is not null)
         {
             if (existing.InputHash != inputHash) throw new JobError("idempotency_conflict", 409);
             await tx.CommitAsync(ct); return existing;
         }
-        var parameters = opt.Provider == "Fake" ? new MethodParameters("fake-keyword-v1", 16000, 512, 0, 0, "not-applicable") : opt.Snapshot();
+        var parameters = opt.Provider == "Fake" ? new MethodParameters("fake-keyword-v1", 16000, 512, 0, 0, "not-applicable") : opt.Snapshot(input.Contract);
+        parameters = parameters with { Contract = input.Contract, CompletionPolicy = CompletionValidator.Version, ParserVersion = DocumentParser.Version };
+        var schema = input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Contract : OutputSchemaVersion;
+        var prompt = input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt;
         var raw = JsonSerializer.Serialize(parameters, OutputValidator.Json);
-        var configHash = Hash($"{opt.Provider}:{PromptVersion}:{OutputSchemaVersion}:{OutputValidator.Version}:{Files.DocumentParser.Version}:{DeepSeekClient.Prompt}:{raw}");
+        var configHash = Hash($"{opt.Provider}:{PromptVersion}:{schema}:{OutputValidator.Version}:{Files.DocumentParser.Version}:{prompt}:{raw}");
         var method = await db.AiMethods.SingleOrDefaultAsync(x => x.ConfigHash == configHash, ct);
         if (method is null)
         {
             method = new AiMethod { ConfigHash = configHash, Provider = opt.Provider, Model = parameters.Model,
-                PromptVersion = PromptVersion, SchemaVersion = OutputSchemaVersion, Parameters = raw };
+                PromptVersion = PromptVersion, SchemaVersion = schema, Parameters = raw };
             db.AiMethods.Add(method);
         }
         var now = await Now(ct);
@@ -157,7 +162,7 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         reservation.UnallocatedAmount = 0;
     }
     public async Task<bool> Finish(Guid id, string owner, long generation, string? output, string? error, bool retry,
-        CancellationToken ct, ParsedDocument? sourceDocument = null, SkillOutput? structuredOutput = null)
+        CancellationToken ct, ParsedDocument? sourceDocument = null, SkillOutput? structuredOutput = null, FullCvOutput? fullOutput = null)
     {
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         var job = await LockJob(id, ct);
@@ -167,7 +172,7 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         if (!active) { output = null; error = "access_revoked"; retry = false; }
         if (output is not null)
         {
-            if (job.ResumeVersionId is not { } versionId || sourceDocument is null || structuredOutput is null)
+            if (job.ResumeVersionId is not { } versionId || sourceDocument is null || (structuredOutput is null && fullOutput is null))
             { output = null; error = "revision_input_missing"; retry = false; }
             else
             {
@@ -182,9 +187,9 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
                     if (parent?.RevisionNo == int.MaxValue) { output = null; error = "resume_revision_limit"; retry = false; }
                     else
                     {
-                        db.ResumeDataRevisions.Add(ResumeRevisionFactory.FromAi(job.RequestedBy, versionId,
-                            parent?.Id, (parent?.RevisionNo ?? 0) + 1, job.MethodVersionId, job.Id, sourceDocument,
-                            structuredOutput, now));
+                        db.ResumeDataRevisions.Add(fullOutput is not null
+                            ? FullCvExtraction.FromAi(job.RequestedBy, versionId, parent?.Id, (parent?.RevisionNo ?? 0) + 1, job.MethodVersionId, job.Id, sourceDocument, fullOutput, now)
+                            : ResumeRevisionFactory.FromAi(job.RequestedBy, versionId, parent?.Id, (parent?.RevisionNo ?? 0) + 1, job.MethodVersionId, job.Id, sourceDocument, structuredOutput!, now));
                     }
                 }
             }
@@ -214,6 +219,36 @@ public static class JobEndpoints
                 return Results.Accepted($"/api/ai/jobs/{job.Id}", new { job.Id, job.Status });
             }
             catch (JobError ex) { return Results.Problem(statusCode: ex.Status, title: ex.Code); }
+        }).RequireAuthorization();
+        // Explicit private export for offline evaluation. Always the original job output, never a confirmed child.
+        app.MapGet("/api/ai/jobs/{id:guid}/evaluation-capture", async (Guid id, ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
+        {
+            if (!user.IsInRole("Candidate")) return Results.Forbid();
+            var uid = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var row = await (from j in db.AiJobs.AsNoTracking()
+                join m in db.AiMethods.AsNoTracking() on j.MethodVersionId equals m.Id
+                join v in db.ResumeVersions.AsNoTracking() on j.ResumeVersionId equals v.Id
+                join f in db.StoredFiles.AsNoTracking() on v.FileId equals f.Id
+                where j.Id == id && j.RequestedBy == uid && v.CandidateId == uid && f.OwnerUserId == uid && f.Status == "ready"
+                select new { Job = j, Method = m, v.DocumentHash }).SingleOrDefaultAsync(ct);
+            if (row is null) return Results.NotFound();
+            if (row.Job.Status is not ("succeeded" or "failed")) return Results.Problem(statusCode: 409, title: "capture_not_terminal");
+            var parameters = JsonSerializer.Deserialize<MethodParameters>(row.Method.Parameters, OutputValidator.Json);
+            if (parameters?.Contract != FullCvExtraction.Contract || parameters.CompletionPolicy != CompletionValidator.Version ||
+                parameters.ParserVersion != DocumentParser.Version)
+                return Results.Problem(statusCode: 409, title: "capture_metadata_unavailable");
+            var attempts = await db.ExternalCallAttempts.AsNoTracking().Where(x => x.AiJobId == id).ToListAsync(ct);
+            return Results.Ok(new { schemaVersion = 1, contract = parameters.Contract, parser = parameters.ParserVersion,
+                row.Method.Provider, row.Method.Model, method = row.Method.ConfigHash,
+                promptSha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(FullCvExtraction.Prompt))),
+                parameters = JsonSerializer.Deserialize<JsonElement>(row.Method.Parameters), beforeUserCorrection = true,
+                unit = row.Method.Provider == "Fake" ? "test_credit" : "usd",
+                document = new { sourceJobId = id, sourceSha256 = row.DocumentHash, rawOutput = row.Job.OutputJson,
+                    finishReason = row.Job.Status == "succeeded" ? "stop" : null, errorCode = row.Job.ErrorCode,
+                    inputTokens = attempts.Count > 0 && attempts.All(x => x.InputTokens.HasValue) ? (long?)attempts.Sum(x => x.InputTokens!.Value) : null,
+                    outputTokens = attempts.Count > 0 && attempts.All(x => x.OutputTokens.HasValue) ? (long?)attempts.Sum(x => x.OutputTokens!.Value) : null,
+                    cost = attempts.Count > 0 && attempts.All(x => x.ActualAmount.HasValue) ? (decimal?)attempts.Sum(x => x.ActualAmount!.Value) : null,
+                    elapsedMs = row.Job.FinishedAt.HasValue ? (long?)(row.Job.FinishedAt.Value - row.Job.CreatedAt).TotalMilliseconds : null } });
         }).RequireAuthorization();
         app.MapGet("/api/ai/jobs/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
         {

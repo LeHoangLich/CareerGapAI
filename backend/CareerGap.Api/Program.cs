@@ -18,6 +18,15 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
+if (args.Length == 1 && args[0] == "--parse-document-worker") { await ParserProcess.RunWorker(); return; }
+if (args.Length == 3 && args[0] == "--evaluate-cv-extraction") { await ExtractionEvaluation.Run(args[1], args[2]); return; }
+if (args.Length == 4 && args[0] == "--evaluate-cv-captures")
+{
+    try { await CvCaptureEvaluation.Run(args[1], args[2], args[3]); }
+    catch (Exception error) when (error is not OutOfMemoryException)
+    { Console.Error.WriteLine(error is InvalidDataException ? error.Message : "capture_evaluation_invalid_or_unavailable"); Environment.ExitCode = 1; }
+    return;
+}
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddFilter("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();

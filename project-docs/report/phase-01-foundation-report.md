@@ -1,5 +1,7 @@
 # Báo cáo thực thi GĐ1 — Nền tảng, quyền và đánh giá
 
+> **Nhật ký lịch sử**, đã mở rộng qua các lát GĐ2/GĐ3. Những SHA/CI/test count và câu “chưa triển khai/chưa có consumer” bên dưới chỉ đúng tại thời điểm từng mục. Trạng thái hiện tại nằm ở [current-status](../current-status.md), kết quả mới và checklist ở [báo cáo giai đoạn A](stage-a-2026-10-16.md); L12 hiện đã có consumer diagnostic. Không lấy mục mở đầu ngày 15/10 làm hiện trạng mới nhất.
+
 Ngày báo cáo: **15/10/2026**, múi giờ Asia/Saigon. Kết luận: **Chưa đạt M1**. Đã thực thi và kiểm chứng prototype local; chưa hoàn thành toàn bộ GĐ1.
 
 Cập nhật theo xác nhận mới của người dùng: dự án do **1 người tự thực hiện**. Đã sửa tiêu chí nhân sự sang dựng lại theo README và tự review/CI; không còn điều kiện ba thành viên. Các kết quả kiểm thử bên dưới giữ đúng bằng chứng của lần chạy đã ghi, không coi việc sửa tài liệu là chạy lại kiểm thử.

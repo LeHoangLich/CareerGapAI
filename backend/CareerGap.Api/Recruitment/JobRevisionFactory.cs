@@ -6,7 +6,7 @@ using CareerGap.Api.Data;
 
 namespace CareerGap.Api.Recruitment;
 
-public sealed record JobStructuredRequirement(string RequirementId, string Text, string Importance, string SourceType);
+public sealed record JobStructuredRequirement(string RequirementId, string Text, string Importance, string SourceType, decimal? MinimumYears = null, string Relation = "single", IReadOnlyList<string>? Alternatives = null, bool NeedsReview = false);
 public sealed record JobStructuredRequirements(int SchemaVersion, IReadOnlyList<JobStructuredRequirement> Requirements);
 public sealed record JobRequirementEvidence(string RequirementId, string SourceType, int? StartOffset,
     int? EndOffset, string? Quote, string? Statement);
@@ -17,8 +17,8 @@ public sealed record ConfirmJobRevisionRequest(int BaseRevisionNo,
 
 public static partial class JobRevisionFactory
 {
-    public const int SchemaVersion = 1;
-    public const string ParserVersion = "jd-lines-importance-hints-v1";
+    public const int SchemaVersion = 2;
+    public const string ParserVersion = "jd-atomic-requirements-v2";
     public const int MaxRequirements = 100;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly HashSet<string> ImportanceValues = new(StringComparer.Ordinal)
@@ -27,7 +27,7 @@ public static partial class JobRevisionFactory
     [GeneratedRegex(@"\b(optional|nice\s+to\s+have|preferred|bonus|plus)\b|không\s+(bắt\s+buộc|yêu\s+cầu|cần)|ưu\s+tiên|là\s+lợi\s+thế|khuyến\s+khích", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex OptionalHint();
 
-    [GeneratedRegex(@"\b(required|must(?:\s+have)?|mandatory)\b|bắt\s+buộc|cần\s+có|yêu\s+cầu|tối\s+thiểu", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\b(required|must(?:\s+have)?|mandatory|minimum|at\s+least)\b|bắt\s+buộc|cần\s+có|yêu\s+cầu|tối\s+thiểu", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex RequiredHint();
 
     public static bool TryExtract(Guid versionId, Guid? parentId, int revisionNo, string requirementsText,
@@ -42,12 +42,22 @@ public static partial class JobRevisionFactory
         {
             var trimmed = line.Trim();
             if (trimmed.Length == 0 || IsSectionHeader(trimmed)) continue;
-            var leading = line.Length - line.TrimStart().Length;
-            var quote = line.Trim();
-            var offset = start + leading;
-            var id = $"source-{++ordinal:D4}";
-            requirements.Add(new JobStructuredRequirement(id, quote, HintImportance(quote), "document_text"));
-            evidence.Add(new JobRequirementEvidence(id, "document_text", offset, offset + quote.Length, quote, null));
+            var importance = HintImportance(trimmed);
+            // Keep disjunctions intact: never turn A or B into two mandatory criteria.
+            var disjunction = Regex.IsMatch(trimmed, @"\s+(?:or|hoặc)\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+            var pieces = disjunction ? new[] { (Text: line, Offset: 0) } : Regex.Matches(line, @"[^;,]+", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50))
+                .Select(match => (Text: match.Value, Offset: match.Index)).ToArray();
+            foreach (var piece in pieces)
+            {
+                var quote = piece.Text.Trim(); if (quote.Length == 0) continue;
+                var offset = start + piece.Offset + piece.Text.Length - piece.Text.TrimStart().Length;
+                var id = $"source-{++ordinal:D4}";
+                var years = Regex.Match(quote, @"(?<![\d.])(?<min>\d{1,2}(?:\.\d+)?)\s*(?:[-–]\s*\d{1,2})?\+?\s*(?:years?|năm)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+                decimal? minimum = years.Success && decimal.TryParse(years.Groups["min"].Value, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var parsedYears) && parsedYears <= 99.99m ? parsedYears : null;
+                var alternatives = disjunction ? Regex.Split(quote, @"\s+(?:or|hoặc)\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50)).Select(x => x.Trim()).ToArray() : null;
+                requirements.Add(new(id, quote, importance, "document_text", minimum, disjunction ? "any_of" : "single", alternatives, disjunction || pieces.Length > 1));
+                evidence.Add(new(id, "document_text", offset, offset + quote.Length, quote, null));
+            }
         }
         if (requirements.Count > MaxRequirements) { error = "job_requirement_limit"; return false; }
 
@@ -76,7 +86,7 @@ public static partial class JobRevisionFactory
             parentEvidence = JsonSerializer.Deserialize<JobRequirementEvidence[]>(parent.Evidence, Json);
         }
         catch (JsonException) { error = "job_revision_data_unavailable"; return false; }
-        if (parsed?.SchemaVersion != SchemaVersion || parsed.Requirements is null ||
+        if (parsed?.SchemaVersion is not (1 or SchemaVersion) || parsed.Requirements is null ||
             parsed.Requirements.Count > MaxRequirements || parentEvidence is null || parentEvidence.Length > MaxRequirements)
         { error = "job_revision_data_unavailable"; return false; }
 

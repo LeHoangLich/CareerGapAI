@@ -50,7 +50,7 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
 
         var resumeRevision = await db.ResumeDataRevisions.AsNoTracking()
             .Where(x => x.ResumeVersionId == resumeVersionId && x.CandidateId == candidateId &&
-                x.Origin == "user_confirmed" && x.ConfirmedBy == candidateId && x.ConfirmedAt != null)
+                (x.Origin == "user_confirmed" || (x.Origin == "user_entered" && x.SchemaVersion == 2)) && x.ConfirmedBy == candidateId && x.ConfirmedAt != null)
             .OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
         var jobRevisionMap = await LoadJobRevisionsAsync(jobs
             .Where(x => x.CurrentVersion is not null)
@@ -121,7 +121,7 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
         var resumeRevisionRows = publicResumeIds.Length == 0
             ? []
             : await db.ResumeDataRevisions.AsNoTracking()
-                .Where(x => publicResumeIds.Contains(x.ResumeVersionId) && x.Origin == "user_confirmed" &&
+                .Where(x => publicResumeIds.Contains(x.ResumeVersionId) && (x.Origin == "user_confirmed" || (x.Origin == "user_entered" && x.SchemaVersion == 2)) &&
                     x.ConfirmedBy == x.CandidateId && x.ConfirmedAt != null)
                 .OrderByDescending(x => x.RevisionNo).ToListAsync(ct);
         var resumeRevisionMap = resumeRevisionRows.GroupBy(x => x.ResumeVersionId)

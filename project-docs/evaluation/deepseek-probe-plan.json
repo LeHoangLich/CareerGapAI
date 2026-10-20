@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 2,
+  "status": "prepared_waiting_provider_and_authorization",
+  "backendKeyConfigured": false,
+  "paidProbeAuthorized": false,
+  "inputRightsVerified": false,
+  "projectRemainingUsd": null,
+  "providerAvailableUsd": null,
+  "periodStartUtc": null,
+  "periodEndUtc": null,
+  "backendMonthlyLimitUsd": null,
+  "authorizedProbeCapUsd": null,
+  "proposedModel": null,
+  "pricingVerifiedAt": null,
+  "pricingSource": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "priceBasis": "must_verify_model_and_prices_before_any_paid_call",
+  "inputUsdPerMillion": null,
+  "outputUsdPerMillion": null,
+  "maxInputTokens": 16000,
+  "maxOutputTokens": 2048,
+  "maximumAttempts": 2,
+  "contract": "cv-fields-v3"
+}

@@ -4,6 +4,7 @@ import { api, refreshCsrf } from './api';
 import { PublicJobBrowser, RecruiterJobManager } from './jobs';
 import { CandidatePublicResumeManager, PublicResumeBrowser } from './publicResumes';
 import './style.css';
+import { FullCvReview } from './fullCvReview';
 
 const ResumeBuilderPanel = lazy(() => import('./resumeBuilder').then(module => ({ default: module.ResumeBuilderPanel })));
 
@@ -11,9 +12,9 @@ type Session = { authenticated: boolean; userId?: string; email?: string; roles:
 type DeletionState = { status: string; requestedAt: string; purgeAfter: string };
 type ResumeVersion = { id: string; fileId: string; versionNo: number; documentHash: string; createdAt: string };
 type Resume = { id: string; title: string; rowVersion: number; createdAt: string; updatedAt: string; versions: ResumeVersion[] };
-type Job = { id: string; resumeVersionId?: string; status: string; provider?: string; model?: string; outputJson?: string; errorCode?: string };
+type Job = { schemaVersion?: string; id: string; resumeVersionId?: string; status: string; provider?: string; model?: string; outputJson?: string; errorCode?: string };
 type ResumeDataRevision = {
-  id: string; resumeVersionId: string; revisionNo: number; parentRevisionId: string | null; origin: string;
+  id: string; resumeVersionId: string; schemaVersion: number; revisionNo: number; parentRevisionId: string | null; origin: string;
   structuredData: { schemaVersion: number; skills: { name: string }[] };
   evidence: { skillName: string; sourceType: string; segmentId: string | null; startOffset: number | null; endOffset: number | null; quote: string | null; statement: string | null }[];
   parserVersion: string; dataHash: string; confirmedAt: string | null;
@@ -77,10 +78,17 @@ function CandidateProfilePanel() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  useEffect(() => { api<Profile>('/api/profile/me').then(value => { setProfile(value); setSkillsText(Array.isArray(value.details.skills) ? value.details.skills.join(', ') : ''); }).catch(e => setError((e as Error).message)); }, []);
+  useEffect(() => {
+    let cancelled = false;
+    api<Profile>('/api/profile/me').then(value => {
+      if (cancelled) return;
+      setProfile(value); setSkillsText(Array.isArray(value.details.skills) ? value.details.skills.join(', ') : '');
+    }).catch(e => { if (!cancelled) setError((e as Error).message); });
+    return () => { cancelled = true; };
+  }, []);
   if (!profile) return <section className="card"><h2>Hồ sơ ứng viên</h2><p role="status">Đang tải hồ sơ…</p>{error && <p role="alert" className="error">{error}</p>}</section>;
   const toggle = (key: string, checked: boolean) => setProfile(current => current ? { ...current, sharedFields: checked ? [...new Set([...current.sharedFields, key])] : current.sharedFields.filter(x => x !== key) } : current);
-  const field = (key: keyof Profile, label: string, type = 'text') => <label>{label}<input type={type} value={String(profile[key] ?? '')} onChange={e => setProfile(current => current ? { ...current, [key]: e.target.value || null } : current)}/></label>;
+  const field = (key: keyof Profile, label: string, type = 'text') => <label>{label}<input type={type} value={String(profile[key] ?? '')} onChange={e => { const value = e.currentTarget.value || null; setProfile(current => current ? { ...current, [key]: value } : current); }}/></label>;
   return <section className="card"><h2>Hồ sơ và quyền chia sẻ</h2><p>ID hồ sơ để gửi cho nhà tuyển dụng bạn chọn: <code>{profile.userId}</code></p>
     <form onSubmit={e => { e.preventDefault(); void (async () => { setBusy(true); setError(''); setMessage(''); try {
       const saved = await api<Profile>('/api/profile/me', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
@@ -148,7 +156,7 @@ function AccountDeletionPendingPanel({ session, onAuthenticated }: { session: Se
       <label>Mật khẩu hiện tại<input type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e => setPassword(e.target.value)}/></label>
       <button disabled={busy}>{busy ? 'Đang hủy…' : 'Hủy yêu cầu xóa'}</button>
     </form>
-    <button className="secondary" disabled={busy} onClick={() => void (async () => { try { await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); onAuthenticated({ authenticated: false, roles: [] }); } catch (err) { setError((err as Error).message); } })()}>Đăng xuất</button>
+    <button className="secondary" disabled={busy} onClick={() => void (async () => { try { sessionStorage.removeItem(`careergap:builder-recovery:${session.userId}`); await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); onAuthenticated({ authenticated: false, roles: [] }); } catch (err) { setError((err as Error).message); } })()}>Đăng xuất</button>
     {error && <p role="alert" className="error">{error}</p>}
   </section>;
 }
@@ -170,7 +178,7 @@ function App() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const poll = useRef(0);
-  const pending = useRef<{ versionId: string; key: string } | undefined>(undefined);
+  const pending = useRef<{ versionId: string; key: string; contract?: string } | undefined>(undefined);
   useEffect(() => { api<Session>('/api/auth/me').then(setSession).catch(e => setError(e.message)).finally(() => setLoading(false)); }, []);
   useEffect(() => {
     if (session?.authenticated && session.roles.includes('Candidate'))
@@ -189,7 +197,7 @@ function App() {
       if (cancelled) return;
       setRevisions(value);
       const latest = value[0];
-      if (latest?.origin === 'ai_extracted') setAcceptedSkills(latest.structuredData.skills.map(skill => skill.name));
+      if (latest?.origin === 'ai_extracted' && latest.schemaVersion === 1) setAcceptedSkills(latest.structuredData.skills.map(skill => skill.name));
       else setAcceptedSkills([]);
     }).catch(e => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
@@ -226,8 +234,8 @@ function App() {
     {!loading && !session?.deletionPending && <PublicJobBrowser session={session}/>}
     {!loading && !session?.deletionPending && <PublicResumeBrowser session={session}/>}
     {loading ? <p role="status">Đang kết nối…</p> : !session?.authenticated ? <AccountAccess onAuthenticated={setAuthenticated}/> : session.deletionPending ? <AccountDeletionPendingPanel session={session} onAuthenticated={setAuthenticated}/> : <>
-      <div className="session"><span>{session.email}</span><button className="secondary" disabled={busy} onClick={() => void action(async () => { await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); setSession({ authenticated: false, roles: [] }); setResumes([]); setSelectedResumeId(''); setSelectedResumeVersionId(''); setJob(undefined); setRevisions([]); pending.current = undefined; })}>Đăng xuất</button></div>
-      {session.roles.includes('Candidate') ? <><CandidateProfilePanel/><Suspense fallback={<section className="card"><p role="status">Đang mở trình tạo CV…</p></section>}><ResumeBuilderPanel resumes={resumes} onResumesUpdated={setResumes}/></Suspense><div className="grid"><section className="card"><h2>CV riêng của bạn</h2><p>PDF có văn bản hoặc DOCX, tối đa 4 MB. Mỗi CV có thể giữ nhiều phiên bản; file cũ không bị ghi đè và chỉ chính bạn được tải.</p>
+      <div className="session"><span>{session.email}</span><button className="secondary" disabled={busy} onClick={() => void action(async () => { sessionStorage.removeItem(`careergap:builder-recovery:${session.userId}`); await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); setSession({ authenticated: false, roles: [] }); setResumes([]); setSelectedResumeId(''); setSelectedResumeVersionId(''); setJob(undefined); setRevisions([]); pending.current = undefined; })}>Đăng xuất</button></div>
+      {session.roles.includes('Candidate') ? <><CandidateProfilePanel/><Suspense fallback={<section className="card"><p role="status">Đang mở trình tạo CV…</p></section>}><ResumeBuilderPanel ownerId={session.userId ?? ''} resumes={resumes} onResumesUpdated={setResumes}/></Suspense><div className="grid"><section className="card"><h2>CV riêng của bạn</h2><p>PDF có văn bản hoặc DOCX, tối đa 4 MB. Mỗi CV có thể giữ nhiều phiên bản; file cũ không bị ghi đè và chỉ chính bạn được tải.</p>
         <form onSubmit={e => { e.preventDefault(); const form = e.currentTarget; const data = new FormData(form); void action(async () => {
           const path = selectedResumeId ? `/api/resumes/${selectedResumeId}/versions` : '/api/resumes';
           const created = await api<{ id: string; versionId: string }>(path, { method: 'POST', body: data });
@@ -247,24 +255,31 @@ function App() {
           <div className="resume-version-list">{r.versions.map(version => <div className="resume-version row" key={version.id}>
             <label className="resume-version-choice"><input type="radio" name="resume-version" checked={selectedResumeVersionId === version.id} onChange={() => setSelectedResumeVersionId(version.id)}/><span><strong>Phiên bản {version.versionNo}</strong><small>{new Date(version.createdAt).toLocaleString('vi-VN')}</small></span></label>
             <div className="row"><a href={`/api/files/${version.fileId}`}>Tải file</a><button className="secondary" disabled={busy} onClick={() => void action(async () => {
-              const keepKey = pending.current?.versionId === version.id && job?.resumeVersionId === version.id && ['queued', 'running'].includes(job.status);
+              const keepKey = pending.current?.contract !== 'cv-fields-v3' && pending.current?.versionId === version.id && job?.resumeVersionId === version.id && ['queued', 'running'].includes(job.status);
               const key = keepKey ? pending.current!.key : crypto.randomUUID();
               pending.current = { versionId: version.id, key };
               setRevisions([]); setRevisionMessage(''); setUserStatementSkills('');
               const next = await api<Job>('/api/ai/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId: version.id, idempotencyKey: key }) });
               if (!['queued', 'running'].includes(next.status)) pending.current = undefined;
               poll.current++; setJob(next);
-            })}>Thử trích xuất v{version.versionNo}</button></div>
+            })}>Thử trích xuất v{version.versionNo}</button><button className="secondary" disabled={busy} onClick={() => void action(async () => {
+              setSelectedResumeVersionId(version.id);
+              const keep = pending.current?.contract === 'cv-fields-v3' && pending.current.versionId === version.id && job && ['queued', 'running'].includes(job.status);
+              const fullKey = keep ? pending.current!.key : crypto.randomUUID();
+              pending.current = { versionId: version.id, key: fullKey, contract: 'cv-fields-v3' };
+              const next = await api<Job>('/api/ai/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId: version.id, idempotencyKey: fullKey, contract: 'cv-fields-v3' }) });
+              poll.current++; setJob(next);
+            })}>Đọc đầy đủ v{version.versionNo}</button></div>
           </div>)}</div>
         </li>)}</ul>
         {!resumes.length && <p>Chưa có CV trên trang này.</p>}
         <div className="row"><button className="secondary" disabled={page === 1 || busy} onClick={() => setPage(p => p - 1)}>Trước</button><span>Trang {page}</span><button className="secondary" disabled={resumes.length < 20 || busy} onClick={() => setPage(p => p + 1)}>Sau</button></div>
       </section><section className="card"><h2>Kết quả thử nghiệm</h2>{!job ? <p>Chọn “Thử trích xuất” để bắt đầu. Dữ liệu gốc được giữ nguyên.</p> : <>
         <p role="status">{({ queued: 'Đang chờ xử lý', running: 'Đang đọc tài liệu', succeeded: 'Đã xử lý', failed: 'Chưa thể phân tích', cancelled: 'Đã hủy' } as Record<string, string>)[job.status]}</p>
-        {job.provider && <p className="badge">{job.provider === 'Fake' ? 'Mô phỏng bằng từ khóa · không gọi AI thật' : `DeepSeek · ${job.model}`}</p>}
+        {job.provider && <p className="badge">{job.provider === 'Fake' ? job.schemaVersion === 'cv-fields-v3' ? 'Mô phỏng cục bộ · không gọi AI thật' : 'Mô phỏng bằng từ khóa · không gọi AI thật' : `DeepSeek · ${job.model}`}</p>}
         {job.status === 'failed' && <p>Tác vụ chưa thành công. File CV vẫn có thể tải về; hệ thống không tạo điểm đánh giá thay thế.</p>}
-        {output && <><p>Kỹ năng được nhắc trực tiếp trong tài liệu:</p><ul>{output.skills.map((s, i) => <li key={i}><strong>{s.name}</strong> — “{s.quote}” <small>{s.evidenceRef}</small></li>)}</ul>{!output.skills.length && <p>Chưa tìm thấy kỹ năng trong phạm vi thử nghiệm.</p>}</>}
-        {latestRevision && <section className="revision-review" aria-label="Rà soát dữ liệu trích xuất">
+        {output?.skills && <><p>Kỹ năng được nhắc trực tiếp trong tài liệu:</p><ul>{output.skills.map((s, i) => <li key={i}><strong>{s.name}</strong> — “{s.quote}” <small>{s.evidenceRef}</small></li>)}</ul>{!output.skills.length && <p>Chưa tìm thấy kỹ năng trong phạm vi thử nghiệm.</p>}</>}
+        {latestRevision?.schemaVersion === 1 && <section className="revision-review" aria-label="Rà soát dữ liệu trích xuất">
           <h3>Rà soát dữ liệu trích xuất</h3>
           <p>Revision {latestRevision.revisionNo} · {latestRevision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'} · parser {latestRevision.parserVersion}</p>
           {latestRevision.origin === 'ai_extracted' ? <>
@@ -300,7 +315,7 @@ function App() {
           {revisionMessage && <p role="status">{revisionMessage}</p>}
         </section>}
         <button className="secondary" disabled={busy} onClick={() => void action(async () => { poll.current++; setJob(await api<Job>(`/api/ai/jobs/${job.id}`)); })}>Kiểm tra lại</button>
-      </>}</section></div></> : <section className="card"><h2>Tài khoản nhà tuyển dụng</h2><p>Recruiter được mở file gốc khi ứng viên chủ động công khai hoặc từ snapshot của đơn thuộc tin mình phụ trách.</p></section>}
+      </>}</section></div><FullCvReview versionId={selectedResumeVersionId} refreshKey={`${job?.id}-${job?.status}`}/></> : <section className="card"><h2>Tài khoản nhà tuyển dụng</h2><p>Recruiter được mở file gốc khi ứng viên chủ động công khai hoặc từ snapshot của đơn thuộc tin mình phụ trách.</p></section>}
       {session.roles.includes('Recruiter') && <><RecruiterJobManager/><RecruiterProfileLookup/></>}<PasswordChangePanel/>
       {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <AccountDeletionPanel onPending={purgeAfter => setAuthenticated({ authenticated: true, roles: [], deletionPending: true, purgeAfter })}/>}
       <section className="card probe"><div><h2>Kiểm tra PDF tiếng Việt</h2><p>Xuất tài liệu giả để kiểm tra dấu, phân trang và khả năng chọn/copy văn bản.</p></div><button disabled={busy} className="secondary" onClick={() => void action(async () => { const { downloadProbe } = await import('./pdfProbe'); await downloadProbe(); })}>Xuất PDF mẫu giả</button></section>
