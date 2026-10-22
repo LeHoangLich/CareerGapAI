@@ -1,5 +1,9 @@
 # Giai đoạn A — Corpus và giao thức đánh giá v0.1
 
+> Cập nhật tiếp ngày 21/10: [pilot v2 và kiểm chứng M3 local](../report/m3-local-acceptance-2026-10-21.md) có native DOCX/PDF, tổng 6 CV/4 nguồn + 8 JD/6 nhóm, 292 nhãn Codex. File private `.local/m3-followup-20261021/corpus-v2-ready.json`; bảng nhãn chưa được người rà, transfer false, chưa đủ CV native Việt. Giữ bản v1/freeze và các kiểm kê cũ theo lịch sử, không thay tên synthetic thành quality evidence.
+
+> Bổ sung ngày 21/10 sau yêu cầu trực tiếp: [pilot nguồn mở có giấy phép](../report/m3-inputs-2026-10-21.md) đã có 4 CV/3 nguồn và 8 JD/6 nhóm, 246 nhãn dự thảo do Codex tự rà; giữ private, human review pending, provider transfer false. Chưa đủ native vi CV/original DOCX/độ phủ nghiệm thu. Kiểm kê 0 corpus tiếp nhận bên dưới là lịch sử ngày 16/10, không phải số hiện hành.
+
 Ngày 16/10/2026. **Dự thảo, chưa được giảng viên duyệt.** Chuẩn bị trước L14/prompt; không có số liệu chất lượng trên dữ liệu đại diện.
 
 ## Kiểm kê hiện có và phần chờ

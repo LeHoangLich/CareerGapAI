@@ -71,7 +71,7 @@ public static class ConfirmedRevisionMatcher
             requirements?.Count(x => x.Importance == "optional"),
             requirements?.Count(x => x.Importance == "unspecified"));
 
-    private static bool TryReadResume(ResumeDataRevision revision, bool publicScope, out List<string> skills)
+    public static bool TryReadResume(ResumeDataRevision revision, bool publicScope, out List<string> skills)
     {
         skills = [];
         if (revision.SchemaVersion is 2 or 3) return ResumeSkillProjection.TryRead(revision, publicScope, out skills);
@@ -118,7 +118,7 @@ public static class ConfirmedRevisionMatcher
         catch (Exception ex) when (ex is ArgumentException or InvalidOperationException) { return false; }
     }
 
-    private static bool TryReadJob(JobDataRevision revision, out List<JobStructuredRequirement> requirements)
+    public static bool TryReadJob(JobDataRevision revision, out List<JobStructuredRequirement> requirements)
     {
         requirements = [];
         if (revision.Origin != "user_confirmed" || revision.ConfirmedBy is null || revision.ConfirmedAt is null ||

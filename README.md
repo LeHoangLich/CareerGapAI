@@ -1,5 +1,11 @@
 # CareerGap AI
 
+> Giai đoạn C ngày 22/10: đã có matching hai chiều, điểm 0–100 và bằng chứng, phân tích hồ sơ theo JD/CV lúc nộp, user quota và cache có kiểm quyền. [Báo cáo C](project-docs/report/stage-c-2026-10-22.md), [API/rubric/cách chạy evaluator](project-docs/phase-04-matching.md). Migration 16 chỉ được áp dụng trong môi trường kiểm thử riêng; chạy migration bằng bước riêng trước khi dùng tính năng ở DB local khác. Các ghi nhận “chưa thực hiện C” dưới đây là lịch sử. M3 chất lượng đại diện vẫn chờ; tiếp tục chỉ localhost.
+
+> Kiểm chứng M3 local mới ngày 21/10: [94 backend, 9 E2E, DOCX gốc và JD parser v3](project-docs/report/m3-local-acceptance-2026-10-21.md). Chức năng local đạt các ca đã chạy; chất lượng đại diện còn native vi CV, người rà nhãn và quyền provider cho corpus mới. Không phí mới, không deploy/C; các ghi nhận “hoãn/chưa có corpus” bên dưới thuộc các lượt trước.
+
+> Chốt chức năng B ngày 21/10: [probe DeepSeek thật và browser workflow PDF/apply/snapshot](project-docs/report/stage-b-provider-2026-10-21.md) đã đạt trên synthetic; trần DeepSeek 2 USD cho toàn giai đoạn phát triển, không reset theo lượt. M3 chất lượng trên corpus đại diện vẫn hoãn, chưa thực hiện C.
+
 > Điểm đọc hiện trạng duy nhất: [baseline, CI và phạm vi L01–L13](project-docs/current-status.md). [Giai đoạn A](project-docs/report/stage-a-2026-10-16.md) có checklist nghiệm thu, kết quả dựng lại và đầu vào đánh giá còn chờ.
 
 Bản thử localhost có JD công khai để khách/ứng viên tìm kiếm; recruiter quản lý công ty/JD theo version. Candidate quản lý profile, CV private nhiều version, nộp một version cụ thể, theo dõi trạng thái/lịch sử và rút đơn. Recruiter sàng lọc theo ma trận đã chốt, ghi chú nội bộ riêng tư và block theo từng tin; snapshot giữ version CV/JD lúc nộp. L07 hỗ trợ ứng viên chủ động chọn một CV version công khai; recruiter nhận file gốc, ứng viên khác chỉ nhận bản DOCX dựng lại từ text và đã quét liên hệ nhận diện được. L08 hiện thực cục bộ yêu cầu xóa 7 ngày, purge, hết hạn đơn 90 ngày và dọn file upload pending sau 24 giờ. L09 có baseline matching từ khóa hai chiều trên localhost, trả `retrieval_score` 0–1; đây không phải điểm AI sâu và chưa được đánh giá chất lượng thật. L10 lưu revision kỹ năng CV để Candidate xác nhận provenance; L11 lưu revision yêu cầu theo JD version để recruiter owner rà soát/xác nhận. L12 bổ sung chẩn đoán term-overlap riêng từ các revision đã xác nhận của đúng CV/JD version; giữ nguyên điểm/thứ tự L09, không tạo điểm phù hợp tổng hợp. L13 có trình tạo CV `simple-v1`: ứng viên nhập dữ liệu, xem trước/tải PDF tiếng Việt rồi lưu thành file version riêng tư cùng revision `user_entered` schema v2 để mở lại/sửa. Chủ dự án đã chọn một mẫu một cột simple-v1 cho GĐ3. B/L14 thêm full CV schema v3, sửa/xác nhận theo field, parser process con và JD v2; giữ nguyên dữ liệu v1/v2. Builder nạp dữ liệu đã xác nhận và phục hồi save dở sau reload; PDF tạo ra đã được kiểm tra dùng khi ứng tuyển. [Chi tiết B và giới hạn](project-docs/report/stage-b-2026-10-16.md). E2E dùng Fake/test_credit, không gọi provider thật. Backup/restore/expire hiện là runbook local thủ công; CI baseline và các thay đổi sau đó được phân biệt tại [hiện trạng chuẩn](project-docs/current-status.md); chưa có bằng chứng production hoặc nghiệm thu M1/M2/M3 tổng thể.
@@ -109,7 +115,7 @@ python -m unittest discover -s tests/evaluation -v
 ./scripts/check-deepseek-readiness.ps1
 ```
 
-Preflight cuối hiện trả **exit 1 có chủ đích**: chưa key/số dư/kỳ/cho phép probe trả phí. Không gọi provider hoặc đọc secrets. Manifest hiện chỉ synthetic; xem [giao thức, template và giới hạn](project-docs/evaluation/stage-a-corpus-protocol.md), [runbook provider](project-docs/evaluation/deepseek-probe-runbook.md). Không dùng kết quả smoke làm bằng chứng chất lượng thực tế.
+Preflight plan public mặc định trả **exit 1 có chủ đích** vì probe 21/10 đã đóng, không có dispatch mới. Key đã xác thực và probe riêng đã đạt; quyền phát triển trong trần DeepSeek 2 USD còn hiệu lực theo ledger, không tự mở lại cap đã dùng. Manifest hiện chỉ synthetic; xem [giao thức, template và giới hạn](project-docs/evaluation/stage-a-corpus-protocol.md), [runbook provider](project-docs/evaluation/deepseek-probe-runbook.md). Không dùng kết quả smoke làm bằng chứng chất lượng thực tế.
 
 ## GĐ3/B — đọc đầy đủ, xác nhận và tạo CV
 
@@ -131,7 +137,7 @@ Builder giữ draft dang dở trong **sessionStorage theo user** sau upload, có
 python scripts/check-generated-cv-pdfs.py .local/stage-b-20261016/evidence/builder-long.pdf .local/stage-b-20261016/evidence/builder-short.pdf
 ```
 
-Bổ sung local 19/10: [chấm captures trước sửa](project-docs/evaluation/cv-capture-evaluation.md), [runbook full CV v3](project-docs/evaluation/deepseek-probe-runbook.md), [checklist M3](project-docs/phase-03-acceptance.md), [report](project-docs/report/stage-b-followup-2026-10-19.md). Full CV real yêu cầu `Ai__FullCvMaxOutputTokens` riêng; provider vẫn Fake và chưa được phép probe trả phí. E2E có thể đặt `CAREERGAP_E2E_EVIDENCE_DIRECTORY` vào thư mục evidence mới để giữ PDF lịch sử.
+Bổ sung local 19/10: [chấm captures trước sửa](project-docs/evaluation/cv-capture-evaluation.md), [runbook full CV v3](project-docs/evaluation/deepseek-probe-runbook.md), [checklist M3](project-docs/phase-03-acceptance.md), [report](project-docs/report/stage-b-followup-2026-10-19.md). Full CV real yêu cầu `Ai__FullCvMaxOutputTokens` riêng. Mặc định ứng dụng/CI vẫn Fake; probe thật 21/10 đã được cho phép và hoàn tất trong cap 0,05 USD, xem report mới ở đầu README. E2E có thể đặt `CAREERGAP_E2E_EVIDENCE_DIRECTORY` vào thư mục evidence mới để giữ PDF lịch sử.
 
 ## Triển khai đã dừng — tham khảo cho giai đoạn sau
 
@@ -139,4 +145,4 @@ Không thực hiện các bước production dưới đây trong giai đoạn hi
 
 Dockerfile đóng gói React static cùng .NET, port mặc định 8080. Đặt `ASPNETCORE_HTTP_PORTS` theo cổng nền tảng; không chạy Vite trên cloud. Cấu hình production bắt buộc private S3 storage, connection string, chứng thư Data Protection và allowed hosts thực tế. Tham khảo [runbook](project-docs/phase-01-implementation.md).
 
-Repository cá nhân do chủ dự án publish tại [GitHub](https://github.com/LeHoangLich/CareerGapAI). Bản chuẩn và CI đúng SHA xem [hiện trạng](project-docs/current-status.md); [báo cáo giai đoạn A](project-docs/report/stage-a-2026-10-16.md) ghi kiểm tra mới và điều kiện M1/M2 còn thiếu. Không tự push hoặc mở lại deploy. Chưa có public demo hoặc chứng minh DeepSeek/private bucket/search/email thật.
+Repository cá nhân do chủ dự án publish tại [GitHub](https://github.com/LeHoangLich/CareerGapAI). Bản chuẩn và CI đúng SHA xem [hiện trạng](project-docs/current-status.md); [báo cáo giai đoạn A](project-docs/report/stage-a-2026-10-16.md) ghi kiểm tra mới và điều kiện M1/M2 còn thiếu. Không tự push hoặc mở lại deploy. Chưa có public demo hoặc bằng chứng private bucket/search/email thật; DeepSeek full CV đã qua probe thật trên synthetic ngày 21/10.

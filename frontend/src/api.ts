@@ -22,6 +22,14 @@ export function errorMessage(code: string, status: number): string {
   if (code === 'parse_timeout') return 'Tài liệu mất quá nhiều thời gian để đọc. Hãy dùng bản PDF/DOCX đơn giản hơn hoặc nhập thông tin thủ công.';
   if (code === 'parser_unavailable') return 'Bộ đọc tài liệu chưa sẵn sàng. Hãy thử lại sau.';
   if (code === 'full_cv_output_budget_required') return 'Phân tích CV đầy đủ chưa được cấu hình hạn mức đầu ra. Bạn vẫn có thể nhập CV thủ công.';
+  if (code === 'confirmed_resume_required') return 'CV chưa có dữ liệu xác nhận phù hợp với thời điểm phân tích. Hãy rà soát CV trước.';
+  if (code === 'confirmed_job_required') return 'JD chưa có yêu cầu được xác nhận phù hợp với thời điểm phân tích.';
+  if (code === 'no_eligible_cv_facts') return 'CV công khai chưa có thông tin xác nhận từ tài liệu được phép đối chiếu.';
+  if (code === 'no_assessable_requirements') return 'JD chưa có tiêu chí đủ đầu vào để chấm điểm.';
+  if (code === 'matching_input_limit') return 'CV/JD vượt giới hạn phân tích thử nghiệm. Hãy dùng đầu vào ngắn hơn.';
+  if (code === 'match_output_budget_required') return 'Chưa cấu hình hạn mức đầu ra cho phân tích cặp CV–JD.';
+  if (code === 'user_quota_exhausted') return 'Đã hết hạn mức AI của tài khoản trong kỳ này.';
+  if (code === 'user_concurrency_limit') return 'Đã đủ số phân tích đang chạy. Hãy đợi rồi thử lại.';
   if (code === 'ai_output_truncated') return 'Phản hồi phân tích chưa đầy đủ nên chưa được lưu. Hãy thử tài liệu ngắn hơn hoặc nhập thông tin thủ công.';
   if (code === 'ai_completion_invalid' || code === 'ai_output_empty') return 'Dịch vụ chưa trả được kết quả phân tích đầy đủ. Hãy thử lại sau hoặc nhập thông tin thủ công.';
   if (code === 'revision_data_unavailable') return 'Bản trích xuất này không còn đọc được. Hãy chạy lại trích xuất trên đúng phiên bản CV.';

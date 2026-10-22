@@ -280,6 +280,9 @@ public sealed class AccountDeletionService(
             ? await db.Applications.Where(x => x.CandidateId == account.Id).Select(x => x.Id).ToArrayAsync(ct)
             : [];
 
+        await Matching.MatchRetention.Erase(db, db.MatchInputs.Where(x => x.CandidateId == account.Id ||
+            db.AiJobs.Any(j => j.Id == x.AiJobId && j.RequestedBy == account.Id)), ct);
+
         await db.Notifications.Where(x => x.RecipientUserId == account.Id ||
             (applicationIds.Length > 0 && x.ApplicationId != null && applicationIds.Contains(x.ApplicationId.Value)) ||
             (aiJobIds.Length > 0 && x.AiJobId != null && aiJobIds.Contains(x.AiJobId.Value)))

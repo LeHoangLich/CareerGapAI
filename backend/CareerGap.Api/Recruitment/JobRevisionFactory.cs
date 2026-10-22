@@ -18,13 +18,13 @@ public sealed record ConfirmJobRevisionRequest(int BaseRevisionNo,
 public static partial class JobRevisionFactory
 {
     public const int SchemaVersion = 2;
-    public const string ParserVersion = "jd-atomic-requirements-v2";
+    public const string ParserVersion = "jd-atomic-requirements-v3";
     public const int MaxRequirements = 100;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static readonly HashSet<string> ImportanceValues = new(StringComparer.Ordinal)
         { "required", "optional", "unspecified" };
 
-    [GeneratedRegex(@"\b(optional|nice\s+to\s+have|preferred|bonus|plus)\b|không\s+(bắt\s+buộc|yêu\s+cầu|cần)|ưu\s+tiên|là\s+lợi\s+thế|khuyến\s+khích", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    [GeneratedRegex(@"\b(optional|nice[\s-]+to[\s-]+have|preferred|preferably|bonus|plus)\b|không\s+(bắt\s+buộc|yêu\s+cầu|cần)|ưu\s+tiên|là\s+(?:(?:một|1)\s+)?lợi\s+thế|khuyến\s+khích", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex OptionalHint();
 
     [GeneratedRegex(@"\b(required|must(?:\s+have)?|mandatory|minimum|at\s+least)\b|bắt\s+buộc|cần\s+có|yêu\s+cầu|tối\s+thiểu", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
@@ -38,24 +38,39 @@ public static partial class JobRevisionFactory
         var requirements = new List<JobStructuredRequirement>();
         var evidence = new List<JobRequirementEvidence>();
         var ordinal = 0;
+        var sectionImportance = "unspecified";
         foreach (var (line, start) in Lines(requirementsText))
         {
             var trimmed = line.Trim();
-            if (trimmed.Length == 0 || IsSectionHeader(trimmed)) continue;
-            var importance = HintImportance(trimmed);
-            // Keep disjunctions intact: never turn A or B into two mandatory criteria.
-            var disjunction = Regex.IsMatch(trimmed, @"\s+(?:or|hoặc)\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
-            var pieces = disjunction ? new[] { (Text: line, Offset: 0) } : Regex.Matches(line, @"[^;,]+", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50))
-                .Select(match => (Text: match.Value, Offset: match.Index)).ToArray();
+            if (trimmed.Length == 0) continue;
+            if (TrySectionHeader(trimmed, out var headerImportance))
+            { sectionImportance = headerImportance; continue; }
+            // Unknown Markdown headings end the preceding scope, but are not data.
+            if (trimmed.StartsWith('#')) { sectionImportance = "unspecified"; continue; }
+            var bullet = Regex.Match(line, @"^\s*(?:[-*•]|\d+[.)])\s+", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+            var bodyOffset = bullet.Success ? bullet.Length : 0;
+            var body = line[bodyOffset..];
+            var prefix = Regex.Match(body.TrimStart(), @"^(?:required|mandatory|must\s+have|optional|preferred|ưu\s+tiên|bắt\s+buộc)\s*:", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+            var lineImportance = prefix.Success ? HintImportance(prefix.Value) : sectionImportance;
+            var pieces = SplitAtoms(body).ToArray();
             foreach (var piece in pieces)
             {
                 var quote = piece.Text.Trim(); if (quote.Length == 0) continue;
-                var offset = start + piece.Offset + piece.Text.Length - piece.Text.TrimStart().Length;
+                var offset = start + bodyOffset + piece.Offset + piece.Text.Length - piece.Text.TrimStart().Length;
+                var localImportance = HintImportance(quote);
+                var optional = OptionalHint().IsMatch(quote);
+                var required = RequiredHint().IsMatch(quote);
+                var importance = optional || required ? localImportance : lineImportance;
+                var disjunction = Disjunction(quote);
                 var id = $"source-{++ordinal:D4}";
-                var years = Regex.Match(quote, @"(?<![\d.])(?<min>\d{1,2}(?:\.\d+)?)\s*(?:[-–]\s*\d{1,2})?\+?\s*(?:years?|năm)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
-                decimal? minimum = years.Success && decimal.TryParse(years.Groups["min"].Value, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var parsedYears) && parsedYears <= 99.99m ? parsedYears : null;
-                var alternatives = disjunction ? Regex.Split(quote, @"\s+(?:or|hoặc)\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50)).Select(x => x.Trim()).ToArray() : null;
-                requirements.Add(new(id, quote, importance, "document_text", minimum, disjunction ? "any_of" : "single", alternatives, disjunction || pieces.Length > 1));
+                var years = Regex.Matches(quote, @"(?<![\d.])(?<min>\d{1,2}(?:\.\d+)?)\s*(?:[-–]\s*\d{1,2})?\+?\s*(?:years?|năm)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+                var noExperience = Regex.IsMatch(quote, @"không\s+(?:yêu\s+cầu|cần)(?:\s+có)?\s+kinh\s+nghiệm|\bno\s+(?:prior\s+)?experience\s+(?:required|necessary)\b|\bexperience\s+(?:is\s+)?not\s+required\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+                var ambiguousYears = years.Count > 1 || (years.Count > 0 && noExperience);
+                decimal? minimum = !ambiguousYears && years.Count == 1 && decimal.TryParse(years[0].Groups["min"].Value, System.Globalization.NumberStyles.AllowDecimalPoint, System.Globalization.CultureInfo.InvariantCulture, out var parsedYears) && parsedYears <= 99.99m ? parsedYears : null;
+                var alternatives = disjunction ? Regex.Split(quote, @"\s+(?:and/or|or|hoặc)\s+(?!(?:more|above|higher|cao\s+hơn|trở\s+lên)\b)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50)).Select(x => x.Trim()).ToArray() : null;
+                var examples = Regex.IsMatch(quote, @"\([^)]*[,/][^)]*\)", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+                var conjunction = Regex.IsMatch(quote, @"\s+(?:and|và)\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+                requirements.Add(new(id, quote, importance, "document_text", minimum, disjunction ? "any_of" : "single", alternatives, disjunction || pieces.Length > 1 || ambiguousYears || examples || conjunction || (optional && required)));
                 evidence.Add(new(id, "document_text", offset, offset + quote.Length, quote, null));
             }
         }
@@ -157,8 +172,53 @@ public static partial class JobRevisionFactory
         return required == optional ? "unspecified" : required ? "required" : "optional";
     }
 
-    private static bool IsSectionHeader(string line) => line.Trim(' ', '\t', ':', '-', '#').ToLowerInvariant() is
-        "requirements" or "qualifications" or "what we need" or "yêu cầu" or "kỹ năng yêu cầu" or "điều kiện";
+    private static bool TrySectionHeader(string line, out string importance)
+    {
+        var key = Regex.Replace(line.Trim(' ', '\t', ':', '-', '#').ToLowerInvariant(), @"[\s-]+", " ", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+        importance = key switch
+        {
+            "required" or "mandatory" or "required skills" or "required qualifications" or "required technical skills" or "required skills and technologies" or "yêu cầu bắt buộc" or "bắt buộc" => "required",
+            "optional" or "preferred" or "preferred qualifications" or "nice to have" or "nice to have qualifications" or "desired qualities" or "ưu tiên" => "optional",
+            _ => "unspecified"
+        };
+        return importance != "unspecified" || key is "requirements" or "qualifications" or "what we need" or "yêu cầu" or "kỹ năng yêu cầu" or "điều kiện" or "experience profile" or "primary stack" or "secondary technologies" or "core qualifications" or "work environment";
+    }
+
+    private static bool Disjunction(string text) => Regex.IsMatch(text, @"\s+(?:and/or|or|hoặc)\s+(?!(?:more|above|higher|cao\s+hơn|trở\s+lên)\b)", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50));
+
+    private static IEnumerable<(string Text, int Offset)> SplitAtoms(string text)
+    {
+        // Split sentences/semicolons first. Parenthetical examples, decimals and
+        // technology names such as Nest.js/.NET remain in their original clause.
+        var clauses = new List<(int Start, int End)>(); var start = 0; var depth = 0;
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '(') depth++;
+            if (text[i] == ')' && depth > 0) depth--;
+            if (depth != 0) continue;
+            if (text[i] == ';') { clauses.Add((start, i)); start = i + 1; }
+            else if (text[i] is '.' or '!' or '?' && i + 2 < text.Length && char.IsWhiteSpace(text[i + 1]))
+            {
+                var next = i + 1; while (next < text.Length && char.IsWhiteSpace(text[next])) next++;
+                if (next < text.Length && char.IsUpper(text[next])) { clauses.Add((start, i + 1)); start = i + 1; }
+            }
+        }
+        clauses.Add((start, text.Length));
+        foreach (var clause in clauses)
+        {
+            var value = text[clause.Start..clause.End];
+            // A or B stays together; commas inside examples never create criteria.
+            if (Disjunction(value)) { yield return (value, clause.Start); continue; }
+            var atom = clause.Start; depth = 0;
+            for (var i = clause.Start; i < clause.End; i++)
+            {
+                if (text[i] == '(') depth++;
+                if (text[i] == ')' && depth > 0) depth--;
+                if (text[i] == ',' && depth == 0) { yield return (text[atom..i], atom); atom = i + 1; }
+            }
+            yield return (text[atom..clause.End], atom);
+        }
+    }
 
     private static IEnumerable<(string Text, int Start)> Lines(string text)
     {

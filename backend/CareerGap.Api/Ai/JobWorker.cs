@@ -50,6 +50,10 @@ public sealed class JobWorker(IServiceScopeFactory scopes, JobWakeup wakeup, ILo
         db.ChangeTracker.Clear();
         var service = sp.GetRequiredService<JobService>();
         var job = await db.AiJobs.AsNoTracking().SingleAsync(x => x.Id == jobId, stoppingToken);
+        if (job.JobType == "match_pair")
+        {
+            await Matching.PairMatchingWorker.Process(sp, job, owner, generation, stoppingToken); return;
+        }
         var method = await db.AiMethods.AsNoTracking().SingleAsync(x => x.Id == job.MethodVersionId, stoppingToken);
         var parameters = JsonSerializer.Deserialize<MethodParameters>(method.Parameters, OutputValidator.Json)!;
         Guid? attemptId = null;

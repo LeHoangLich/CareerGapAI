@@ -1,14 +1,16 @@
 # Checklist M3 và đầu vào bàn giao sang C
 
-Cập nhật 19/10/2026. B/P04–P09 local có implementation/bằng chứng; **M3 tổng thể còn chờ provider/corpus và đánh giá thực tế**. [Báo cáo 16/10](report/stage-b-2026-10-16.md) giữ lịch sử; [bổ sung 19/10](report/stage-b-followup-2026-10-19.md) ghi lượt mới. Không cộng số test giữa các lượt.
+Cập nhật cuối ngày 21/10/2026: [biên bản kiểm chứng local mới](report/m3-local-acceptance-2026-10-21.md). **94/94 backend PostgreSQL, 9/9 E2E**, PDF 2/1 trang đạt; corpus **6 CV/4 nguồn + 8 JD/6 nhóm, 292 nhãn dự thảo** đã có DOCX gốc. Parser đọc 6/6, khôi phục nguyên văn 205/205 giá trị đã nhãn; JD parser v3 được sửa/đo trước sửa trên tuning và holdout. **Chức năng local đạt các ca đã chạy; M3 chất lượng đại diện chưa đóng.** Không có call/phí DeepSeek mới, không triển khai C.
+
+Lịch sử: [intake v1 12 tài liệu](report/m3-inputs-2026-10-21.md), [kiểm tra trước intake](report/m3-quality-review-2026-10-21.md), [probe DeepSeek synthetic](report/stage-b-provider-2026-10-21.md), [B ngày 16/10](report/stage-b-2026-10-16.md), [bổ sung 19/10](report/stage-b-followup-2026-10-19.md). Không cộng số test hoặc gán điều kiện thiếu của lượt cũ cho hiện trạng mới.
 
 | Điều kiện | Đã có local | Còn chờ nghiệm thu tổng thể |
 |---|---|---|
-| CV/JD Việt–Anh có cấu trúc và nguồn, không bịa field thiếu | CV v3/quote validator, JD v2/labeled synthetic, owner review/child revision | Corpus có quyền/nhãn đại diện; đo sai field/ngữ nghĩa/nguồn/layout |
-| File khó/lỗi có trạng thái | Parser child deadline, PDF/DOCX/no-text/broken/header/footer/table; replay tách parser/output | Coverage file thực tế, không hứa mọi layout/OCR |
-| Worker/usage/trạng thái đúng | Retry/timeout/quota/lease regression, host replacement skills/full, truncated JSON bị chặn/settle known usage | Model/giá/key/số dư/kỳ/cap và quyền probe; chưa OS crash trong call thật |
-| Tạo/mở/sửa/phục hồi/PDF ứng tuyển | simple-v1 đã chốt, recovery/session notice, PDF→apply→snapshot, text/render/geometry | Luồng local không chờ mẫu thứ hai, hosting hoặc DeepSeek |
-| Đánh giá trước sửa | Manifest/nhãn độc lập, owner export raw, assembler/replay, breakdown/error/null metrics | Chạy model thật trên tài liệu có quyền; phân tích lỗi/usage và sửa theo bằng chứng |
+| CV/JD Việt–Anh có cấu trúc và nguồn, không bịa field thiếu | CV schema 3, JD schema 2/parser 3, owner review/child revision, quote/offset checks | CV native Việt còn thiếu; nhãn do Codex, chưa người rà và chưa đủ độ phủ đại diện |
+| File khó/lỗi có trạng thái | Deadline/kill tree, 94 regression; đọc 6 file ngoài synthetic có native DOCX/PDF, 205 giá trị nhãn khôi phục | Đây là parser value recovery, không phải semantic LLM quality hoặc chứng minh mọi layout/OCR |
+| Worker/usage/trạng thái đúng | Retry/timeout/quota/lease/completion regression, synthetic DeepSeek capture replay | Provider thật đã qua probe synthetic; chưa OS crash trong call thật, không tạo phí để giả lập |
+| Tạo/mở/sửa/phục hồi/PDF ứng tuyển | 9 E2E mới đạt, PDF dài/ngắn render/text/geometry/counter đạt, simple-v1 | Đạt phạm vi local/synthetic đã chạy, không chờ mẫu khác/hosting |
+| Đánh giá trước sửa | Raw/replay synthetic, real-source parser + JD v2/v3 tuning/holdout diagnostics, error analysis và hash freeze | Chưa DeepSeek trên corpus ngoài synthetic: transfer false; cần quyền phù hợp, người rà nhãn và native vi CV. Không gọi span coverage là semantic F1 |
 | Đầu vào rubric | Projection theo scope, JD required/optional/years/any_of, hợp đồng dưới đây | P10/C chốt rubric thử nghiệm/version và JD snapshot/hiện tại khi phân tích lại |
 
 ## Hợp đồng đầu vào sang C — dự thảo, chưa là rubric điểm
@@ -22,6 +24,6 @@ Cập nhật 19/10/2026. B/P04–P09 local có implementation/bằng chứng; **
 
 ## Ranh giới phần chờ
 
-Đã chốt 28 giờ/tuần cho dữ liệu, một simple-v1, chưa corpus có quyền và DeepSeek cung cấp sau; không hỏi lại hoặc tự mua dịch vụ. Công cụ local dùng synthetic; không đổi nhãn thành chất lượng thật.
+Đã chốt 28 giờ/tuần, một simple-v1 và key/trần DeepSeek 2 USD cho toàn giai đoạn phát triển; không hỏi lại hoặc tự mua dịch vụ. Đã có pilot 14 tài liệu/292 nhãn, kể cả DOCX gốc; không còn thiếu toàn bộ corpus. Còn CV native Việt có quyền, người rà nhãn và quyền gửi đúng corpus ngoài synthetic cho provider. Không tự ký duyệt, cấp quyền thay người sở hữu hoặc biến nhãn Codex thành human/expert reviewed.
 
-Sau khi có dữ liệu/provider: kiểm tra quyền/cap → probe v3 ngắn → raw trước sửa → đánh giá tách parser/model và coverage → sửa theo bằng chứng → biên bản nghiệm thu đúng phiên bản. B local không tự đóng điều kiện M1/M2. Roadmap có ý thử AI viết sớm, nhưng kế hoạch tuần tự hiện hành đặt implementation P16/D; không tự triển khai trong B.
+Luồng provider đã kiểm chứng trên synthetic. Sau khi có corpus đại diện: kiểm tra quyền/cap → probe v3 ngắn → raw trước sửa → đánh giá tách parser/model và coverage → sửa theo bằng chứng → biên bản nghiệm thu đúng phiên bản. B local không tự đóng điều kiện M1/M2. Roadmap có ý thử AI viết sớm, nhưng kế hoạch tuần tự hiện hành đặt implementation P16/D; không tự triển khai trong B.

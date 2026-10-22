@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api';
 import { CandidateKeywordRecommendations, RecruiterKeywordResumeSearch } from './matching';
+import { PairRecommendations } from './pairMatching';
 
 type Session = { authenticated: boolean; userId?: string; roles: string[] };
 type Company = { id: string; name: string; slug: string; description: string | null; websiteUrl: string | null; location: string | null; industry: string | null; sizeLabel: string | null; rowVersion: number };
@@ -449,6 +450,7 @@ export function RecruiterJobManager() {
     <div className="job-list">{jobs.map(job => <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo}</p></div><span className={`job-status ${job.status}`}>{job.status}</span></div><p>{job.version.description}</p><div className="row"><button className="secondary" disabled={busy || job.status === 'closed'} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button disabled={busy} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button className="secondary" disabled={busy} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}<button className="secondary" disabled={loadingApplications === job.id} onClick={() => void toggleApplications(job)}>{loadingApplications === job.id ? 'Đang tải…' : expandedApplications[job.id] ? 'Ẩn hồ sơ' : `Hồ sơ ứng tuyển (${applicationsByJob[job.id]?.total ?? 'xem'})`}</button></div>
       <JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
       <RecruiterKeywordResumeSearch jobId={job.id} enabled={job.status === 'published' && job.acceptingApplications}/>
+      <PairRecommendations key={`applications:${job.id}`} direction="applications" jobId={job.id}/>
       {expandedApplications[job.id] && <div className="job-applications"><h4>Hồ sơ ứng tuyển</h4>{!applicationsByJob[job.id]?.items.length ? <p>Chưa có hồ sơ cho tin này.</p> : <ul className="application-list">{applicationsByJob[job.id].items.map(application => <li key={application.id}>
         <div><strong>{statusLabel(application.status)}</strong><small>Nộp lúc {new Date(application.submittedAt).toLocaleString('vi-VN')} · CV phiên bản {application.resumeVersionNo}</small>
           <div className="row application-actions">{(recruiterTransitions[application.status] ?? []).map(status => <button className="secondary" key={status} disabled={mutatingApplicationId === application.id} onClick={() => void changeApplicationStatus(job.id, application, status)}>{status === 'reviewing' ? 'Đang xem xét' : status === 'shortlisted' ? 'Chọn tiếp' : 'Loại khỏi quy trình'}</button>)}

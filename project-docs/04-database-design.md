@@ -1,5 +1,7 @@
 # CareerGap AI – Tài liệu Thiết kế Database
 
+> **Sau C ngày 22/10:** migration 16 thêm `ai_jobs.job_type`, `match_inputs`, `match_results` bất biến, FK ghép owner/version/revision và trigger context/snapshot. Các bảng recommendation/projection/learning trong thiết kế đích chưa được triển khai toàn bộ. User quota tính trên usage/reservation hiện có, không thêm bảng quota user. [Hợp đồng C và khác biệt thiết kế](phase-04-matching.md), [kiểm chứng migration](report/stage-c-2026-10-22.md). Các mốc 15 migrations bên dưới là lịch sử B.
+
 > Sau B: schema CV v3/JD v2 được lưu trong JSON revisions hiện có, **không migration mới**, vẫn 15. Xem [hợp đồng](phase-03-extraction-contract.md) và [report B](report/stage-b-2026-10-16.md); projection là on-demand, chưa thêm bảng skill taxonomy/projection. Không sửa dữ liệu/snapshot lịch sử.
 
 > Hiện trạng triển khai: [current-status](current-status.md); phân biệt bảng/cột đã có với đích ở [ma trận schema/hợp đồng](schema-implementation-status.md). Baseline có 15 migrations, L10/L11 revision, L12 diagnostic, L13 builder v2; application/public selection chưa pin revision, chưa score 0–100 hoặc quality corpus. Kiểm tra mới xem [report A](report/stage-a-2026-10-16.md).

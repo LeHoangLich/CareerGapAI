@@ -1,5 +1,7 @@
 # GĐ3/B — Hợp đồng extraction, rà soát và builder local
 
+> Chốt chức năng B ngày 21/10: [probe DeepSeek thật và browser workflow PDF/apply/snapshot](report/stage-b-provider-2026-10-21.md) đã đạt trên synthetic; trần DeepSeek 2 USD cho toàn giai đoạn phát triển, không reset theo lượt. M3 chất lượng trên corpus đại diện vẫn hoãn, chưa thực hiện C.
+
 Ngày 16/10/2026. Implementation working tree sau baseline `b392ef0`; xem [báo cáo B](report/stage-b-2026-10-16.md) và [hiện trạng](current-status.md). Không có migration mới: vẫn 15 migrations, các schema mới nằm trong JSON revision đã version hóa. Không nâng dependency.
 
 ## Ba schema CV được giữ riêng
@@ -40,9 +42,9 @@ Có test deadline rất ngắn trên process thật, cancellation, body/header/f
 
 ## JD schema v2
 
-Bộ tách `jd-atomic-requirements-v2` tách newline, dấu phẩy/chấm phẩy thành các phần có offset chính xác; bảo toàn required/optional/unspecified theo ngữ cảnh dòng. Có `minimumYears` khi có số năm/range tường minh, `relation=single/any_of`, `alternatives`, `needsReview`. Dòng có “or/hoặc” giữ một nhóm lựa chọn, không biến thành nhiều yêu cầu bắt buộc. Recruiter xem gợi ý, bỏ/chọn và phân loại; nếu phân tích chưa đúng thì bỏ mục và tự bổ sung yêu cầu đã sửa, provenance vẫn riêng.
+Bộ tách hiện tại **`jd-atomic-requirements-v3`**, schema vẫn **2**. Ngữ cảnh tiêu đề required/optional tường minh áp dụng cho item; tiêu đề không thành requirement, tiêu đề Markdown khác kết thúc scope trước. Tách câu/chấm phẩy và dấu phẩy ngoài nhóm ngoặc, giữ offset chính xác kể cả bullet/CRLF; không tách ví dụ trong ngoặc thành các công nghệ bắt buộc. Có `minimumYears` khi có số năm/range tường minh, `relation=single/any_of`, `alternatives`, `needsReview`. “or/hoặc/and/or” giữ nhóm lựa chọn cần rà; ngưỡng “hoặc cao hơn/or more” không là hai lựa chọn. Phủ định kinh nghiệm mâu thuẫn hoặc nhiều mốc năm trong cùng clause trả null/cần rà, không buộc một số năm chung. Câu còn liên từ/nhóm ví dụ giữ needsReview. Recruiter xem gợi ý, bỏ/chọn và phân loại; nếu phân tích chưa đúng thì bỏ mục và tự bổ sung yêu cầu đã sửa, provenance vẫn riêng.
 
-Là parser local có giới hạn: chưa grammar logic lồng nhau, không tự kết luận mọi câu là yêu cầu nguyên tử hoàn chỉnh hoặc hiểu mọi dấu phẩy. Metadata chỉ là gợi ý được rà soát, chưa phải rubric/chấm điểm. v1 cũ vẫn đọc và xác nhận được, child dùng schema mới; không sửa JSON lịch sử. [Nhãn JD synthetic](evaluation/jd-atomic-smoke.json) gồm vi/en và lựa chọn/years/unspecified, chưa giảng viên duyệt.
+Là parser local có giới hạn: chưa grammar logic lồng nhau, không tự kết luận mọi câu là yêu cầu nguyên tử hoàn chỉnh hoặc hiểu mọi dấu phẩy. Metadata chỉ là gợi ý được rà soát, chưa phải rubric/chấm điểm. v1 cũ vẫn đọc và xác nhận được, child dùng schema mới; không sửa JSON lịch sử. Parser v2 đã lưu vẫn nguyên trạng và child xác nhận giữ parser snapshot của parent; extract lại với v3 tạo revision mới theo endpoint hiện có, không backfill snapshot. [Nhãn JD synthetic](evaluation/jd-atomic-smoke.json) và [chẩn đoán JD trên pilot ngoài synthetic](report/m3-local-acceptance-2026-10-21.md) chưa được giảng viên duyệt.
 
 ## Builder và projection
 

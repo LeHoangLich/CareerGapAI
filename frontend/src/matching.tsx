@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { api } from './api';
+import { PairAnalysisButton, PairRecommendations } from './pairMatching';
 
 type ResumeList = { id: string; title: string; versions: { id: string; versionNo: number; createdAt?: string }[] };
 type KeywordOverlap = { count: number; queryTermCount: number; terms: string[] };
@@ -40,13 +41,14 @@ export function CandidateKeywordRecommendations({ resumes, onSearchTitle }: { re
     finally { setBusy(false); }
   }
   return <section className="matching-panel" aria-label="Gợi ý việc bằng từ khóa">
-    <div className="section-heading"><div><p className="eyebrow">BASELINE L09</p><h3>Gợi ý việc theo CV</h3></div><span className="badge">Không gọi AI</span></div>
+    <div className="section-heading"><div><p className="eyebrow">BASELINE L09</p><h3>Gợi ý việc theo CV</h3></div><span className="badge">Điểm từ khóa</span></div>
     <p>Dùng một CV riêng của bạn để xếp hạng JD đang nhận hồ sơ. Chỉ từ khóa trùng; đây là retrieval score 0–1, không phải điểm phù hợp AI hay kết luận năng lực.</p>
     <div className="row matching-controls"><label>CV dùng để tìm<select aria-label="CV dùng để gợi ý việc" value={selected?.id ?? ''} onChange={event => { setResumeVersionId(event.target.value); setRun(undefined); }} disabled={!versions.length}>
       {!versions.length && <option value="">Chưa có CV</option>}
       {versions.map(version => <option key={version.id} value={version.id}>{version.title} · v{version.versionNo}</option>)}
     </select></label><button disabled={busy || !selected} onClick={() => void recommend()}>{busy ? 'Đang xếp hạng…' : 'Tìm việc theo CV'}</button></div>
     {!versions.length && <p className="hint">Tải một CV riêng lên trước; không cần công khai CV để tìm việc cho chính bạn.</p>}
+    <PairRecommendations key={selected?.id ?? 'empty'} direction="jobs" resumeVersionId={selected?.id}/>
     {error && <p role="alert" className="error">{error}</p>}
     {run && <>
       <p className="hint" role="status">Đã xét {run.assessedCount}/{run.searchSpaceCount} JD · {run.zeroOverlapCount} JD không trùng từ khóa · {run.noQueryTermsCount} JD chưa có từ khóa để tìm · phương pháp {run.methodVersion}.</p>
@@ -56,6 +58,7 @@ export function CandidateKeywordRecommendations({ resumes, onSearchTitle }: { re
           {item.keywordOverlap.terms.length > 0 && <small>Từ khóa trùng: {item.keywordOverlap.terms.join(', ')}</small>}
           <small>{revisionDiagnosticText(item.confirmedRevisionMatch, 'candidate')}</small>
         </div><button className="secondary" onClick={() => onSearchTitle(item.title)}>Tìm tin này trong danh sách</button>
+        {selected && <PairAnalysisButton key={`${selected.id}:${item.jobVersionId}`} resumeVersionId={selected.id} jobVersionId={item.jobVersionId}/>}
       </li>)}</ol> : <p>Không tìm thấy từ khóa trùng trong các JD đang nhận hồ sơ.</p>}
     </>}
   </section>;
@@ -75,6 +78,7 @@ export function RecruiterKeywordResumeSearch({ jobId, enabled }: { jobId: string
   return <section className="matching-panel recruiter-matching" aria-label="Tìm CV công khai theo JD">
     <div className="row"><strong>CV công khai theo JD</strong><button className="secondary" disabled={busy} onClick={() => void search()}>{busy ? 'Đang xếp hạng…' : 'Tìm ứng viên bằng từ khóa'}</button></div>
     <p className="hint">Chỉ xét CV đang được candidate công khai và file gốc sẵn sàng; CV riêng đã nộp nhưng không công khai không nằm trong kho này.</p>
+    <PairRecommendations key={jobId} direction="public_resumes" jobId={jobId}/>
     {error && <p role="alert" className="error">{error}</p>}
     {run && <>
       <p className="hint" role="status">Đã đọc được {run.assessedCount}/{run.searchSpaceCount} CV công khai · {run.unreadableCount} CV không đọc được đã bỏ qua · {run.noQueryTermsCount > 0 ? 'JD chưa có từ khóa để tìm · ' : ''}phương pháp {run.methodVersion}.</p>

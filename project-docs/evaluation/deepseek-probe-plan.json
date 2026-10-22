@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "status": "prepared_waiting_provider_and_authorization",
-  "backendKeyConfigured": false,
+  "status": "completed_synthetic_probe_2026_10_21_no_active_probe",
+  "backendKeyConfigured": true,
   "paidProbeAuthorized": false,
   "inputRightsVerified": false,
   "projectRemainingUsd": null,
@@ -10,14 +10,26 @@
   "periodEndUtc": null,
   "backendMonthlyLimitUsd": null,
   "authorizedProbeCapUsd": null,
-  "proposedModel": null,
-  "pricingVerifiedAt": null,
+  "proposedModel": "deepseek-flash",
+  "pricingVerifiedAt": "2026-10-21T06:17:25.777431+00:00",
   "pricingSource": "https://api-docs.deepseek.com/quick_start/pricing/",
-  "priceBasis": "must_verify_model_and_prices_before_any_paid_call",
-  "inputUsdPerMillion": null,
-  "outputUsdPerMillion": null,
+  "priceBasis": "peak_cache_miss_conservative_verified_2026-10-21",
+  "inputUsdPerMillion": 0.3,
+  "outputUsdPerMillion": 1.2,
   "maxInputTokens": 16000,
   "maxOutputTokens": 2048,
   "maximumAttempts": 2,
-  "contract": "cv-fields-v3"
+  "contract": "cv-fields-v3",
+  "developmentPhaseLimitUsd": "2.00",
+  "lastCompletedProbe": {
+    "date": "2026-10-21",
+    "documents": 6,
+    "originalGroups": 3,
+    "attempts": 6,
+    "probeCapUsd": "0.05",
+    "conservativeUsageCostUsd": "0.00655320",
+    "developmentBudgetDebitUsd": "0.01",
+    "remainingDevelopmentBudgetGuardedUsd": "1.99",
+    "report": "../report/stage-b-provider-2026-10-21.md"
+  }
 }

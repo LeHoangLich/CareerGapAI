@@ -195,6 +195,14 @@ namespace CareerGap.Api.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("input_hash");
 
+                    b.Property<string>("JobType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasDefaultValue("extract_cv")
+                        .HasColumnName("job_type");
+
                     b.Property<long>("LeaseGeneration")
                         .HasColumnType("bigint")
                         .HasColumnName("lease_generation");
@@ -250,6 +258,8 @@ namespace CareerGap.Api.Data.Migrations
                     b.ToTable("ai_jobs", t =>
                         {
                             t.HasCheckConstraint("ck_job", "status IN ('queued','running','succeeded','failed','cancelled') AND attempt_count >= 0 AND max_attempts BETWEEN 1 AND 2 AND lease_generation >= 0");
+
+                            t.HasCheckConstraint("ck_job_type", "job_type IN ('extract_cv','match_pair') AND (job_type <> 'match_pair' OR resume_version_id IS NULL)");
                         });
                 });
 
@@ -1273,6 +1283,97 @@ namespace CareerGap.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CareerGap.Api.Data.MatchInput", b =>
+                {
+                    b.Property<Guid>("AiJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_job_id");
+
+                    b.Property<Guid?>("ApplicationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("application_id");
+
+                    b.Property<Guid>("CandidateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("candidate_id");
+
+                    b.Property<string>("Context")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("context");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasColumnType("char(64)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<Guid>("JobRevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_revision_id");
+
+                    b.Property<Guid>("JobVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("job_version_id");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<Guid>("ResumeRevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resume_revision_id");
+
+                    b.Property<Guid>("ResumeVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resume_version_id");
+
+                    b.HasKey("AiJobId");
+
+                    b.HasIndex("ApplicationId");
+
+                    b.HasIndex("Fingerprint", "AiJobId");
+
+                    b.HasIndex("JobRevisionId", "JobVersionId");
+
+                    b.HasIndex("ResumeRevisionId", "ResumeVersionId");
+
+                    b.HasIndex("ResumeVersionId", "CandidateId");
+
+                    b.ToTable("match_inputs", t =>
+                        {
+                            t.HasCheckConstraint("ck_match_context", "context IN ('self','public_pool','application') AND ((context = 'application') = (application_id IS NOT NULL))");
+                        });
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.MatchResult", b =>
+                {
+                    b.Property<Guid>("AiJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_job_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Criteria")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("criteria");
+
+                    b.Property<decimal>("Score")
+                        .HasPrecision(18, 8)
+                        .HasColumnType("numeric(18,8)")
+                        .HasColumnName("score");
+
+                    b.HasKey("AiJobId");
+
+                    b.ToTable("match_results", t =>
+                        {
+                            t.HasCheckConstraint("ck_match_score", "score BETWEEN 0 AND 100");
+                        });
+                });
+
             modelBuilder.Entity("CareerGap.Api.Data.NotificationRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2056,6 +2157,50 @@ namespace CareerGap.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.MatchInput", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.AiJob", null)
+                        .WithOne()
+                        .HasForeignKey("CareerGap.Api.Data.MatchInput", "AiJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CareerGap.Api.Data.ApplicationRecord", null)
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CareerGap.Api.Data.JobDataRevision", null)
+                        .WithMany()
+                        .HasForeignKey("JobRevisionId", "JobVersionId")
+                        .HasPrincipalKey("Id", "JobVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CareerGap.Api.Data.ResumeDataRevision", null)
+                        .WithMany()
+                        .HasForeignKey("ResumeRevisionId", "ResumeVersionId")
+                        .HasPrincipalKey("Id", "ResumeVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CareerGap.Api.Data.ResumeVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ResumeVersionId", "CandidateId")
+                        .HasPrincipalKey("Id", "CandidateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.MatchResult", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.MatchInput", null)
+                        .WithOne()
+                        .HasForeignKey("CareerGap.Api.Data.MatchResult", "AiJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("CareerGap.Api.Data.NotificationRecord", b =>

@@ -1,5 +1,15 @@
 # CareerGapAI — Đánh giá hiện trạng và kế hoạch tiếp theo
 
+> C ngày 22/10 theo yêu cầu tiếp tục tuần tự: P10–P15 đã triển khai chức năng local và so sánh sơ bộ synthetic. [Report C](../report/stage-c-2026-10-22.md), [hợp đồng API/rubric](../phase-04-matching.md). Chủ dự án chốt JD snapshot lúc nộp; chưa mở GĐ5/deploy. Các đánh giá “chưa thực hiện C” trong phần hiện trạng gốc là lịch sử.
+
+> Tiếp tục M3 ngày 21/10 theo yêu cầu làm hết phần có thể: [biên bản local mới](../report/m3-local-acceptance-2026-10-21.md). Bổ sung DOCX gốc, corpus 14 tài liệu/292 nhãn; JD parser v3, 94 backend/9 E2E đạt. M3 chất lượng đại diện còn native vi CV/người rà/quyền transfer; chưa thực hiện C, không call/phí mới.
+
+> Bổ sung đầu vào theo yêu cầu mới ngày 21/10: [report corpus/nhãn M3](../report/m3-inputs-2026-10-21.md). Có pilot 4 CV/3 nguồn, 8 JD/6 nhóm, 246 nhãn dự thảo; chưa đủ native vi CV/DOCX gốc và người rà nhãn/độ phủ đại diện. Không phí mới, chưa đóng M3 hoặc mở C.
+
+> Yêu cầu mới ngày 21/10: thực hiện nghiệm thu chất lượng M3. [Biên bản kiểm tra](../report/m3-quality-review-2026-10-21.md) ghi validator/replay mới và coverage; chưa đủ bằng chứng đại diện, chờ corpus/nhãn có quyền. Không thêm phí, không đổi ngưỡng và chưa thực hiện C. Ghi nhận tạm hoãn bên dưới là lịch sử.
+
+> Chốt chức năng B ngày 21/10: [probe DeepSeek thật và browser workflow PDF/apply/snapshot](../report/stage-b-provider-2026-10-21.md) đã đạt trên synthetic; trần DeepSeek 2 USD cho toàn giai đoạn phát triển, không reset theo lượt. M3 chất lượng trên corpus đại diện vẫn hoãn, chưa thực hiện C.
+
 > Bổ sung local B ngày 19/10: [report](../report/stage-b-followup-2026-10-19.md), [checklist M3](../phase-03-acceptance.md). Công cụ replay/capture và probe v3 sẵn sàng local; provider/corpus và đánh giá chất lượng chưa có, không tự đóng M3 hoặc bắt đầu C.
 
 > Tiếp tục theo yêu cầu: [báo cáo giai đoạn B — P04/L14–P09](../report/stage-b-2026-10-16.md), [hợp đồng triển khai](../phase-03-extraction-contract.md). Đã chốt một simple-v1 cho GĐ3; phần local đã được kiểm thử, quality/provider còn chờ. Các nhận định ban đầu dưới đây là lịch sử; chưa bắt đầu C.
@@ -103,7 +113,7 @@ Chưa có bằng chứng chất lượng AI trên corpus đại diện có quy�
 | M1 — nền tảng | Nền tảng kỹ thuật có bằng chứng local/CI; chưa nghiệm thu tổng thể | Dựng lại theo README trong môi trường sạch, kế hoạch/manifest dữ liệu và ghi nhận trao đổi đánh giá; cập nhật checklist bằng SHA mới |
 | M2 — tuyển dụng cơ bản | Phần lớn luồng chức năng đã có và được test | Chạy bộ acceptance đúng phiên bản, baseline trên dữ liệu có manifest/split và ghi biên bản; email thật theo dõi riêng, không chặn CRUD độc lập |
 | M3 — extraction/builder | Đang thực hiện | Full CV/JD có provenance, xác nhận; template cuối được chọn; PDF tạo ra ứng tuyển được; đo extraction trước sửa |
-| M4 — matching AI | Mới có nền baseline và diagnostic | match_pair, điểm 0–100 theo rubric, bằng chứng, hai chiều và tập đơn, cache/version/quyền/quota, thực nghiệm so sánh |
+| M4 — matching AI | Đạt phạm vi chức năng local và so sánh synthetic P10–P15 ngày 22/10; [biên bản C](../report/stage-c-2026-10-22.md) | Chất lượng đại diện/rubric người rà độc lập còn chờ; không dùng pilot synthetic làm đánh giá cuối |
 | M5 — đủ chức năng | Chưa đạt | AI viết CV có duyệt, nguồn học thật, quản trị/report/usage, tích hợp provider và luồng xuyên suốt |
 | M6 — bàn giao | Chưa đạt | Đánh giá cuối, dùng thử, hồi quy, restore, tài liệu/báo cáo/slide/demo |
 
@@ -138,6 +148,8 @@ Các mã P dưới đây là kế hoạch đề xuất mới, không phải task
 **Đóng M3 khi:** có CV/JD đầy đủ kiểm tra được nguồn, flow tạo CV dùng để ứng tuyển, báo cáo extraction ban đầu và đầu vào đủ rõ cho rubric. Kết quả có giới hạn được ghi trung thực; không tự đặt ngưỡng đã được giảng viên duyệt.
 
 ### Giai đoạn C — Hoàn tất GĐ4: matching có điểm và giải thích
+
+**Biên bản thực hiện 21–22/10:** [P10–P15, kiểm thử, so sánh và giới hạn](../report/stage-c-2026-10-22.md). Checklist bên dưới là tiêu chí kế hoạch gốc; kết quả thực tế được ghi trong biên bản, không coi synthetic là nghiệm thu chất lượng đại diện.
 
 **P10. Chốt rubric thử nghiệm và ngữ cảnh phiên bản.** Xác định tiêu chí, trọng số, missing/no_evidence, required chưa có bằng chứng và điều kiện địa điểm/lương/work mode. Chốt JD snapshot hay JD hiện tại khi phân tích lại; dữ liệu đơn cũ luôn giữ nguyên. Rubric có version; chưa có góp ý giảng viên thì ghi rõ thử nghiệm.
 

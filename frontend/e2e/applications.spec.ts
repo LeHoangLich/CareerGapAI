@@ -54,7 +54,8 @@ test('candidate submits a selected resume version and recruiter reads it only th
     // renders valid results without assuming this newly created job fits inside its top-20 window.
     const recommendedJobs = candidateMatching.locator('.matching-results li');
     await expect(recommendedJobs.first()).toContainText('retrieval_score');
-    await expect(recommendedJobs.first()).toContainText('CV và JD chưa có revision xác nhận');
+    // Other test data can include a confirmed JD; this newly uploaded CV is still unconfirmed.
+    await expect(recommendedJobs.first()).toContainText(/CV (và JD )?chưa có revision xác nhận/);
 
     await candidatePage.locator('.public-resume-controls').getByRole('button', { name: 'Công khai phiên bản 1', exact: true }).click();
     await expect(candidatePage.locator('.public-resume-controls')).toContainText('CV đã công khai');

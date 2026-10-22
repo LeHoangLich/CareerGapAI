@@ -228,7 +228,7 @@ function App() {
   const latestRevision = revisions[0];
   const setAuthenticated = (next: Session) => { setSession(next); setError(''); };
   return <main>
-    <header><span className="brand">CareerGap <strong>AI</strong></span><span className="badge">Thử nghiệm GĐ1</span></header>
+    <header><span className="brand">CareerGap <strong>AI</strong></span><span className="badge">Thử nghiệm GĐ4</span></header>
     <section className="intro"><p className="eyebrow">NỀN TẢNG HỒ SƠ NGHỀ NGHIỆP</p><h1>Khởi đầu từ CV của bạn.</h1><p>Tìm tin tuyển dụng công khai, chọn một phiên bản CV riêng tư để ứng tuyển và theo dõi hồ sơ đã gửi. Mỗi đơn lưu đúng phiên bản CV và JD tại thời điểm nộp.</p></section>
     {error && <p role="alert" className="error">{error}</p>}
     {!loading && !session?.deletionPending && <PublicJobBrowser session={session}/>}
@@ -320,7 +320,7 @@ function App() {
       {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <AccountDeletionPanel onPending={purgeAfter => setAuthenticated({ authenticated: true, roles: [], deletionPending: true, purgeAfter })}/>}
       <section className="card probe"><div><h2>Kiểm tra PDF tiếng Việt</h2><p>Xuất tài liệu giả để kiểm tra dấu, phân trang và khả năng chọn/copy văn bản.</p></div><button disabled={busy} className="secondary" onClick={() => void action(async () => { const { downloadProbe } = await import('./pdfProbe'); await downloadProbe(); })}>Xuất PDF mẫu giả</button></section>
     </>}
-    <footer>GĐ1 · Đơn ứng tuyển lưu snapshot CV/JD; phần đánh giá mức phù hợp chưa mở. Giao diện tiếng Việt phục vụ thử nghiệm.</footer>
+    <footer>Đối chiếu CV–JD theo rubric thử nghiệm · Đơn ứng tuyển giữ nguyên hồ sơ lúc nộp · Người dùng quyết định sàng lọc.</footer>
   </main>;
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);

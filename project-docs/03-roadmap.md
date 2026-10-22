@@ -1,5 +1,15 @@
 # CareerGap AI – Roadmap Phát triển
 
+> Cập nhật C ngày 22/10: đã thực hiện P10–P15 theo yêu cầu chủ dự án dù M3 chất lượng đại diện còn thiếu đầu vào. [Report C](report/stage-c-2026-10-22.md) ghi nghiệm thu chức năng local và so sánh tuning synthetic, không nâng thành chất lượng thực tế. Quyết định phân tích lại: JD snapshot lúc nộp. Các đoạn “chưa mở C” bên dưới là lịch sử trước yêu cầu này; GĐ5/deploy chưa mở.
+
+> Kiểm chứng local M3 tiếp 21/10: [report](report/m3-local-acceptance-2026-10-21.md) ghi native DOCX, corpus v2/292 nhãn, parser JD v3 và 94 backend/9 E2E đạt. M3 chất lượng đại diện còn native vi CV/người rà/quyền transfer; không còn thiếu DOCX gốc, chưa mở C hoặc deploy.
+
+> Đầu vào M3 bổ sung ngày 21/10: [pilot 12 tài liệu/9 nhóm và 246 nhãn dự thảo](report/m3-inputs-2026-10-21.md) đã kiểm tra local; còn thiếu native vi CV/original DOCX/người rà nhãn và độ phủ đại diện. Không call provider, chưa đóng M3 hoặc thực hiện C.
+
+> Kiểm tra nghiệm thu M3 theo yêu cầu mới ngày 21/10: [biên bản](report/m3-quality-review-2026-10-21.md). Replay tái lập smoke đạt; chất lượng đại diện chờ corpus/nhãn có quyền, chưa đóng M3. Không phát sinh phí hoặc thực hiện C. Các ghi nhận tạm hoãn bên dưới là lịch sử trước yêu cầu này.
+
+> Chốt chức năng B ngày 21/10: [probe DeepSeek thật và browser workflow PDF/apply/snapshot](report/stage-b-provider-2026-10-21.md) đã đạt trên synthetic; trần DeepSeek 2 USD cho toàn giai đoạn phát triển, không reset theo lượt. M3 chất lượng trên corpus đại diện vẫn hoãn, chưa thực hiện C.
+
 > Bổ sung local B ngày 19/10: [report](report/stage-b-followup-2026-10-19.md), [checklist M3](phase-03-acceptance.md). Công cụ replay/capture và probe v3 sẵn sàng local; provider/corpus và đánh giá chất lượng chưa có, không tự đóng M3 hoặc bắt đầu C.
 
 > Cập nhật sau B/P04–P09: [report](report/stage-b-2026-10-16.md), [hợp đồng GĐ3](phase-03-extraction-contract.md). Đã có lát local full CV v3/parser cô lập/JD v2/builder recovery/projection và smoke trước sửa; M3 vẫn chưa nghiệm thu chất lượng. Chủ dự án chốt một mẫu một cột simple-v1 cho GĐ3, thêm mẫu sau.

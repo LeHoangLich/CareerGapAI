@@ -274,6 +274,7 @@ public sealed class AiMethod
 public sealed class AiJob
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public string JobType { get; set; } = "extract_cv";
     public Guid RequestedBy { get; set; }
     public Guid? ResumeVersionId { get; set; }
     public Guid MethodVersionId { get; set; }
@@ -290,6 +291,26 @@ public sealed class AiJob
     public DateTimeOffset? FinishedAt { get; set; }
     public string? OutputJson { get; set; }
     public string? ErrorCode { get; set; }
+}
+public sealed class MatchInput
+{
+    public Guid AiJobId { get; set; }
+    public Guid CandidateId { get; set; }
+    public Guid ResumeVersionId { get; set; }
+    public Guid ResumeRevisionId { get; set; }
+    public Guid JobVersionId { get; set; }
+    public Guid JobRevisionId { get; set; }
+    public Guid? ApplicationId { get; set; }
+    public string Context { get; set; } = "self";
+    public string Fingerprint { get; set; } = "";
+    public string Payload { get; set; } = "{}";
+}
+public sealed class MatchResult
+{
+    public Guid AiJobId { get; set; }
+    public decimal Score { get; set; }
+    public string Criteria { get; set; } = "[]";
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
 public sealed class BudgetPeriod
 {

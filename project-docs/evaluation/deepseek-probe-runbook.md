@@ -1,5 +1,7 @@
 # P03/P06 — Probe full CV v3 từ localhost
 
+> Cập nhật 21/10: [probe full CV thật đã hoàn tất](../report/stage-b-provider-2026-10-21.md) trong cap 0,05 USD, thuộc trần DeepSeek 2 USD toàn giai đoạn phát triển; còn 1,99 USD theo ledger bảo thủ. Key đã có, không hỏi lại hoặc tự cấp lại ngân sách. Plan public hiện không có probe mở; trạng thái “chưa được phép” phía dưới là lịch sử chuẩn bị 19/10, không thay xác nhận 21/10. Dùng ledger/đối chiếu ngoài app trước lần gọi tiếp theo.
+
 Cập nhật **19/10/2026**. Chỉ chuẩn bị; **chưa được phép gọi trả phí**. Chủ dự án cung cấp DeepSeek sau. Chưa xác nhận key/số dư/kỳ/cap; không đọc secrets, tạo key hoặc nạp tiền. Mặc định tiếp tục Fake.
 
 ## Kiểm tra offline

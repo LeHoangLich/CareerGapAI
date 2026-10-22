@@ -22,6 +22,7 @@ public sealed class ApplicationRetentionService(AppDb db, TimeProvider clock)
 
         var ids = expired.Select(x => x.Id).ToArray();
         await db.Database.ExecuteSqlRawAsync("SET LOCAL careergap.application_retention = 'on'", ct);
+        await Matching.MatchRetention.Erase(db, db.MatchInputs.Where(x => x.ApplicationId != null && ids.Contains(x.ApplicationId.Value)), ct);
         await db.Notifications.Where(x => x.ApplicationId != null && ids.Contains(x.ApplicationId.Value)).ExecuteDeleteAsync(ct);
         await db.ApplicationNotes.Where(x => ids.Contains(x.ApplicationId)).ExecuteDeleteAsync(ct);
         await db.ApplicationStatusHistory.Where(x => ids.Contains(x.ApplicationId)).ExecuteDeleteAsync(ct);
