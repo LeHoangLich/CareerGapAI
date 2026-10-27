@@ -44,7 +44,18 @@ public sealed class CompletionTests
         Assert.True(options.SupportsContract(FullCvExtraction.Contract));
         Assert.Equal(512, options.Snapshot().MaxOutputTokens);
         Assert.Equal(2048, options.Snapshot(FullCvExtraction.Contract).MaxOutputTokens);
-        options.FullCvMaxOutputTokens = 2049; Assert.False(options.SupportsContract(FullCvExtraction.Contract));
+        options.FullCvMaxOutputTokens = 8192;
+        Assert.True(options.SupportsContract(FullCvExtraction.Contract));
+        Assert.Equal(8192, options.Snapshot(FullCvExtraction.Contract).MaxOutputTokens);
+        options.FullCvMaxOutputTokens = 8193; Assert.False(options.SupportsContract(FullCvExtraction.Contract));
+    }
+
+    [Fact] public void HistoricalFullCvMethodsKeepOriginalPromptAndNewPolicyIsDistinct()
+    {
+        Assert.Equal(FullCvExtraction.LegacyPrompt, FullCvExtraction.PromptForMethod("extract-probe-v2"));
+        Assert.Equal(FullCvExtraction.Prompt, FullCvExtraction.PromptForMethod(FullCvExtraction.PromptPolicy));
+        Assert.NotEqual(FullCvExtraction.Prompt, FullCvExtraction.LegacyPrompt);
+        Assert.Throws<ProviderError>(() => FullCvExtraction.PromptForMethod("unknown"));
     }
 
     private sealed class SyntheticHandler(string response) : HttpMessageHandler

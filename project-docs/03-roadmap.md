@@ -1,5 +1,8 @@
 # CareerGap AI – Roadmap Phát triển
 
+> 27/10 — Đã hoàn tất phần kỹ thuật E sau sửa: CV2/2, pair8/8 trên method mới; F1 exact0,623 và34/44 trạng thái tham chiếu, rerank CV→JD nDCG0,917 so baseline1,00, không cải thiện. Đây là regression trên tập đã xem, giữ kết quả E đầu. Backend159/159, E2E9/9, FE4/4/lint/typecheck/build; restore current DLL19migrations/43tables/11files/3ledger, Docker+3HTTP và full writing UI→PDF→new private version đạt. Demo đã chuyển sang DB persistent riêng, hai role và proposal Fake chưa duyệt sẵn cho giảng viên. DeepSeekfollowup debit0,04+hold0,01; total spent0,11+hold0,03/remaining1,86 trong2USD; một journal unknown trung gian giữreservation, không hoàn. Tavily mới2credits/2requestsDocker, Git khônggap; UsageAPI tổngchưađổi, giữdebit/capđóng; email0. Chưa xác nhận phản hồi giảng viên, M6/representative quality chưa nghiệmthu. Không push/deploy; userWord giữ hash. Xem báo cáo sau sửa và bộ dùng thử hiện hành. Các trạng thái lỗi kỹ thuật chưa sửa phía dưới là lịch sử. [Báo cáo](report/stage-e-followup-2026-10-27.md), [manifest](evaluation/stage-e-followup-2026-10-27.json), [bộ dùng thử](handoff/stage-e-fixed-20261027/README.md).
+
+
 > 27/10 — E đã thực thi14jobs/23attempts:CV0/2,pair2/8,writing4/4; P/R/F1 và LLM rerank chưa tính được. Clean directory/9E2E/3FE và restore19migrations/43bảng/18objects đạt; đã chuẩn bị bộ dùng thử, chưa có feedback giảng viên. **E/M6 chưa hoàn thành**, còn lỗi AI/topic và chưa release commit. [Báo cáo hiện hành](report/stage-e-2026-10-27.md). Các ghi nhận E chưa chạy bên dưới là lịch sử.
 
 

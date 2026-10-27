@@ -1,0 +1,6 @@
+SYNTHETIC E - Lap trinh vien web
+Du lieu tu tao, chi dung minh hoa.
+Bat buoc: React
+Bat buoc: TypeScript
+Uu tien: PostgreSQL
+Uu tien: Docker

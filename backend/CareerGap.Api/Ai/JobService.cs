@@ -52,7 +52,7 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         if (opt.Provider is not ("Fake" or "DeepSeek")) throw new JobError("provider_not_configured", 503);
         if (opt.Provider == "DeepSeek" && (!opt.RealIsConfigured() || string.IsNullOrWhiteSpace(config["Ai:ApiKey"]))) throw new JobError("provider_not_configured", 503);
         if (opt.Provider == "DeepSeek" && writing is not null && opt.WritingMaxOutputTokens is not (>= 128 and <= 2048)) throw new JobError("writing_output_budget_required", 503);
-        if (opt.Provider == "DeepSeek" && writing is null && (match is null ? !opt.SupportsContract(input.Contract) : opt.MatchMaxOutputTokens is not (>= 128 and <= 2048)))
+        if (opt.Provider == "DeepSeek" && writing is null && (match is null ? !opt.SupportsContract(input.Contract) : opt.MatchMaxOutputTokens is not (>= 128 and <= 4096)))
             throw new JobError(match is null ? "full_cv_output_budget_required" : "match_output_budget_required", 503);
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         // Serialize only short admission transactions: method/period creation and idempotency.
@@ -76,14 +76,14 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         if (writing is not null) parameters = parameters with { MaxOutputTokens = opt.Provider == "Fake" ? 2048 : opt.WritingMaxOutputTokens!.Value };
         parameters = parameters with { Contract = input.Contract, CompletionPolicy = CompletionValidator.Version, ParserVersion = DocumentParser.Version };
         var schema = writing is not null ? WritingContract.Version : match is not null ? PairMatchingContract.Version : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Contract : OutputSchemaVersion;
-        var prompt = writing is not null ? WritingContract.Prompt : match is not null ? PairMatchingContract.Prompt + PairMatchingContract.Rubric : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt;
+        var prompt = writing is not null ? WritingContract.Prompt : match is not null ? PairMatchingContract.Prompt + PairMatchingContract.GroundingInstructions + PairMatchingContract.Rubric : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt;
         var raw = JsonSerializer.Serialize(parameters, OutputValidator.Json);
         var configHash = Hash($"{opt.Provider}:{PromptVersion}:{schema}:{OutputValidator.Version}:{Files.DocumentParser.Version}:{prompt}:{raw}");
         var method = await db.AiMethods.SingleOrDefaultAsync(x => x.ConfigHash == configHash, ct);
         if (method is null)
         {
             method = new AiMethod { ConfigHash = configHash, Provider = opt.Provider, Model = parameters.Model,
-                    PromptVersion = writing is not null ? WritingContract.Version : match is null ? PromptVersion : PairMatchingContract.Version, SchemaVersion = schema, Parameters = raw };
+                    PromptVersion = writing is not null ? WritingContract.Version : match is not null ? PairMatchingContract.GroundingPolicy : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.PromptPolicy : PromptVersion, SchemaVersion = schema, Parameters = raw };
             db.AiMethods.Add(method);
         }
         if (match is not null)
@@ -104,7 +104,8 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
                 db.MatchResults.Add(new MatchResult { AiJobId = reused.Id, Score = result.Score, Criteria = result.Criteria, CreatedAt = result.CreatedAt });
                 await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return reused;
             }
-            if (Encoding.UTF8.GetByteCount(match.Payload + PairMatchingContract.Prompt) + 1024 > parameters.MaxInputTokens)
+            var payload = JsonSerializer.Deserialize<PairPayload>(match.Payload, OutputValidator.Json)!;
+            if (Encoding.UTF8.GetByteCount(PairMatchingContract.Serialize(PairMatchingContract.ProviderPayload(payload)) + PairMatchingContract.ProviderPrompt(payload)) + 1024 > parameters.MaxInputTokens)
                 throw new JobError("matching_input_limit", 422);
         }
         if (writing is not null && Encoding.UTF8.GetByteCount(writing.Payload + WritingContract.Prompt) + 1024 > parameters.MaxInputTokens) throw new JobError("writing_input_limit", 422);
@@ -340,7 +341,7 @@ public static class JobEndpoints
             var attempts = await db.ExternalCallAttempts.AsNoTracking().Where(x => x.AiJobId == id).ToListAsync(ct);
             return Results.Ok(new { schemaVersion = 1, contract = parameters.Contract, parser = parameters.ParserVersion,
                 row.Method.Provider, row.Method.Model, method = row.Method.ConfigHash,
-                promptSha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(FullCvExtraction.Prompt))),
+                promptSha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(FullCvExtraction.PromptForMethod(row.Method.PromptVersion)))),
                 parameters = JsonSerializer.Deserialize<JsonElement>(row.Method.Parameters), beforeUserCorrection = true,
                 unit = row.Method.Provider == "Fake" ? "test_credit" : "usd",
                 document = new { sourceJobId = id, sourceSha256 = row.DocumentHash, rawOutput = row.Job.OutputJson,

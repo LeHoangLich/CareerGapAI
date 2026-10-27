@@ -15,3 +15,4 @@ playwright-report/
 test-results/
 .playwright-cli/
 **/__pycache__/
+frontend/%SystemDrive%/

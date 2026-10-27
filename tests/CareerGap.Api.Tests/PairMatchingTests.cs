@@ -54,6 +54,28 @@ public sealed class PairContractTests
         Assert.False(PairMatchingContract.HasOverlap("SQL", ["PostgreSQL"]));
         Assert.True(PairMatchingContract.HasOverlap("React.js", ["React"]));
     }
+    [Fact] public void ProviderSeesOnlyLiteralCandidateKeysWithoutRelaxingEvidenceValidation()
+    {
+        var payload = Payload(); var allowed = PairMatchingContract.ProviderPayload(payload);
+        Assert.Single(allowed.Requirements);
+        Assert.Equal("skills[0]", allowed.Requirements[0].EligibleFactKeys[0]);
+        var expanded = PairMatchingContract.ExpandProviderOutput(PairMatchingContract.Serialize(new PairOutput([new("req-1", "met", [new("skills[0]", "React")])])), payload);
+        Assert.Equal(66.67m, PairMatchingContract.Validate(expanded, payload).Score);
+        Assert.Throws<ProviderError>(() => PairMatchingContract.ExpandProviderOutput(Output(), payload));
+        Assert.Throws<ProviderError>(() => PairMatchingContract.Validate(
+            PairMatchingContract.Serialize(new PairOutput([new("req-1", "no_evidence", []), new("req-2", "partial", [new("skills[0]", "React")])])), payload));
+    }
+    [Fact] public void EmptyProviderCandidateSetRemainsNoEvidenceAndManualReviewCannotBeMet()
+    {
+        var none = Payload() with { Facts = [] };
+        Assert.Empty(PairMatchingContract.ProviderPayload(none).Requirements);
+        var expanded = PairMatchingContract.ExpandProviderOutput("{\"criteria\":[]}", none);
+        Assert.All(PairMatchingContract.Validate(expanded, none).Criteria, c => Assert.Equal("no_evidence", c.Status));
+        var reviewed = Payload(review: true);
+        Assert.DoesNotContain("met", PairMatchingContract.ProviderPayload(reviewed).Requirements[0].AllowedStatuses);
+        Assert.Throws<ProviderError>(() => PairMatchingContract.ExpandProviderOutput(
+            PairMatchingContract.Serialize(new PairOutput([new("req-1", "met", [new("skills[0]", "React")])])), reviewed));
+    }
     [Fact] public void PreferencesAreExplicitlyUnassessedAndExcludedFromDenominator()
     {
         var payload = Payload() with { Requirements = [new("req-1", "React", "required", null, "single", [], false, "document_text"),

@@ -6,6 +6,7 @@ export async function refreshCsrf() {
 }
 export function errorMessage(code: string, status: number): string {
   const messages: Record<string,string> = {
+    ai_disabled:'AI đang tắt trong môi trường này. Yêu cầu mới chưa được tạo; bạn vẫn có thể xem, tải CV và thao tác thủ công.',
     writing_output_budget_required:'Chưa cấu hình hạn mức đầu ra cho đề xuất viết CV.', writing_output_invalid:'Đề xuất chưa đạt kiểm tra dữ kiện nguồn; CV giữ nguyên.',
     writing_input_limit:'Dữ kiện CV vượt giới hạn soạn thử nghiệm.', writing_facts_required:'CV chưa có đủ dữ kiện nghề nghiệp đã xác nhận trong giới hạn soạn thử nghiệm.', invalid_writing_language:'Chọn tiếng Việt hoặc tiếng Anh cho đề xuất.',
     writing_not_ready:'Đề xuất chưa xử lý xong.', invalid_writing_decision:'Hãy kiểm tra nội dung và độ dài trước khi duyệt.', writing_already_decided:'Đề xuất này đã được duyệt hoặc bỏ trước đó.',

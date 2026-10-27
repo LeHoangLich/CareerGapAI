@@ -1,5 +1,8 @@
 # Hướng dẫn coding agent — CareerGap AI
 
+> 27/10 — Đã hoàn tất phần kỹ thuật E sau sửa: CV2/2, pair8/8 trên method mới; F1 exact0,623 và34/44 trạng thái tham chiếu, rerank CV→JD nDCG0,917 so baseline1,00, không cải thiện. Đây là regression trên tập đã xem, giữ kết quả E đầu. Backend159/159, E2E9/9, FE4/4/lint/typecheck/build; restore current DLL19migrations/43tables/11files/3ledger, Docker+3HTTP và full writing UI→PDF→new private version đạt. Demo đã chuyển sang DB persistent riêng, hai role và proposal Fake chưa duyệt sẵn cho giảng viên. DeepSeekfollowup debit0,04+hold0,01; total spent0,11+hold0,03/remaining1,86 trong2USD; một journal unknown trung gian giữreservation, không hoàn. Tavily mới2credits/2requestsDocker, Git khônggap; UsageAPI tổngchưađổi, giữdebit/capđóng; email0. Chưa xác nhận phản hồi giảng viên, M6/representative quality chưa nghiệmthu. Không push/deploy; userWord giữ hash. Xem báo cáo sau sửa và bộ dùng thử hiện hành. Các trạng thái lỗi kỹ thuật chưa sửa phía dưới là lịch sử. [Báo cáo](project-docs/report/stage-e-followup-2026-10-27.md), [manifest](project-docs/evaluation/stage-e-followup-2026-10-27.json), [bộ dùng thử](project-docs/handoff/stage-e-fixed-20261027/README.md).
+
+
 ## 1. Phạm vi hướng dẫn và nguồn yêu cầu
 
 - Áp dụng cho phát triển, sửa lỗi, review và cập nhật tài liệu trong dự án này.

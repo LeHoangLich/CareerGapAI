@@ -1,5 +1,8 @@
 using System.Security.Claims;
 using System.Text.Json;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 using CareerGap.Api.Ai;
 using CareerGap.Api.Data;
 using CareerGap.Api.Integrations;
@@ -15,13 +18,23 @@ public sealed class LearningService(AppDb db, PairMatchingService pairs, IWebSea
 {
     // A query vocabulary, not a CV taxonomy. Only approved topic names leave the server.
     public static readonly LearningTopic[] Topics = [
-        new("docker", "Docker", "Docker containers"), new("react", "React", "React React.js ReactJS"), new("typescript", "TypeScript", "TypeScript"),
+        new("docker", "Docker", "Docker|containers"), new("react", "React", "React|React.js|ReactJS"), new("typescript", "TypeScript", "TypeScript"),
         new("python", "Python", "Python"), new("sql", "SQL", "SQL"), new("postgresql", "PostgreSQL", "PostgreSQL"), new("java", "Java", "Java"),
-        new("javascript", "JavaScript", "JavaScript"), new("dotnet", ".NET", ".NET ASP.NET C#"), new("git", "Git", "Git"), new("testing", "Software testing", "testing kiểm thử"),
-        new("excel", "Microsoft Excel", "Excel"), new("accounting", "Accounting", "accounting kế toán"), new("marketing", "Digital marketing", "marketing tiếp thị"),
-        new("communication", "Communication skills", "communication giao tiếp"), new("management", "Project management", "project management quản lý dự án"),
-        new("english", "Business English", "English tiếng Anh"), new("analytics", "Data analysis", "analytics analysis phân tích dữ liệu"), new("design", "Graphic design", "design thiết kế đồ họa"),
-        new("sales", "Sales skills", "sales bán hàng"), new("customer-service", "Customer service", "customer service chăm sóc khách hàng")];
+        new("javascript", "JavaScript", "JavaScript"), new("dotnet", ".NET", ".NET|ASP.NET|C#"), new("git", "Git", "Git"), new("testing", "Software testing", "testing|kiểm thử"),
+        new("excel", "Microsoft Excel", "Excel"), new("accounting", "Accounting", "accounting|kế toán"), new("marketing", "Digital marketing", "marketing|tiếp thị"),
+        new("communication", "Communication skills", "communication|giao tiếp"), new("management", "Project management", "project management|quản lý dự án"),
+        new("english", "Business English", "English|tiếng Anh"), new("analytics", "Data analysis", "analytics|analysis|phân tích dữ liệu"), new("design", "Graphic design", "design|thiết kế đồ họa"),
+        new("sales", "Sales skills", "sales|bán hàng"), new("customer-service", "Customer service", "customer service|chăm sóc khách hàng")];
+    public static bool MatchesTopic(string requirement, LearningTopic topic)
+    {
+        // Alternatives are whole phrases. A shared syllable in Vietnamese is not topic evidence.
+        static string Fold(string value) => Regex.Replace(string.Concat(value.Normalize(NormalizationForm.FormD)
+            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)).Replace('đ', 'd').Replace('Đ', 'D'), @"\s+", " ").Trim();
+        var source = Fold(requirement);
+        return topic.Aliases.Split('|', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Any(alias => Regex.IsMatch(source, @"(?<![\p{L}\p{N}_])" + Regex.Escape(Fold(alias)) + @"(?![\p{L}\p{N}_])",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(50)));
+    }
     private async Task<ScoredCriterion> Gap(Guid uid, Guid pairId, string key, CancellationToken ct)
     {
         var pair = await pairs.Read(uid, pairId, ct);
@@ -29,7 +42,7 @@ public sealed class LearningService(AppDb db, PairMatchingService pairs, IWebSea
         return pair.Criteria?.SingleOrDefault(x => x.RequirementKey == key && x.Status is "partial" or "no_evidence") ?? throw new JobError("learning_gap_required", 409);
     }
     public async Task<IReadOnlyList<LearningTopic>> Choices(Guid uid, Guid pair, string key, CancellationToken ct)
-    { var gap = await Gap(uid, pair, key, ct); return Topics.Where(t => PairMatchingContract.HasOverlap(gap.Requirement, [t.Aliases])).Take(6).ToArray(); }
+    { var gap = await Gap(uid, pair, key, ct); return Topics.Where(t => MatchesTopic(gap.Requirement, t)).Take(6).ToArray(); }
     public async Task<object> Find(Guid uid, LearningQuery request, CancellationToken ct)
     {
         if (request.IdempotencyKey == Guid.Empty || request.Language is not ("vi" or "en") || request.Level is not ("beginner" or "intermediate")) throw new JobError("invalid_learning_query", 400);
