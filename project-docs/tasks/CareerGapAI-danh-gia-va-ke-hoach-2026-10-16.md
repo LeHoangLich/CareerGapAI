@@ -1,5 +1,18 @@
 # CareerGapAI — Đánh giá hiện trạng và kế hoạch tiếp theo
 
+> 27/10 — E đã thực thi14jobs/23attempts:CV0/2,pair2/8,writing4/4; P/R/F1 và LLM rerank chưa tính được. Clean directory/9E2E/3FE và restore19migrations/43bảng/18objects đạt; đã chuẩn bị bộ dùng thử, chưa có feedback giảng viên. **E/M6 chưa hoàn thành**, còn lỗi AI/topic và chưa release commit. [Báo cáo hiện hành](../report/stage-e-2026-10-27.md). Các ghi nhận E chưa chạy bên dưới là lịch sử.
+
+
+> 27/10: bước7 đã đối chiếu7/7điều kiện và nghiệmthu M5 phạmvi local theo ủyquyền owner; [biênbản](../report/m5-local-acceptance-2026-10-27.md). D hoànthành,tiếp theo E/P20 theo freeze2CVAnh×4JD; chưa chạyđánhgiáE hoặc đóngM3chấtlượngđạidiện/M6. Các trạngthái M5pending trướcđây làlịchsử.
+
+> D tuần tự25/10: công việc7–8 writing synthetic đã hoàn thành accept/PDF/private version, Việt version3 và Anh version2/revision1; nguồn/public selection giữ nguyên, PDF/hash/text/visual đạt. PDF nội dung Anh còn tiêu đề mục Việt của simple-v1. [Report mục14](../report/stage-d-2026-10-23.md#14-codex-ra-23-nhan-nguon-theo-uy-quyen). Công việc9 đã được Codex rà theo ủy quyền:21nhãn giữ nguyên,2sửa locator; human review vẫn pending; M3/M5/chất lượng đại diện/final freeze/E/deploy chưa đóng. Email accepted1/unknown1 và search2credits/allowance0 giữ nguyên; không provider call mới. Các trạng thái chờ dưới đây là lịch sử.
+
+> D tuần tự 24/10: chủ dự án đã chọn/cấp Resend 1 email miễn phí/0 USD; một attempt qua app ghi `outcome_unknown`, chưa chứng minh giao thư/reset. Kiểm tra sau send phát hiện key backend không có prefix dự kiến `re_`; cần sửa cấu hình và đối soát, chưa xác định lỗi provider gốc. Giữ 1 unknown/0 allowance, không retry hoặc đổi DB/window để cấp lại. [Report mục 9](../report/stage-d-2026-10-23.md#9-email-resend-mot-luot-chua-ro-ket-qua). Chưa hoàn thành công việc email/chuyển việc tiếp theo/M5/final freeze/E/deploy; các ghi nhận chưa cấp phép email dưới đây giữ lịch sử.
+
+> D ngày 23/10 theo yêu cầu toàn quyền tiếp tục: [report D](../report/stage-d-2026-10-23.md) có writing DeepSeek thật 2/2 synthetic và Tavily hai Basic requests/6 links được chủ dự án rà. Công việc 5 hoàn thành với Overview đúng 2 credits lúc 17:45; cap search hết, không gọi thêm. Công việc 6 chờ chuẩn bị email provider/key/sender/recipient/allowance; Resend/một email miễn phí mới đề xuất. DeepSeek còn 1,97/2 USD. M5/final freeze chưa đóng, chưa mở E/deploy. Các đoạn “GĐ5 chưa mở” dưới là lịch sử.
+
+> Bổ sung C 23/10: [restart và backup/restore](../report/stage-c-recovery-2026-10-23.md) đạt với instance Fake mới; phần local còn thiếu do Docker đã xử lý. Chất lượng đại diện/giảng viên vẫn chưa được công nhận; không mở GĐ5/deploy.
+
 > C ngày 22/10 theo yêu cầu tiếp tục tuần tự: P10–P15 đã triển khai chức năng local và so sánh sơ bộ synthetic. [Report C](../report/stage-c-2026-10-22.md), [hợp đồng API/rubric](../phase-04-matching.md). Chủ dự án chốt JD snapshot lúc nộp; chưa mở GĐ5/deploy. Các đánh giá “chưa thực hiện C” trong phần hiện trạng gốc là lịch sử.
 
 > Tiếp tục M3 ngày 21/10 theo yêu cầu làm hết phần có thể: [biên bản local mới](../report/m3-local-acceptance-2026-10-21.md). Bổ sung DOCX gốc, corpus 14 tài liệu/292 nhãn; JD parser v3, 94 backend/9 E2E đạt. M3 chất lượng đại diện còn native vi CV/người rà/quyền transfer; chưa thực hiện C, không call/phí mới.
@@ -114,7 +127,7 @@ Chưa có bằng chứng chất lượng AI trên corpus đại diện có quy�
 | M2 — tuyển dụng cơ bản | Phần lớn luồng chức năng đã có và được test | Chạy bộ acceptance đúng phiên bản, baseline trên dữ liệu có manifest/split và ghi biên bản; email thật theo dõi riêng, không chặn CRUD độc lập |
 | M3 — extraction/builder | Đang thực hiện | Full CV/JD có provenance, xác nhận; template cuối được chọn; PDF tạo ra ứng tuyển được; đo extraction trước sửa |
 | M4 — matching AI | Đạt phạm vi chức năng local và so sánh synthetic P10–P15 ngày 22/10; [biên bản C](../report/stage-c-2026-10-22.md) | Chất lượng đại diện/rubric người rà độc lập còn chờ; không dùng pilot synthetic làm đánh giá cuối |
-| M5 — đủ chức năng | Chưa đạt | AI viết CV có duyệt, nguồn học thật, quản trị/report/usage, tích hợp provider và luồng xuyên suốt |
+| M5 — đủ chức năng | Đạt phạm vi localhost — 27/10/2026 | AI viết CV có duyệt, nguồn học thật, quản trị/report/usage, tích hợp provider và luồng xuyên suốt |
 | M6 — bàn giao | Chưa đạt | Đánh giá cuối, dùng thử, hồi quy, restore, tài liệu/báo cáo/slide/demo |
 
 ## 7. Kế hoạch thực hiện tuần tự

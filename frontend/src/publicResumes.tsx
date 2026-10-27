@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ReportButton } from './administration';
 import { api } from './api';
 
 type Resume = { id: string; title: string; versions: { id: string; versionNo: number }[] };
@@ -59,12 +60,14 @@ export function PublicResumeBrowser({ session }: { session?: Session }) {
     return () => { cancelled = true; };
   }, [isCandidate, isRecruiter, page]);
   if (!isCandidate && !isRecruiter) return null;
-  return <section className="card public-resume-browser"><div className="section-heading"><h2>Kho CV công khai</h2><span className="badge">{isCandidate ? 'Bản đã ẩn liên hệ' : 'Quyền recruiter'}</span></div>
+  return <section className="card public-resume-browser" id="public-resumes"><div className="section-heading"><h2>Kho CV công khai</h2><span className="badge">{isCandidate ? 'Bản đã ẩn liên hệ' : 'Quyền recruiter'}</span></div>
     <p>{isCandidate ? 'Bạn chỉ thấy CV có bản dẫn xuất đã kiểm tra. Các liên hệ, link và ảnh từ file gốc không được chuyển sang bản này.' : 'CV được ứng viên chủ động công khai. Recruiter có thể mở file gốc theo quyền của kho CV.'}</p>
     {error && <p role="alert" className="error">{error}</p>}
     <ul className="public-resume-list">{items.map(item => <li key={item.candidateId}>
       <div><strong>{item.displayName}</strong>{item.headline && <small>{item.headline}</small>}<small>CV phiên bản {item.versionNo} · công khai {new Date(item.publishedAt).toLocaleDateString('vi-VN')}</small></div>
       <a href={`/api/public/resumes/${item.candidateId}/${item.resumeVersionId}/file`} target="_blank" rel="noreferrer">Mở CV</a>
+      <ReportButton targetType="public_resume" targetId={item.resumeVersionId}/>
+      {isRecruiter && <a href={`/?profile=${item.candidateId}#shared-profile`}>Xem hồ sơ được chia sẻ</a>}
       {isRecruiter && item.redactionStatus !== 'ready' && <small>Bản dành cho candidate khác chưa sẵn sàng.</small>}
     </li>)}</ul>
     {!items.length && !error && <p>Chưa có CV công khai trong trang này.</p>}

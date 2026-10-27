@@ -20,6 +20,8 @@ public static class AccountEndpoints
 {
     public static void MapAccounts(this WebApplication app)
     {
+        var localFakeMailbox = (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) &&
+            app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>().Value.Provider == "Fake";
         app.MapGet("/api/auth/csrf", (HttpContext http, IAntiforgery antiforgery) => Results.Ok(new { token = antiforgery.GetAndStoreTokens(http).RequestToken }));
         app.MapGet("/api/auth/me", (ClaimsPrincipal user) => Results.Ok(new
         {
@@ -48,6 +50,7 @@ public static class AccountEndpoints
         app.MapPost("/api/auth/password/change", ChangePasswordAsync).RequireAuthorization();
         app.MapPost("/api/auth/password/forgot", ForgotPasswordAsync).RequireRateLimiting("recovery");
         app.MapPost("/api/auth/password/reset", ResetPasswordAsync).RequireRateLimiting("recovery");
+        app.MapGet("/api/auth/recovery-options", () => Results.Ok(new { localMailboxAvailable = localFakeMailbox }));
         app.MapPost("/api/account/deletion-request", async (AccountDeletionPasswordRequest input, ClaimsPrincipal principal,
             AccountDeletionService deletions, CancellationToken ct) =>
         {
@@ -74,7 +77,7 @@ public static class AccountEndpoints
             return Results.NoContent();
         }).RequireAuthorization().RequireRateLimiting("recovery");
 
-        if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
+        if (localFakeMailbox)
         {
             app.MapGet("/api/dev/mailbox", (HttpContext http, LocalMailOutbox outbox) =>
             {
@@ -150,7 +153,9 @@ public static class AccountEndpoints
                 {
                     var builder = new UriBuilder(new Uri(parsedBase, "/"));
                     builder.Query = $"resetEmail={Uri.EscapeDataString(account.Email!)}&resetToken={Uri.EscapeDataString(token)}";
-                    await emailSender.SendPasswordRecoveryAsync(account.Email!, builder.Uri, ct);
+                    // Keep the same public response for missing accounts and delivery/configuration failures.
+                    try { await emailSender.SendPasswordRecoveryAsync(account.Email!, builder.Uri, ct); }
+                    catch (Exception e) when (e is IntegrationError or HttpRequestException or OperationCanceledException) { }
                 }
             }
         }

@@ -43,7 +43,7 @@ test('full CV review survives reload, preserves source, and supplies builder dra
   expect(revisions[1].structuredData.fields.find((field: { path: string }) => field.path === 'summary').value).toBe('Xây dựng dữ liệu thử.');
   const builder = page.locator('.resume-builder');
   await builder.getByLabel('CV cần cập nhật').selectOption(all[0].id);
-  await builder.getByRole('button', { name: 'Nạp revision mẫu' }).click();
+  await builder.getByRole('button', { name: 'Nạp dữ liệu CV' }).click();
   await expect(builder.getByLabel('Tên hiển thị *')).toHaveValue('Ứng Viên Tổng Hợp');
   await expect(builder.getByLabel('Giới thiệu')).toHaveValue('Nội dung do ứng viên tự sửa.');
   await expect(builder.getByLabel('Kỹ năng, mỗi dòng một mục')).toHaveValue('React\nTypeScript\nPostgreSQL\nGo');

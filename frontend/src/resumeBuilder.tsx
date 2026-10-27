@@ -2,6 +2,7 @@ import { pdf } from '@react-pdf/renderer';
 import { useEffect, useRef, useState } from 'react';
 import { api } from './api';
 import { ResumeBuilderPdf, type BuilderEducation, type BuilderExperience, type BuilderProject, type ResumeBuilderContent } from './resumeBuilderPdf';
+import { WritingPanel, type WritingEdit } from './writing';
 
 type ResumeVersion = { id: string; fileId: string; versionNo: number; documentHash: string; createdAt: string };
 type Resume = { id: string; title: string; rowVersion: number; createdAt: string; updatedAt: string; versions: ResumeVersion[] };
@@ -82,6 +83,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated }: Props
   const [title, setTitle] = useState('CV của tôi');
   const [targetResumeId, setTargetResumeId] = useState('');
   const [sourceVersionId, setSourceVersionId] = useState('');
+  const [loadedRevisionId, setLoadedRevisionId] = useState('');
   const [content, setContent] = useState(emptyContent);
   const [previewBlob, setPreviewBlob] = useState<Blob>();
   const [previewKey, setPreviewKey] = useState('');
@@ -111,17 +113,19 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated }: Props
   function edit(update: (current: ResumeBuilderContent) => ResumeBuilderContent) {
     if (pendingUpload) { setError('Hãy hoàn tất hoặc bỏ bản lưu dang dở trước khi sửa nội dung.'); return; }
     setContent(current => update(current));
+    setLoadedRevisionId('');
     setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); setPendingUpload(undefined); setMessage(''); setError('');
   }
 
   function changeTarget(id: string) {
     if (pendingUpload) { setError('Hãy hoàn tất hoặc bỏ bản lưu dang dở trước khi chọn CV khác.'); return; }
     setTargetResumeId(id);
+    setLoadedRevisionId('');
     const selected = resumes.find(item => item.id === id);
     setSourceVersionId(selected?.versions[0]?.id ?? '');
     setTitle(selected?.title ?? 'CV của tôi');
     setContent(emptyContent()); setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); setPendingUpload(undefined);
-    setMessage(id ? 'Chọn phiên bản bên dưới rồi nạp revision mẫu để chỉnh sửa.' : 'CV mới sẽ tạo một hồ sơ riêng tư.');
+    setMessage(id ? 'Chọn phiên bản bên dưới rồi nạp dữ liệu CV để chỉnh sửa.' : 'CV mới sẽ tạo một hồ sơ riêng tư.');
   }
 
   async function loadRevision() {
@@ -129,12 +133,15 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated }: Props
     setBusy(true); setLoadingRevision(true); setError('');
     try {
       const revisions = await api<Revision[]>(`/api/resume-versions/${sourceVersionId}/revisions`);
-      const saved = revisions.find(item => item.origin === 'user_entered' && item.schemaVersion === 2);
+      const eligible = revisions.find(item => item.origin === 'user_confirmed' || item.origin === 'user_entered' && item.schemaVersion === 2);
+      const saved = eligible?.origin === 'user_entered' && eligible.schemaVersion === 2 ? eligible : undefined;
       const loaded = saved ? fromRevision(saved.structuredData) : fromRevision(await api<unknown>(`/api/resume-versions/${sourceVersionId}/builder-content`).catch(() => undefined));
       if (!loaded) {
+        setLoadedRevisionId('');
         setContent(emptyContent()); setSavedKey('');
         setMessage('Phiên bản này chưa có dữ liệu từ trình tạo CV; bạn có thể nhập nội dung để tạo phiên bản kế tiếp.');
       } else {
+        setLoadedRevisionId(eligible?.id ?? '');
         setContent(loaded); setSavedKey('');
         setMessage(`Đã nạp dữ liệu mẫu từ revision ${saved?.revisionNo ?? 'đã xác nhận'}. Lưu thay đổi sẽ tạo file version mới; bản cũ được giữ nguyên.`);
       }
@@ -197,6 +204,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated }: Props
       const fresh = await api<Resume[]>('/api/resumes?page=1');
       onResumesUpdated(fresh);
       setTargetResumeId(uploaded.resumeId); setSourceVersionId(uploaded.versionId);
+      setLoadedRevisionId(revision.id);
       window.dispatchEvent(new Event('resume-list-updated'));
       setSavedKey(key); setPendingUpload(undefined); sessionStorage.removeItem(recoveryKey);
       setMessage(`Đã lưu CV riêng tư, phiên bản mới và revision ${revision.revisionNo}. Các bản trước vẫn được giữ nguyên.`);
@@ -223,17 +231,24 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated }: Props
   const updateListItem = <T,>(list: T[], index: number, update: Partial<T>) => list.map((item, i) => i === index ? { ...item, ...update } : item);
   const addItem = <T,>(list: T[], blank: () => T, max: number) => list.length < max ? [...list, blank()] : list;
   const dropItem = <T,>(list: T[], index: number) => list.filter((_, i) => i !== index);
+  function applyWriting(edits: WritingEdit[], revisionId: string) {
+    if (revisionId !== loadedRevisionId) { setError('Dữ liệu nguồn đã thay đổi hoặc bản nháp đã được sửa. Hãy nạp lại dữ liệu CV trước khi áp dụng đề xuất đã duyệt.'); return; }
+    const missing = edits.some(item => item.target !== 'summary' && (item.target.startsWith('experience') ? !content.experience[Number(item.target.match(/\d+/)?.[0])] : !content.projects[Number(item.target.match(/\d+/)?.[0])]));
+    if (missing) { setError('Hãy nạp dữ liệu nguồn phù hợp trước khi đưa đề xuất đã duyệt vào bản nháp.'); return; }
+    edit(current => edits.reduce((next, item) => item.target === 'summary' ? { ...next, summary: item.text } : item.target.startsWith('experience') ? { ...next, experience: updateListItem(next.experience, Number(item.target.match(/\d+/)?.[0]), { description: item.text }) } : { ...next, projects: updateListItem(next.projects, Number(item.target.match(/\d+/)?.[0]), { description: item.text }) }, current));
+  }
 
-  return <section className="card resume-builder">
+  return <section className="card resume-builder" id="cv-builder">
     <div className="section-heading"><div><p className="eyebrow">CV THEO MẪU · BẢN THỬ NGHIỆM</p><h2>Tạo CV từ thông tin bạn cung cấp</h2></div><span className="job-status">simple-v1</span></div>
-    <p>Nhập và rà soát nội dung trước khi xuất PDF. Không có AI tự viết hoặc bổ sung dữ kiện trong luồng này. Lưu sẽ tạo file PDF riêng tư và revision bất biến gắn với đúng version.</p>
+    <p>Nhập và rà soát nội dung trước khi xuất PDF. Đề xuất AI chỉ được đưa vào bản nháp sau khi bạn duyệt. Lưu sẽ tạo file PDF riêng tư và revision bất biến gắn với đúng version.</p>
     <p>Bản lưu dang dở được giữ tạm trong phiên trình duyệt của tài khoản này và xóa sau khi hoàn tất, bỏ bản nháp hoặc đăng xuất.</p>
     {pendingUpload && <div role="status"><p>File đã được tải riêng tư; phần dữ liệu cần hoàn tất.</p><button disabled={busy} onClick={() => void completePending()}>Hoàn tất bản lưu dang dở</button><button disabled={busy} className="secondary" onClick={() => { sessionStorage.removeItem(recoveryKey); setPendingUpload(undefined); setMessage('Đã bỏ bản nháp tạm. File đã tải vẫn ở CV riêng của bạn.'); }}>Bỏ bản nháp tạm</button></div>}
     <div className="builder-source-row">
-      <label>CV cần cập nhật<select value={targetResumeId} onChange={e => changeTarget(e.target.value)}><option value="">Tạo CV mới</option>{resumes.map(resume => <option key={resume.id} value={resume.id}>{resume.title}</option>)}</select></label>
-      {targetResume && <><label>Version dùng để nạp dữ liệu<select value={sourceVersionId} onChange={e => setSourceVersionId(e.target.value)}>{targetResume.versions.map(version => <option key={version.id} value={version.id}>Version {version.versionNo}</option>)}</select></label><button className="secondary" disabled={!sourceVersionId || busy} onClick={() => void loadRevision()}>{loadingRevision ? 'Đang nạp…' : 'Nạp revision mẫu'}</button></>}
+      <label>CV cần cập nhật<select aria-label="CV cần cập nhật" disabled={busy || !!pendingUpload} value={targetResumeId} onChange={e => changeTarget(e.target.value)}><option value="">Tạo CV mới</option>{resumes.map(resume => <option key={resume.id} value={resume.id}>{resume.title}</option>)}</select></label>
+      {targetResume && <><label>Phiên bản nguồn<select aria-label="Phiên bản nguồn" disabled={busy || !!pendingUpload} value={sourceVersionId} onChange={e => {setSourceVersionId(e.target.value);setLoadedRevisionId('');}}>{targetResume.versions.map(version => <option key={version.id} value={version.id}>Phiên bản {version.versionNo}</option>)}</select></label><button className="secondary" disabled={!sourceVersionId || busy} onClick={() => void loadRevision()}>{loadingRevision ? 'Đang nạp…' : 'Nạp dữ liệu CV'}</button></>}
       <label>Tên CV<input value={title} maxLength={100} onChange={e => { setTitle(e.target.value); setPendingUpload(undefined); }}/></label>
     </div>
+    {sourceVersionId && <>{!loadedRevisionId && <p className="hint">Nạp dữ liệu CV đã xác nhận trước khi yêu cầu đề xuất AI. Nội dung đang sửa cần được lưu và xác nhận trước khi dùng làm nguồn.</p>}<WritingPanel key={sourceVersionId} versionId={sourceVersionId} disabled={busy || !!pendingUpload || !loadedRevisionId} onApply={applyWriting}/></>}
     <form className="builder-form" onSubmit={e => { e.preventDefault(); void createPreview(); }}>
       <h3>Thông tin cá nhân</h3>
       <div className="form-columns">
@@ -243,7 +258,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated }: Props
         <label>Số điện thoại<input value={content.phone} maxLength={50} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, phone: value })); }}/></label>
         <label>Địa điểm<input value={content.location} maxLength={150} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, location: value })); }}/></label>
       </div>
-      <label>Giới thiệu<textarea value={content.summary} maxLength={3000} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, summary: value })); }}/></label>
+      <label>Giới thiệu<textarea aria-label="Giới thiệu" value={content.summary} maxLength={3000} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, summary: value })); }}/></label>
 
       <div className="builder-section-heading"><h3>Kỹ năng</h3><small>Tối đa 20 dòng; đây là thông tin bạn tự khai báo.</small></div>
       <label>Kỹ năng, mỗi dòng một mục<textarea value={content.skills.join('\n')} maxLength={2200} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, skills: parseLines(value) })); }}/></label>

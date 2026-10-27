@@ -33,7 +33,7 @@ test('recruiter creates company and job versions; only published current jobs ar
   await jobEditor.getByLabel('Yêu cầu và kỹ năng', { exact: true }).fill('Bắt buộc: C#\nƯu tiên: PostgreSQL\nASP.NET Core');
   await jobEditor.getByRole('button', { name: 'Tạo tin nháp', exact: true }).click();
   const managedJob = manager.locator('.job-card').filter({ hasText: title });
-  await expect(managedJob).toContainText('draft');
+  await expect(managedJob).toContainText('Bản nháp');
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 
   const jdReview = managedJob.locator('.job-revision-review');
@@ -61,7 +61,7 @@ test('recruiter creates company and job versions; only published current jobs ar
   await expect(managedJob).toContainText('Phiên bản 2: phát triển API và kiểm thử PostgreSQL.');
 
   await managedJob.getByRole('button', { name: 'Đóng tin', exact: true }).click();
-  await expect(managedJob).toContainText('closed');
+  await expect(managedJob).toContainText('Đã đóng');
   await browser.getByRole('button', { name: 'Tìm việc', exact: true }).click();
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 });

@@ -79,7 +79,18 @@ builder.Services.AddRateLimiter(o =>
 builder.Services.AddSingleton<DocumentParser>();
 builder.Services.AddSingleton<RedactedResumeBuilder>();
 builder.Services.AddSingleton<LocalMailOutbox>();
-builder.Services.AddScoped<IEmailSender, FakeEmailSender>();
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.AddHttpClient<ResendEmailSender>().ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+builder.Services.AddScoped<IEmailSender>(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>().Value.Provider switch {
+    "Fake" => new FakeEmailSender(sp.GetRequiredService<LocalMailOutbox>()), "Resend" => sp.GetRequiredService<ResendEmailSender>(),
+    _ => throw new InvalidOperationException("Unknown email provider") });
+builder.Services.Configure<SearchOptions>(builder.Configuration.GetSection("Search"));
+builder.Services.AddHttpClient<TavilySearchClient>().ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
+builder.Services.AddScoped<IWebSearchClient>(sp => sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<SearchOptions>>().Value.Provider switch {
+    "Fake" => new FakeWebSearchClient(), "Tavily" => sp.GetRequiredService<TavilySearchClient>(),
+    _ => throw new InvalidOperationException("Unknown search provider") });
+builder.Services.AddScoped<CareerGap.Api.Learning.LearningService>();
+builder.Services.AddHostedService<CareerGap.Api.Learning.LearningCacheWorker>();
 builder.Services.AddSingleton<IFileStorage>(sp => builder.Configuration["Storage:Provider"] == "S3" ? new S3FileStorage(builder.Configuration) : new LocalFileStorage(sp.GetRequiredService<IWebHostEnvironment>(), builder.Configuration));
 builder.Services.AddScoped<OrphanFileCleanupService>();
 builder.Services.AddHostedService<OrphanFileCleanupWorker>();
@@ -87,6 +98,7 @@ builder.Services.Configure<KeywordBaselineOptions>(builder.Configuration.GetSect
 builder.Services.AddScoped<KeywordMatchingService>();
 builder.Services.AddScoped<PairMatchingService>();
 builder.Services.AddScoped<PairRecommendationService>();
+builder.Services.AddScoped<CareerGap.Api.Writing.WritingService>();
 builder.Services.Configure<AiOptions>(builder.Configuration.GetSection("Ai"));
 builder.Services.AddHttpClient<DeepSeekClient>(c => { c.BaseAddress = new Uri("https://api.deepseek.com/"); c.Timeout = TimeSpan.FromSeconds(45); });
 builder.Services.AddSingleton<FakeLlmClient>();
@@ -251,6 +263,9 @@ app.MapAccounts(); app.MapProfiles(); app.MapCompanyJobEndpoints(); app.MapJobRe
 app.MapKeywordMatchingEndpoints();
 app.MapPairMatching();
 app.MapPairRecommendations();
+CareerGap.Api.Writing.WritingService.Map(app);
+CareerGap.Api.Learning.LearningService.Map(app);
+CareerGap.Api.Administration.AdminEndpoints.Map(app);
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) app.MapOpenApi();
 app.UseDefaultFiles(); app.UseStaticFiles();
 app.MapFallback("/api/{**path}", () => Results.NotFound());

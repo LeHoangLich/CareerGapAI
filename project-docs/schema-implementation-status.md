@@ -1,5 +1,7 @@
 # Schema và hợp đồng hiện thực tại baseline b392ef0
 
+> **D ngày 23/10:** 19 migrations; các bảng thực mới `writing_inputs`, `writing_results`, `writing_decisions`, `learning_requests`, `content_reports`, `admin_audits`, `email_deliverys`; `suggest_cv` trong `ai_jobs`. Không có bảng learning_resources hay taxonomy đầy đủ như thiết kế đích. [Hợp đồng D](phase-05-improvement-and-administration.md), [report D](report/stage-d-2026-10-23.md). Ma trận baseline dưới giữ theo thời điểm b392ef0, không là hiện trạng D.
+
 > **C ngày 22/10 — migration 16:** đã có `ai_jobs.job_type` (`extract_cv`/`match_pair`), `match_inputs`, `match_results`, FK owner/version/revision/context và trigger bất biến. Matching ghim CV/JD snapshot cùng revision xác nhận tại lúc nộp trong input, không thêm/backfill cột revision application. User quota được tính trên attempts/reservations hiện có. Chưa có parent recommendation job/`recommendation_items`, skill projection hay taxonomy. [Hợp đồng C](phase-04-matching.md), [kiểm chứng migration và report](report/stage-c-2026-10-22.md). Ma trận baseline bên dưới giữ nguyên giá trị lịch sử.
 
 > B/P04–P09 cập nhật: full CV schema v3 và JD v2 nằm trong các bảng revision đã có; builder v2 và v3 confirmed được projection self/public theo provenance; không thêm bảng/cột/migration. [Hợp đồng mới](phase-03-extraction-contract.md), [report](report/stage-b-2026-10-16.md). Các giới hạn baseline b392ef0 bên dưới giữ theo thời điểm.

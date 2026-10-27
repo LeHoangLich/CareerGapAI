@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-27",
+  "created_at_utc": "2026-10-26T20:24:19.078101+00:00",
+  "status": "prepared_not_final_frozen",
+  "refs": {
+    "source_manifest": {
+      "path": ".local/stage-d-20261023/step5/step5-current-source-manifest.json",
+      "sha256": "d8f008026f5370121ac3f7cbdc1281b77bcd85676ea6a55e9829002378ad2596"
+    },
+    "method_inventory": {
+      "path": ".local/stage-d-20261023/step6/method-protocol-review.json",
+      "sha256": "a81aebaee2d3bebc3ab9a089bf6a64a862ff4c3d000771d75e3a10e1b1c88c77"
+    },
+    "protocol": {
+      "path": "project-docs/evaluation/stage-d-final-protocol-2026-10-26.md",
+      "sha256": "057c4814ad49f8a151017a4b918fc8b4ee6392b8b85d0b9032773d0000d45826"
+    },
+    "data_plan": {
+      "path": ".local/stage-d-20261023/step6-owner-20261027/selected-data-plan.json",
+      "sha256": "f22c241e7592ccca57586959839237b7b45fbc1347eab352821926a9bad827f1"
+    },
+    "budget_plan": {
+      "path": "project-docs/evaluation/stage-d-evaluation-budget-followup-2026-10-26.json",
+      "sha256": "2f30cedecb5e6043e63b8fee244a2cdb36385d72eb14d227044351466da81889"
+    }
+  },
+  "method_parameters_plan": {
+    "path": ".local/stage-d-20261023/step6/method-parameters-plan.json",
+    "sha256": "87f989b0cd10700505cc384d451c7d007f4166ce43123d00ba112c1ad6f1940f"
+  },
+  "provider_evidence": [
+    {
+      "path": "project-docs/evaluation/stage-d-writing-provider-2026-10-23.json",
+      "sha256": "9f66430f7c41799754b772258746ba7e78d45dbb4ee51946e64d2881b314af0f"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+      "sha256": "fac95ec4233dcf9d5990093d0b43fb72afa926ee3ff249f9239a24f32ade7dad"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-email-provider-2026-10-24.json",
+      "sha256": "ff27170929b9db3047da467bb6d668ef4bca790933e86fc2eba65b94e94965c4"
+    }
+  ],
+  "provider_evidence_scope": "historical_prior_candidate_verified_provider_contract_sources_unchanged_not_new_DLL_probe",
+  "evaluation_tools": [
+    {
+      "path": "scripts/check-stage-d-freeze.py",
+      "sha256": "e605fae3a0fd7235446449a470eb521194812a81d33c8e4e545c076cf1e0af64"
+    },
+    {
+      "path": "scripts/evaluate-final-pair-captures.py",
+      "sha256": "75561c0573ab2d5d4d36e4a806f386c431585218e031e360a8e52bea8af214b4"
+    },
+    {
+      "path": "tests/evaluation/test_stage_d_freeze.py",
+      "sha256": "f394b851f53739c8dffbbd26adeac1d1b41faf54f16fa3a1f36351dd5e69d76b"
+    },
+    {
+      "path": "tests/evaluation/test_final_pair_evaluation.py",
+      "sha256": "124e650a0b0af4d14d5d70a7d40318b99340f6f5fec4c8a316dfd5ad351f18d2"
+    }
+  ],
+  "readiness": {
+    "owner_scope_approved": true,
+    "final_dataset_frozen": false,
+    "final_independence_verified": false,
+    "provider_rights_verified": false,
+    "final_reference_labels_ready": false,
+    "required_search_allowance_approved": false,
+    "funds_reconciled": false
+  },
+  "execution": {
+    "api_calls_authorized": false,
+    "planned_or_executed_calls_now": 0
+  },
+  "component_configuration_pinned": true,
+  "full_final_freeze_complete": false,
+  "step6_completed": false,
+  "m5_accepted": false,
+  "stage_e_started": false,
+  "owner_scope_decision": "existing_2cv_en_4jd_selected_limited_preparation_no_transfer_no_spend",
+  "owner_scope_receipt": {
+    "path": ".local/stage-d-20261023/step6/owner-conditional-scope-receipt.json",
+    "sha256": "0f980fbece4e2e70c99f7581d64e8d80017868da6b9f7f08846ba9fe67db708a"
+  },
+  "prior_step6_preparation_manifest": {
+    "path": "project-docs/evaluation/stage-d-step6-preparation-2026-10-26.json",
+    "sha256": "88acdcebd965f4484530da54424f69386f213c16b26fc93eb9d04bb9c241a75a"
+  },
+  "local_followup_summary": {
+    "path": ".local/stage-d-20261023/step6-followup/local-preparation-summary.json",
+    "sha256": "07fa77ff8b4598ca5928d224b4aaee96dd82ae4f13917909069f4986eb697439"
+  },
+  "owner_actions_guide": {
+    "path": "project-docs/tasks/stage-d-step6-owner-actions-2026-10-26.md",
+    "sha256": "feee4129fba661bdb6193f06a2f2b6e6ecb41a11f8da40f95c1c7fc0e25dfe88"
+  },
+  "latest_report": {
+    "path": "project-docs/report/stage-d-step6-owner-selection-2026-10-27.md",
+    "sha256": "02a91c72964aeed3972688edcd716324d37a3ce1defc1e9493eea67c64c8401e"
+  },
+  "exact_candidate_documents_for_rights_review": {
+    "path": ".local/stage-d-20261023/step6-followup/exact-candidate-documents-for-rights-review.json",
+    "sha256": "dc4725df31013eeebf5e20f33a7373644ad48c107e4fcfc9f5d28a0bae252584"
+  },
+  "prior_step6_followup_manifest": {
+    "path": "project-docs/evaluation/stage-d-step6-followup-2026-10-26.json",
+    "sha256": "62b2a3d8b24c58fe4cdcd9d32042355fba6d56117b713e43beb781d772a492b8"
+  },
+  "actual_candidate_pool_accepted_by_owner": true,
+  "owner_selection_receipt": {
+    "path": "project-docs/evaluation/stage-d-step6-owner-selection-2026-10-27.json",
+    "sha256": "364743f344d67b3b7b14e98ac3d4387ebc5545df6fce28d89911f7dc3f9a109c"
+  }
+}

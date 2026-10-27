@@ -1,5 +1,7 @@
 # GĐ4 — Hợp đồng matching thử nghiệm
 
+> Bằng chứng phục hồi bổ sung 23/10: [report](report/stage-c-recovery-2026-10-23.md). Restart PostgreSQL/API và backup/restore riêng đã kiểm cả matching cache, snapshot, quyền, file và session cũ; chỉ Fake, không phải production proof.
+
 Cập nhật 22/10/2026, thực hiện P10–P15 theo yêu cầu chủ dự án. [Biên bản và kết quả](report/stage-c-2026-10-22.md). Phạm vi localhost; M3 chất lượng trên corpus đại diện vẫn chờ đầu vào. Rubric chưa được giảng viên thẩm định.
 
 ## Đầu vào và phiên bản

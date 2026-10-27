@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 1,
+  "status": "candidate_not_final_freeze",
+  "createdAtUtc": "2026-10-23T01:30:49.5880386+07:00",
+  "gitHead": "64fbc991833f42ffad6a101579026b6ad5414aaf",
+  "workingTreeDirty": true,
+  "sourceBundleSha256": "8b59d856bf551f663981c11bc4039798d993526de100924b751ac74ac5d847e4",
+  "backendAssemblySha256": "8853252d507a183bfd40742386e3ca1c5d90daec41714fca56a0d1c2c802dfd2",
+  "dockerImage": "sha256:e3f93df21442e01a348777fe30a4117b076c91904429dfa0dab4a51479048996",
+  "methods": {
+    "documentParser": "pdfpig-0.1.16-openxml-3.5.1-v2-isolated",
+    "learning": "learning-topics-v1",
+    "cvEvidenceValidator": "cv-fields-evidence-v1",
+    "rubric": "experimental-requirements-v1",
+    "matching": "pair-evidence-v1",
+    "writing": "cv-composition-v1",
+    "jdParser": "jd-atomic-requirements-v3",
+    "cvExtraction": "cv-fields-v3",
+    "template": "simple-v1"
+  },
+  "runtimeProviders": {
+    "search": "Fake",
+    "ai": "Fake",
+    "email": "Fake"
+  },
+  "providerWritingVerified": false,
+  "providerSearchVerified": false,
+  "providerEmailVerified": false,
+  "qualityRepresentativeEvidence": false,
+  "finalSplit": {
+    "approvalOrThresholdInvented": false,
+    "groupingRule": "all variants of a CV/JD source stay in the same split",
+    "finalHoldoutUsed": false,
+    "status": "pending_valid_rights_representative_labels_and_human_review",
+    "scope": "Stage D only; earlier M3 runs retain their historical scope"
+  },
+  "sourceFiles": [
+    {
+      "path": ".dockerignore",
+      "sha256": "47485c7691d77d189faffd48acab04f6e42ec7338d2b3c4ead6075bc990365ba"
+    },
+    {
+      "path": "backend/CareerGap.Api/Accounts/AccountDeletionService.cs",
+      "sha256": "ccc017ca5098009ff3cab7e1bc41b642b5aa89ac25b437a240ccb8f92bc5e84c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Accounts/AccountEndpoints.cs",
+      "sha256": "1ab9b63a3ab2b4aad95e5a43e578cc98a008f676c06425c21ee57b9f48284895"
+    },
+    {
+      "path": "backend/CareerGap.Api/Administration/AdminEndpoints.cs",
+      "sha256": "110fe42db50b6ca2084c5dcf915df1c15fa794b45c7005704480f90108bd041a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/JobService.cs",
+      "sha256": "45dee1f885b8f6302cf33d58d67e60e0893e105805ce24325fc8b2dc18346619"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/JobWorker.cs",
+      "sha256": "881b165c0eb08f33b72392c97c95a9601d1686480627ad9d9963a431965933b2"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/LlmClients.cs",
+      "sha256": "be9b1916797cf1b46c5b20ab6dbab152004b12b92a49f33ed3a4d3870528cdd9"
+    },
+    {
+      "path": "backend/CareerGap.Api/Applications/ApplicationEndpoints.cs",
+      "sha256": "ad9026af5a5c37ae01b70bf75b1d34ed2d438b97abf63507df1483e6c664b48b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Applications/ApplicationRetentionService.cs",
+      "sha256": "79915b9785497d0bc7df7d5b6298b752901dfca4293c1bebeb8354401cd5ad5b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Applications/ApplicationWorkflowEndpoints.cs",
+      "sha256": "2b67664ede70dca12aaea17d93b579cf0c829e006f5df58b6086a03c53b6f787"
+    },
+    {
+      "path": "backend/CareerGap.Api/appsettings.json",
+      "sha256": "0419d5865cce8571f32e80856364ca6ab9e04732267d443ad189b48d8680dfe8"
+    },
+    {
+      "path": "backend/CareerGap.Api/CareerGap.Api.csproj",
+      "sha256": "d66c03318ef14f1b340eba98b6d2c415a067276e9015c94b08995427deced3a5"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/AdministrationModels.cs",
+      "sha256": "6aa912c182b995e56217d767282862ce4adcf83184fb8be773d6f1bc15e64e58"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/AppDb.cs",
+      "sha256": "1fe0793b40815435088d0a84a8807d3688830f08e15b9ca1b9615e248e6cff1a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/LearningModels.cs",
+      "sha256": "3f39de604487446d74ed8e91a103773fc4938366d7859d6efcea7d2ac94dd67a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025051_Foundation.cs",
+      "sha256": "4e6f8b93b6a5eb1408b3c337cbdeddfad6e01b87d25d0e65f6f42549855b440a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025051_Foundation.Designer.cs",
+      "sha256": "4bcbfeed7e9009819184a741ad7017aab09d43d4c0e25194a8517c760f4a4a0b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025127_ImmutableDocuments.cs",
+      "sha256": "e2e73201ff7afc69846674859cd432f1f8c1501befe7e2b807216e1307d33994"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025127_ImmutableDocuments.Designer.cs",
+      "sha256": "6bc644b3f96181c734dbfbed64bf1c3e0efdf1e48d1cc8efcbdb2313c1dcfbab"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015030402_JobInputIntegrity.cs",
+      "sha256": "a62b35ad9b434b330eee220b2e55e88e3669b89731b22ca0b4ba635d7d0bbe97"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015030402_JobInputIntegrity.Designer.cs",
+      "sha256": "f7e62412a0b24ae56d334827fcc543f486a6f08230ef127e23f0b3f70134a32a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015171732_CandidateProfilesAndRegistration.cs",
+      "sha256": "d95369d25085effceb5504be41ac2b3f593b73acbf709f61bc296959a37c4fbc"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015171732_CandidateProfilesAndRegistration.Designer.cs",
+      "sha256": "aed92ee73d72566af693c2498c01489f0e10d8537564eb35f9062c1eaaed0ee1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015172221_ProfileTimestampsAndVisibilityConstraint.cs",
+      "sha256": "0129cc2b45ac1a6bcac9b7fe8d1cb338667b1472442eaf942245bae65f003b33"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015172221_ProfileTimestampsAndVisibilityConstraint.Designer.cs",
+      "sha256": "10a18a185c0d1511374a9a1d6a148494233990c00bb29356c5fce58af63bf8b1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015173907_RecruitmentJobsLocal.cs",
+      "sha256": "2109c72519d91b69a8cb734c3d2be6f36a356ec5307428b6a46e78a98c0cad6d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015173907_RecruitmentJobsLocal.Designer.cs",
+      "sha256": "01395583cb57c8fff0e5d8aee170155103782e1e35020f26ac9fd0b70e269705"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015175740_ResumeCollectionVersioning.cs",
+      "sha256": "422009bc6f909ea24bc58d802fbd56eb1dade36150fa2bab8a0eb36323fe54f6"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015175740_ResumeCollectionVersioning.Designer.cs",
+      "sha256": "b0793c24b0da2d2c1249fe53591e295bcf4064e740bb7eb17c7f3046a19ff6fd"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015181328_ApplicationSnapshotsAndNotifications.cs",
+      "sha256": "5cc868ebbc116b64df56f020764ceaac2d9d8d038e0c69506bb0e8e3f5e69e30"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015181328_ApplicationSnapshotsAndNotifications.Designer.cs",
+      "sha256": "6a54d9cd0a7027ebdb6815f8a4b34e868234389bef7855bc5807f0b3c6288bec"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015183630_ApplicationNotesAndJobCandidateBlocks.cs",
+      "sha256": "d435f5fe86e27bca4ae2687195f9586759925eca2b1f98584c734ff8abae24af"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015183630_ApplicationNotesAndJobCandidateBlocks.Designer.cs",
+      "sha256": "59dec10146f8256f1364376dd4ff4122d77c29a755622ced4228b9d9e75790c9"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015185621_PublicResumeRedaction.cs",
+      "sha256": "9a3b8252ada4922154ddbdd72128eb423d30c5db89ca16cc8b1d02786920588a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015185621_PublicResumeRedaction.Designer.cs",
+      "sha256": "447d754da4dcfc70d95bac3bc414484747577928bc32008b16b59b9eced8bd8f"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015192020_AccountDeletionLifecycle.cs",
+      "sha256": "fd59a3ce85cb97d01b6b54dd350e1aaaa15172ef422d552f386eee8fe942c215"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015192020_AccountDeletionLifecycle.Designer.cs",
+      "sha256": "b9c53369b1cd91d59a60ec4575c7abfd96c3388b80652ced7ed9ba9fae4ea851"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015194815_ApplicationRetentionWindow.cs",
+      "sha256": "5715994d19ac2f3f9abf49204910d6bc187bfd25a37fe27513085d3c1b725ba0"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015194815_ApplicationRetentionWindow.Designer.cs",
+      "sha256": "715e844821fcd8dce02573e7639ab4384dc9241a2748aed2fdd27a6169e96582"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015201038_OrphanFileCleanupLifecycle.cs",
+      "sha256": "0379482315cab10711deafe1773fefa71a3aeb1d2092e0e8606efa3ff52e3bae"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015201038_OrphanFileCleanupLifecycle.Designer.cs",
+      "sha256": "8333395d46cefc4781e7de6e08e665529d506bf11621c9f214345752cf97e57c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015205526_ResumeDataRevisions.cs",
+      "sha256": "a432bceeeb6302f7b2a68044e57aa16c7937d5b459b06a1ad64747b006bf0f20"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015205526_ResumeDataRevisions.Designer.cs",
+      "sha256": "252dda2ca72e76fd7f2b08b45e06c43eb61ad6ad6fe79f6085ee78bd6280b953"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015211227_JobDataRevisions.cs",
+      "sha256": "3927c8f4b9f10e68b37502d1a0981a9368950e606feb9e97b37c0a8a8382cfed"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015211227_JobDataRevisions.Designer.cs",
+      "sha256": "bc0a391e4804d8990c6b76e7a33abf4f0c0518604c563287d47719c29fa0c501"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261021084251_PairMatching.cs",
+      "sha256": "87f0d3748a36032d214922bf0ab898277510b1d1741376b9f0a375b0f1a11d90"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261021084251_PairMatching.Designer.cs",
+      "sha256": "2e27ca1ef3ae014ea565e2669c668024c31a9e507e672ddbfed714555cfa71f4"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022173043_CvWritingProposals.cs",
+      "sha256": "60b280d469eabef2b75f904f654351b57d3672bd1b46ce9b91303492aee46062"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022173043_CvWritingProposals.Designer.cs",
+      "sha256": "06c996398c5bf160d2ceb78dfabf9cca1046a7d4488e909bf663a5661aba05d2"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174358_LearningSearchCredits.cs",
+      "sha256": "ce25e21d17b03f6410e01a1d9e76f959ab4f92905be49427aadad52cd268ae9c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174358_LearningSearchCredits.Designer.cs",
+      "sha256": "b3a5b2de1404e1d5cbd731237525660c1a53828cde9434d12138fbf67603dbc6"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174732_AdministrationAndEmail.cs",
+      "sha256": "08048080a8196a117b7125567ea3c2088bf7ec93660cb71c45e0c014ccd228e8"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174732_AdministrationAndEmail.Designer.cs",
+      "sha256": "046e6a01633225cff3a4c650649ced5c85cedbf70065962e0462d58d0d99423d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/AppDbModelSnapshot.cs",
+      "sha256": "df6f6ed8870b713fd3ea37b6f7b2b78cb47dd4df0fdcbc0188f572a59b7d111f"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Models.cs",
+      "sha256": "31212ff5473d607e0ec4afd5550d30f1d60c0fe21e4bf0c11533cde318efbedc"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/WritingModels.cs",
+      "sha256": "60cea5aa7f754672b207e096197c769bb97688a9210b95077a4e5183d94625f2"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/DocumentParser.cs",
+      "sha256": "8c98ecf1eb8e9c8f7f3cf26fa34549a79e0f6da791ab00f1c8cf1733ae31b421"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/FileEndpoints.cs",
+      "sha256": "6b843567188977f338fb60709225f077ab76121e6423d25d62c586dc050ca91b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/FileStorage.cs",
+      "sha256": "5c0a861684c9896f24ae8fd24e32397606a4c97ac90d39713b711c91b1ba63f0"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/FullCvExtraction.cs",
+      "sha256": "6920a1c69daf0457da06183c815edee6374a7a809f867ba9c93c69018cd171bf"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/OrphanFileCleanupService.cs",
+      "sha256": "5a71825105080802f7754d1dcd12e4f13f973b23dfc5823ce85540d8cbed55c9"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/ParserProcess.cs",
+      "sha256": "ae575c96e295f5e232fd404f7c1c71d90a751748abcb9f6a26a25008ec6f83d3"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/PublicResumeEndpoints.cs",
+      "sha256": "d5c94b125848940e66615ff64a98924a4a4319ef52a9180680e566b83f73f380"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/RedactedResumeBuilder.cs",
+      "sha256": "83086aa29838daefebc276e3e3cb24703ef049d96ca0a8be3414868e8aa601f0"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/ResumeRevisionEndpoints.cs",
+      "sha256": "d8ca90f3d9b1b886df06abe44a5c8d4fa5bae2e03975427a9da8c2887ea810ff"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/ResumeRevisionFactory.cs",
+      "sha256": "af090554e35ae0425d0281fce1c35977faeb40168dc977baebc38be6cbdd8319"
+    },
+    {
+      "path": "backend/CareerGap.Api/Integrations/ProbeClients.cs",
+      "sha256": "0e53af36f70bb823b2619f4b3bbbfbf7af02dec6044afe9146fcbd900115a46a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Integrations/ResendEmailSender.cs",
+      "sha256": "c42e7a1a3b5e4ed52a86bf7a5d25abeabbe89d9cf4154ad0975c96728f75e14a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Integrations/TavilySearchClient.cs",
+      "sha256": "ebbe1de1d7116f3a8d88cd0762ddfd3e9aca83c3c0ce2517dd7c140b1cae052d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Learning/LearningCacheWorker.cs",
+      "sha256": "1c01a8a31f094844d5d9e3211ca4949da273b4168d68a970287bacd7e73ce28b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Learning/LearningService.cs",
+      "sha256": "b5a48bcc70d7cb0c0fa8f1f13196f654c127424f394d0938e34336a8de44e1a5"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/ConfirmedRevisionDiagnostics.cs",
+      "sha256": "10bbaf785dbf9e8083e166ca3abcfb770c19d78f5f2736d6465f6ea03fab5d01"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/CvCaptureEvaluation.cs",
+      "sha256": "5383daf86de3e995a4fec8b119e01420da1208ca477d32758c20022dd2d22b67"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/ExtractionEvaluation.cs",
+      "sha256": "05d99dcafe836e6e6867c47400f2ec2b97c2b4241c12d1a64172e90a4db72503"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/KeywordBaseline.cs",
+      "sha256": "122dc21da5993faac1c39d75ddfd204ec049690b043edb934229ab23135c1ac8"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/KeywordMatchingService.cs",
+      "sha256": "f9b159170f769523033a82bd7ef97c5022fa9582509ecbc49b4d44463304d04a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/MatchingEvaluationRunner.cs",
+      "sha256": "417876541fb356cea75c98fe27f0d8d3199853b37c980998ec1bb2c2a7745d6e"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/MatchRetention.cs",
+      "sha256": "e276fb92311961fcc991a518686c79ccaa64fa4659aa92a92ab26c8a4cedb5b3"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairMatchingContract.cs",
+      "sha256": "2c89ab9c26fd7e3773f8aabb7e17d2b1a41712d3a1104ea46c6643feb0f3f827"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairMatchingService.cs",
+      "sha256": "759093cd2828c6e6085a204902e5e6201bcf27c5194ab1a7735b5eb30c71bcc1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairMatchingWorker.cs",
+      "sha256": "cf2f02f412d636cc7fd45427bf9d43bf19eae7570b4bfae3aee95c0d2e7c12cb"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairRecommendationService.cs",
+      "sha256": "eff34eb1fb06446b176a5d1655298c527cd8c98f1affbe7721fb825f111f73e2"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/ResumeSkillProjection.cs",
+      "sha256": "3ed1541bc70c326bf40633a6cf04877c18322d5773b599dfe1e3e2d02d2ae20b"
+    },
+    {
+      "path": "backend/CareerGap.Api/packages.lock.json",
+      "sha256": "9a306a02e691613594cf5f1b30ef8efcc11de5b1aabebd45ebe38c54751f8af8"
+    },
+    {
+      "path": "backend/CareerGap.Api/Profiles/ProfileEndpoints.cs",
+      "sha256": "5f8c697799db3b15beb673c37b4752381545ec6126a2241e824f7911861f099b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Program.cs",
+      "sha256": "211da1704f2eeed8ae5d757d0b1479f3a9a00608ccc2b50e0914fa6c69bc4fe1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Recruitment/CompanyJobEndpoints.cs",
+      "sha256": "5d3a95678e262178a81477153203a3eccd7cc122863630ce8f1f5322844b060d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Recruitment/JobRevisionEndpoints.cs",
+      "sha256": "44a79d6c53f1b70a76be110f9b9791b4df45e0a7f57fdfa91aca870106a7145e"
+    },
+    {
+      "path": "backend/CareerGap.Api/Recruitment/JobRevisionFactory.cs",
+      "sha256": "c846f55064e98cce8c703a03a355ae919aed98acfdf669c8c069f5a10d114d56"
+    },
+    {
+      "path": "backend/CareerGap.Api/Writing/WritingContract.cs",
+      "sha256": "6efbc85e49a60c6050861cf8272d8fdbdbb3411721faf3ddb124b8c31eda2b87"
+    },
+    {
+      "path": "backend/CareerGap.Api/Writing/WritingService.cs",
+      "sha256": "f8199bbe0262f7ef7fe3e9c50417e5a54d95c5d29805260107ae36687c496740"
+    },
+    {
+      "path": "backend/CareerGap.Api/Writing/WritingWorker.cs",
+      "sha256": "145df291aa0cc32fa0720ffd9b9d6373464c8f23aa3a4576d00d6ee5e6d020ec"
+    },
+    {
+      "path": "Directory.Build.props",
+      "sha256": "e9e5c2f32dcaa5e6eee688d6cf90bc6445384177e82f99deef88c91839b3cbd4"
+    },
+    {
+      "path": "Dockerfile",
+      "sha256": "ecbf23c7ddf0a766015a7b14d19f84ff763c2c446827348d09c44a354480b5f6"
+    },
+    {
+      "path": "frontend/index.html",
+      "sha256": "43aefa6ba9857f9ab4121e2abb4c29d82450d615f260d2fcd428be09793e689c"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "sha256": "b07470c828c4bad08d0c7a2c30b66546bb3ac197134d20334b9d0761d3811434"
+    },
+    {
+      "path": "frontend/package.json",
+      "sha256": "bbdd9e99f9beabacc50c24d5f4e4f7423eae2c2c7572bcd6eae74509c2cd5908"
+    },
+    {
+      "path": "frontend/src/administration.tsx",
+      "sha256": "12510c1a8e89228b392b3adae898e0da54c42f00f18ce15a32310eaf3fddc513"
+    },
+    {
+      "path": "frontend/src/api.test.ts",
+      "sha256": "75fb08d9666759afa086d46096a27ccb371e01208b5a4128585d14339018caaa"
+    },
+    {
+      "path": "frontend/src/api.ts",
+      "sha256": "845f42d8033391a19751948d79d6d45dfc37c2f68305a48f707f05f02311556a"
+    },
+    {
+      "path": "frontend/src/fullCvReview.tsx",
+      "sha256": "93286ed71afecb8bb359f54429308d085fd2f3cf823d404fc5aed4530ca7e7fc"
+    },
+    {
+      "path": "frontend/src/jobs.tsx",
+      "sha256": "2a3a8572cf9a823311ff75b0e6df51a7cc5c38ab54c515b03b58833419547cff"
+    },
+    {
+      "path": "frontend/src/learning.tsx",
+      "sha256": "dabb29514f383978ea375777d420d01cf0d6de27873bd5bd11348cdb7995b91d"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "sha256": "4a475969f1a699328abc12812d89065c21b1f2da341dec6b3e7a7073b73f1b72"
+    },
+    {
+      "path": "frontend/src/matching.tsx",
+      "sha256": "8df322ba187b029fc16435e4210505b6f083c0cb91bdeaae66687cbf23815fdd"
+    },
+    {
+      "path": "frontend/src/pairMatching.tsx",
+      "sha256": "fe5ce1be1cf605d5f3eeb177af0ca9e32b0ae0b38a914c058fd0ab577e567b59"
+    },
+    {
+      "path": "frontend/src/pdfProbe.tsx",
+      "sha256": "0553830d860a019deb2e571b2b9323eaebad63d5b64eaab0c327fedc475a6cf3"
+    },
+    {
+      "path": "frontend/src/publicResumes.tsx",
+      "sha256": "5a5d6c8b2a31de1961c2d506a5f8d6800e17ba03c89204c9539b6aeaca08bc17"
+    },
+    {
+      "path": "frontend/src/resumeBuilder.tsx",
+      "sha256": "ba9bf7fe4af785da3eb190a74df7ee54163356e312f3ba317932bb9b072a3eb8"
+    },
+    {
+      "path": "frontend/src/resumeBuilderPdf.tsx",
+      "sha256": "22a29573354062b60ee0f6c78edfeac73a86439a45f562b1fe0cee7b232d140b"
+    },
+    {
+      "path": "frontend/src/vite-env.d.ts",
+      "sha256": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5"
+    },
+    {
+      "path": "frontend/src/writing.tsx",
+      "sha256": "2d9033fdd79987206aeefa0fbcb8272b2260dcc0ad8b061de82d0e6483c0dffe"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "sha256": "c0c7f7a462c962b35c79852ef0408f89ec25a3027a49850452bc1b0651c6035e"
+    },
+    {
+      "path": "global.json",
+      "sha256": "a0dcc4ee0c1b8044f9498734741bd764d5c2585f4d0d8e31e27e26e9662f751f"
+    }
+  ]
+}

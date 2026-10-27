@@ -2,9 +2,10 @@ namespace CareerGap.Api.Integrations;
 using System.Collections.Concurrent;
 
 public sealed record LearningLink(string Title, string Url, string Source, string Language);
+public sealed record SearchReply(IReadOnlyList<LearningLink> Links, int? CreditsUsed);
 public interface IWebSearchClient
 {
-    Task<IReadOnlyList<LearningLink>> SearchLearningAsync(string skill, string level, string language, CancellationToken ct);
+    Task<SearchReply> SearchLearningAsync(string skill, string level, string language, CancellationToken ct);
 }
 public interface IEmailSender
 {
@@ -25,8 +26,8 @@ public sealed class LocalMailOutbox
 // No fabricated URLs or simulated delivery receipts. Real adapters remain blocked by provider readiness.
 public sealed class FakeWebSearchClient : IWebSearchClient
 {
-    public Task<IReadOnlyList<LearningLink>> SearchLearningAsync(string skill, string level, string language, CancellationToken ct)
-    { ct.ThrowIfCancellationRequested(); return Task.FromResult<IReadOnlyList<LearningLink>>([]); }
+    public Task<SearchReply> SearchLearningAsync(string skill, string level, string language, CancellationToken ct)
+    { ct.ThrowIfCancellationRequested(); return Task.FromResult(new SearchReply([], 0)); }
 }
 public sealed class FakeEmailSender(LocalMailOutbox outbox) : IEmailSender
 {

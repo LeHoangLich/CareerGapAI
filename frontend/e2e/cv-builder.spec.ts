@@ -71,7 +71,7 @@ test('candidate reviews, saves, reopens, and versions a Vietnamese template CV P
   await expect(reopenedBuilder.getByRole('heading', { name: 'Tạo CV từ thông tin bạn cung cấp' })).toBeVisible();
   const resumeOption = reopenedBuilder.getByLabel('CV cần cập nhật');
   await resumeOption.selectOption(savedResume!.id);
-  await reopenedBuilder.getByRole('button', { name: 'Nạp revision mẫu' }).click();
+  await reopenedBuilder.getByRole('button', { name: 'Nạp dữ liệu CV' }).click();
   await expect(reopenedBuilder.getByLabel('Tên hiển thị *')).toHaveValue('Nguyễn Ứng Viên');
   await expect(reopenedBuilder.getByLabel('Giới thiệu')).toHaveValue(initialSummary);
 

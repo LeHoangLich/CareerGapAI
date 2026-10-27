@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-27",
+  "status": "owner_action1_complete_action2_rights_pending",
+  "selected_documents": [
+    {
+      "document_id": "cv-c-derived-pdf",
+      "group_id": "cv-c-origin",
+      "kind": "cv",
+      "language": "en",
+      "format": "pdf",
+      "sha256": "2c52e9b93ef43c024e3678a69f9ccdd6f086c5033f51678ccf56e745c46686a7"
+    },
+    {
+      "document_id": "jd-vi-03",
+      "group_id": "jd-vi-origin-3",
+      "kind": "jd",
+      "language": "vi",
+      "format": "text",
+      "sha256": "83b94c500f638abd2765cf41874c06363e0f1048611d059e297c7fd5a9d72977"
+    },
+    {
+      "document_id": "jd-vi-05",
+      "group_id": "jd-vi-origin-5",
+      "kind": "jd",
+      "language": "vi",
+      "format": "text",
+      "sha256": "9f1d6181a4e1603770e2c626156b21297e752768782a7a6464c384ec36afe2d5"
+    },
+    {
+      "document_id": "jd-en-02",
+      "group_id": "jd-en-origin-2",
+      "kind": "jd",
+      "language": "en",
+      "format": "text",
+      "sha256": "7ba7031816fb5dda41e0af3271760afa623c95d3b3882d261ed447b428b99eba"
+    },
+    {
+      "document_id": "jd-en-03",
+      "group_id": "jd-en-origin-3",
+      "kind": "jd",
+      "language": "en",
+      "format": "text",
+      "sha256": "3ba9bef4b8d49e9d1f64e57431d3a24a4beffe6acafee295773238e6504f9c82"
+    },
+    {
+      "document_id": "cv-veekas-professional-pdf",
+      "group_id": "cv-veekas-origin",
+      "kind": "cv",
+      "language": "en",
+      "format": "pdf",
+      "sha256": "20346f9715102952243023d7162fffd54b4c347560201b4908d262189527fc9c"
+    }
+  ],
+  "limits": [
+    "Vietnamese_CV_not_evaluated",
+    "Vietnamese_IT_matching_not_evaluated",
+    "language_and_industry_coverage_confounded",
+    "prior_parser_JD_exposure_retained_per_method",
+    "no_representative_quality_or_new_pristine_end_to_end_claim"
+  ],
+  "selection_is_preparation_only": true,
+  "provider_transfer_granted": false,
+  "spend_authorized": false,
+  "api_execution_authorized": false,
+  "human_label_review_claimed": false,
+  "m5_accepted": false,
+  "stage_e_started": false,
+  "private_receipt": {
+    "path": ".local/stage-d-20261023/step6-owner-20261027/owner-selection-receipt.json",
+    "sha256": "3d5661f5ad48138d3f6540dbe28c9aa1fea43d6a171584a9f9854e1c904b60af"
+  }
+}

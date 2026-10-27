@@ -49,6 +49,8 @@ public sealed class TestApp(string connection, string storagePath, FakeLlmClient
         builder.UseSetting("Storage:Root", storagePath);
         builder.UseSetting("Storage:Provider", "Local");
         builder.UseSetting("Ai:Provider", "Fake");
+        builder.UseSetting("Search:Provider", "Fake");
+        builder.UseSetting("Email:Provider", "Fake");
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<DbContextOptions<AppDb>>();
@@ -56,12 +58,20 @@ public sealed class TestApp(string connection, string storagePath, FakeLlmClient
             services.AddDbContext<AppDb>(o => o.UseNpgsql(connection, pg => pg.SetPostgresVersion(16, 0)));
             services.RemoveAll<TimeProvider>();
             services.AddSingleton(clock ?? TimeProvider.System);
+            // Integration tests must remain offline even when the developer's shell has real-provider settings.
+            services.PostConfigure<AiOptions>(o => o.Provider = "Fake");
+            services.PostConfigure<CareerGap.Api.Integrations.SearchOptions>(o => o.Provider = "Fake");
+            services.PostConfigure<CareerGap.Api.Integrations.EmailOptions>(o => o.Provider = "Fake");
+            services.RemoveAll<CareerGap.Api.Integrations.IEmailSender>();
+            services.AddScoped<CareerGap.Api.Integrations.IEmailSender, CareerGap.Api.Integrations.FakeEmailSender>();
+            services.RemoveAll<CareerGap.Api.Integrations.IWebSearchClient>();
+            services.AddScoped<CareerGap.Api.Integrations.IWebSearchClient, CareerGap.Api.Integrations.FakeWebSearchClient>();
             services.RemoveAll<IFileStorage>();
             services.AddSingleton<IFileStorage>(sp => new FaultInjectingFileStorage(
                 new LocalFileStorage(sp.GetRequiredService<IWebHostEnvironment>(), sp.GetRequiredService<IConfiguration>()),
                 storageFault ?? new StorageDeleteFault()));
             if (fake is not null) { services.RemoveAll<FakeLlmClient>(); services.AddSingleton(fake); }
-            foreach (var workerType in new[] { typeof(JobWorker), typeof(AccountDeletionWorker), typeof(ApplicationRetentionWorker), typeof(OrphanFileCleanupWorker) })
+            foreach (var workerType in new[] { typeof(JobWorker), typeof(AccountDeletionWorker), typeof(ApplicationRetentionWorker), typeof(OrphanFileCleanupWorker), typeof(CareerGap.Api.Learning.LearningCacheWorker) })
             {
                 var worker = services.SingleOrDefault(x => x.ImplementationType == workerType);
                 if (worker is not null) services.Remove(worker);

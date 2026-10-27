@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-27",
+  "source": "direct_user_message",
+  "owner_message": "TUI CHO PHÉP NÍ TOÀN QUYỀN ĐỂ HOÀN THÀNH BƯỚC 6",
+  "interpretation": "complete step6 using selected corpus after source review and existing bounded plan",
+  "private_receipt": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/delegated-authority-receipt.json",
+    "sha256": "9682a6b289331c64eb15a177c72e4dfb8814e3d29e47f0f29b2daaca77d94a86"
+  },
+  "rights_review": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/rights-and-minimization-review.json",
+    "sha256": "b0c264a0d0dc563bab09fda25a1476b5e6afaa558bdf19fce6d4cb6d78801162"
+  },
+  "selected_documents": [
+    {
+      "document_id": "cv-c-derived-pdf",
+      "sha256": "2c52e9b93ef43c024e3678a69f9ccdd6f086c5033f51678ccf56e745c46686a7"
+    },
+    {
+      "document_id": "jd-vi-03",
+      "sha256": "83b94c500f638abd2765cf41874c06363e0f1048611d059e297c7fd5a9d72977"
+    },
+    {
+      "document_id": "jd-vi-05",
+      "sha256": "9f1d6181a4e1603770e2c626156b21297e752768782a7a6464c384ec36afe2d5"
+    },
+    {
+      "document_id": "jd-en-02",
+      "sha256": "7ba7031816fb5dda41e0af3271760afa623c95d3b3882d261ed447b428b99eba"
+    },
+    {
+      "document_id": "jd-en-03",
+      "sha256": "3ba9bef4b8d49e9d1f64e57431d3a24a4beffe6acafee295773238e6504f9c82"
+    },
+    {
+      "document_id": "cv-veekas-professional-pdf",
+      "sha256": "20346f9715102952243023d7162fffd54b4c347560201b4908d262189527fc9c"
+    }
+  ],
+  "approved_E_planning_cap_usd": "0.50",
+  "development_cap_usd": "2.00",
+  "approved_search_free_credits": 4,
+  "new_email_allowance": 0,
+  "step6_generation_or_search_authorized_now": false,
+  "raw_original_cv_or_other_corpus_authorized": false,
+  "third_party_rights_created_by_delegation": false,
+  "human_label_review_implied": false
+}

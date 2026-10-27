@@ -3,8 +3,10 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using CareerGap.Api.Data;
 using CareerGap.Api.Files;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Xunit;
 
 namespace CareerGap.Api.Tests;
@@ -213,6 +215,141 @@ public sealed class MatchingTests(FoundationFixture fixture) : IClassFixture<Fou
         run = await owner.GetFromJsonAsync<JsonElement>($"/api/matching/public-resumes?jobId={jobId}");
         Assert.Equal(0, run.GetProperty("searchSpaceCount").GetInt32());
         Assert.Empty(run.GetProperty("items").EnumerateArray());
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RecruiterPublicSearchRechecksProfileVisibilityAndAccountAfterSourceRead(bool suspendAccount)
+    {
+        const string ownerPassword = "SyntheticMatching!Password-2026";
+        var (owner, ownerId) = await fixture.User("Recruiter", ownerPassword);
+        var (candidate, candidateId) = await fixture.User();
+        var companyId = await CreateCompany(owner);
+        var jobId = await CreateJob(owner, companyId, "Backend Engineer", "C# PostgreSQL REST API", publish: true);
+        try
+        {
+            var uploaded = await FoundationFixture.Upload(candidate,
+                FoundationFixture.Docx("Synthetic backend engineer. Skills C# PostgreSQL REST API."));
+            var versionId = uploaded.GetProperty("versionId").GetGuid();
+            var fileId = uploaded.GetProperty("fileId").GetGuid();
+            string sourceKey;
+            string ownerEmail;
+            using (var scope = fixture.App.Services.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+                var profile = await db.CandidateProfiles.SingleAsync(x => x.UserId == candidateId);
+                profile.DisplayName = "Synthetic shared name";
+                profile.Headline = "Synthetic shared headline";
+                db.CandidateProfileVisibility.AddRange(
+                    new CandidateProfileVisibility { CandidateId = candidateId, FieldKey = "display_name" },
+                    new CandidateProfileVisibility { CandidateId = candidateId, FieldKey = "headline" });
+                await db.SaveChangesAsync();
+                sourceKey = await db.StoredFiles.Where(x => x.Id == fileId).Select(x => x.ObjectKey).SingleAsync();
+                ownerEmail = (await db.Users.SingleAsync(x => x.Id == ownerId)).Email!;
+            }
+            Assert.Equal(HttpStatusCode.OK, (await candidate.PostAsJsonAsync("/api/resumes/public",
+                new { resumeVersionId = versionId, expectedRowVersion = (long?)null })).StatusCode);
+
+            // Pause this source read after the initial public/profile projection has been loaded.
+            // A second HTTP request revokes access before the first request can release its DTO.
+            var storage = new SourceReadBarrier(fixture.App.Services.GetRequiredService<IFileStorage>(), sourceKey);
+            await using var gatedApp = fixture.App.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+            {
+                services.RemoveAll<IFileStorage>();
+                services.AddSingleton<IFileStorage>(storage);
+            }));
+            using var gatedOwner = gatedApp.CreateClient();
+            await FoundationFixture.Csrf(gatedOwner);
+            Assert.Equal(HttpStatusCode.NoContent, (await gatedOwner.PostAsJsonAsync("/api/auth/login",
+                new { email = ownerEmail, password = ownerPassword })).StatusCode);
+            await FoundationFixture.Csrf(gatedOwner);
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(45));
+            var pending = gatedOwner.GetAsync($"/api/matching/public-resumes?jobId={jobId}&topK=50", timeout.Token);
+            try
+            {
+                await storage.ReadStarted.WaitAsync(TimeSpan.FromSeconds(20));
+                if (suspendAccount)
+                {
+                    var (admin, _) = await fixture.User("Admin");
+                    Assert.Equal(HttpStatusCode.NoContent, (await admin.PostAsJsonAsync($"/api/admin/accounts/{candidateId}",
+                        new { action = "suspend", reason = "Synthetic suspension while search reads a CV" })).StatusCode);
+                }
+                else
+                {
+                    var profile = await candidate.GetFromJsonAsync<JsonElement>("/api/profile/me");
+                    Assert.Equal(HttpStatusCode.OK, (await candidate.PutAsJsonAsync("/api/profile/me", new
+                    {
+                        rowVersion = profile.GetProperty("rowVersion").GetInt64(),
+                        displayName = "Synthetic shared name", headline = "Synthetic shared headline",
+                        details = new { }, sharedFields = Array.Empty<string>()
+                    })).StatusCode);
+                }
+            }
+            finally { storage.Release(); }
+
+            using var response = await pending;
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var items = result.GetProperty("items").EnumerateArray().ToArray();
+            if (suspendAccount)
+                Assert.DoesNotContain(items, x => x.GetProperty("candidateId").GetGuid() == candidateId);
+            else
+            {
+                var item = Assert.Single(items, x => x.GetProperty("candidateId").GetGuid() == candidateId);
+                Assert.Equal("Ứng viên", item.GetProperty("displayName").GetString());
+                Assert.Equal(JsonValueKind.Null, item.GetProperty("headline").ValueKind);
+            }
+        }
+        finally
+        {
+            // This class shares its fixture across tests: the concurrent request must not
+            // leave another public candidate or published JD in later tests' search space.
+            try
+            {
+                using var scope = fixture.App.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+                if (await db.Users.AnyAsync(x => x.Id == candidateId && x.AccountStatus == "active"))
+                {
+                    var selection = await candidate.GetFromJsonAsync<JsonElement>("/api/resumes/public/me");
+                    if (selection.ValueKind != JsonValueKind.Null)
+                        Assert.Equal(HttpStatusCode.NoContent, (await candidate.DeleteAsync(
+                            $"/api/resumes/public/me?rowVersion={selection.GetProperty("rowVersion").GetInt64()}")).StatusCode);
+                }
+                else
+                {
+                    // Suspended fixture users cannot authenticate to hide their selection.
+                    await db.CandidatePublicResumes.Where(x => x.CandidateId == candidateId).ExecuteDeleteAsync();
+                }
+            }
+            finally
+            {
+                var currentJob = await owner.GetFromJsonAsync<JsonElement>($"/api/jobs/{jobId}");
+                Assert.Equal(HttpStatusCode.OK, (await owner.PostAsJsonAsync($"/api/jobs/{jobId}/close",
+                    new { rowVersion = currentJob.GetProperty("rowVersion").GetInt64() })).StatusCode);
+            }
+        }
+    }
+
+    private sealed class SourceReadBarrier(IFileStorage inner, string sourceKey) : IFileStorage
+    {
+        private readonly TaskCompletionSource started = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource released = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int armed = 1;
+        public string Provider => inner.Provider;
+        public Task ReadStarted => started.Task;
+        public void Release() => released.TrySetResult();
+        public Task PutAsync(string key, byte[] bytes, string contentType, CancellationToken ct) => inner.PutAsync(key, bytes, contentType, ct);
+        public Task DeleteAsync(string key, CancellationToken ct) => inner.DeleteAsync(key, ct);
+        public async Task<byte[]> ReadAsync(string key, CancellationToken ct)
+        {
+            if (key == sourceKey && Interlocked.Exchange(ref armed, 0) == 1)
+            {
+                started.TrySetResult();
+                await released.Task.WaitAsync(ct);
+            }
+            return await inner.ReadAsync(key, ct);
+        }
     }
 
     private static async Task<Guid> CreateCompany(HttpClient recruiter)

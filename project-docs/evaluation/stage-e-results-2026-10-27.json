@@ -1,0 +1,200 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-27",
+  "status": "E_executed_handoff_prepared_M6_pending",
+  "report": "project-docs/report/stage-e-2026-10-27.md",
+  "runtime_changed_in_E": false,
+  "M5_local_remains_accepted": true,
+  "M6_accepted": false,
+  "P20_execution": {
+    "schema_version": 1,
+    "scope": "2EnglishCVx4JD_narrow_registered_primary_methods",
+    "requests_unique": 14,
+    "admitted_jobs": 14,
+    "attempts": 23,
+    "succeeded_jobs": 6,
+    "failed_jobs": 8,
+    "statuses_by_kind": {
+      "cv_extraction": {
+        "failed": 2
+      },
+      "pair": {
+        "succeeded": 2,
+        "failed": 6
+      },
+      "writing": {
+        "succeeded": 4
+      }
+    },
+    "provider_cost_upper_bound_usd": "0.03049410",
+    "input_tokens": 57091,
+    "output_tokens": 11139,
+    "unknown_attempts": 0,
+    "median_job_ms": 8611.748,
+    "p95_job_ms_nearest_rank": 12433.526,
+    "latency_scope": "application job created-to-finished incl queue/retry; excludes pre-admission HTTP429 wait; not isolated provider latency",
+    "admission_429_observations": 7,
+    "cv_extraction": {
+      "documents": 2,
+      "groups": 2,
+      "scoredDocuments": 0,
+      "failedOrMissingDocuments": 2,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null
+    },
+    "baseline": {
+      "cvToJobs": {
+        "queryCount": 2,
+        "queriesWithLabeledPositives": 2,
+        "zeroPositiveQueries": 0,
+        "queriesWithNonzeroIdealDcg": 2,
+        "queriesWithResults": 2,
+        "judgedCandidatePairs": 8,
+        "selectedPairs": 6,
+        "positiveSelectedPairs": 4,
+        "judgmentCoverage": 1.0,
+        "selectedLabelCoverage": 1.0,
+        "meanSelectionRecallOnPositiveQueries": 1.0,
+        "meanPrecisionAtKOnAllQueries": 0.6666666666666666,
+        "top1RelevantRateOnAllQueries": 1,
+        "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+        "recallDenominatorQueries": 2,
+        "precisionDenominatorQueries": 2,
+        "top1DenominatorQueries": 2,
+        "ndcgDenominatorQueries": 2
+      },
+      "jobsToResumes": {
+        "queryCount": 4,
+        "queriesWithLabeledPositives": 2,
+        "zeroPositiveQueries": 2,
+        "queriesWithNonzeroIdealDcg": 2,
+        "queriesWithResults": 3,
+        "judgedCandidatePairs": 8,
+        "selectedPairs": 6,
+        "positiveSelectedPairs": 4,
+        "judgmentCoverage": 1.0,
+        "selectedLabelCoverage": 1.0,
+        "meanSelectionRecallOnPositiveQueries": 1.0,
+        "meanPrecisionAtKOnAllQueries": 0.5,
+        "top1RelevantRateOnAllQueries": 0.5,
+        "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+        "recallDenominatorQueries": 2,
+        "precisionDenominatorQueries": 4,
+        "top1DenominatorQueries": 4,
+        "ndcgDenominatorQueries": 2
+      }
+    },
+    "LLM_rerank_metrics": null,
+    "LLM_rerank_unavailable_reason": "six_failed_pairs_guard_rejected_incomplete_score_matrix; no failed pair mapped to zero",
+    "criterion_statuses_scored_successful_only": 10,
+    "criterion_status_matches_successful_only": 10,
+    "exact_evidence_successful_only": true,
+    "writing_jobs_passed_source_group_controls": 4,
+    "search_requests": 0,
+    "learning_quality_actual_search_sample": 0,
+    "raw_failed_response_bodies_available": false,
+    "raw_failed_response_limitation": "existing runtime retains error and token/cost but not rejected raw LLM body; do not infer exact offending claim",
+    "human_or_instructor_review": false,
+    "representative_quality_accepted": false,
+    "M6_accepted": false
+  },
+  "P21_recovery": {
+    "status": "passed",
+    "schema_migrations": 19,
+    "public_tables_compared_before_replay": 43,
+    "all_table_row_counts_and_content_hashes_match_before_replay": true,
+    "objects": 18,
+    "all_object_bytes_match": true,
+    "data_protection_keys_match_before_replay": true,
+    "ledger_entries": 5,
+    "post_backup_pending_deletion_replayed": true,
+    "old_session_rejected_401": true,
+    "active_account_fresh_login_resumes_file_job_match": true,
+    "pending_account_blocked_403": true,
+    "provider_calls": 0,
+    "application_database_55432_touched": false,
+    "product_source_changed": false,
+    "backup_helpers_scope": "isolated harness preserving product replay CLI guard; generic main-database backup scripts were not repointed or bypassed",
+    "target_database": "careergap_restore_e20261027",
+    "restore_api_stopped": true
+  },
+  "P21_maintenance": {
+    "status": "passed",
+    "policy": "failed upload unreferenced age >=7 days; manual dry-run then apply then existing worker",
+    "dry_run": {
+      "mode": "dry_run",
+      "eligible": 1,
+      "retention_days_from_upload": 7
+    },
+    "applied": {
+      "mode": "applied",
+      "queued": 1,
+      "retention_days_from_upload": 7
+    },
+    "expired_failed_metadata_and_object_deleted": true,
+    "recent_failed_preserved": true,
+    "ready_file_count_unchanged": true,
+    "main_database_touched": false,
+    "provider_calls": 0,
+    "product_source_changed": false,
+    "script_sha256": "9d7df6ccf7cab6e8298d7bffbbb3d386692497d271d6f2c0f79bda2a5cae47e0"
+  },
+  "clean_install_scope": "fresh working directory on existing Windows host with locked packages and available cache; not new OS",
+  "clean_room_E2E": {
+    "passed": 9,
+    "total": 9,
+    "first_incomplete_package_passed": 6,
+    "first_incomplete_package_failed": 3,
+    "reason": "missing public font in copied package; raw first-run evidence retained"
+  },
+  "frontend_tests_passed": 3,
+  "trial_fault_mode": {
+    "AI_disabled_new_admission_503": true,
+    "job_count_unchanged": true,
+    "private_resume_read_still_works": true,
+    "provider_calls": 0,
+    "not_provider_network_timeout_test": true
+  },
+  "owner_instructor_feedback": "none; owner requested trial packet",
+  "trial_guide": "project-docs/handoff/stage-e-20261027/huong-dan-dung-thu.md",
+  "presentation": {
+    "slides": 9,
+    "editable_native_tables": 5,
+    "PowerPoint_application_check": false,
+    "path": "project-docs/handoff/stage-e-20261027/CareerGapAI-bao-cao-E-v2.pptx"
+  },
+  "trial_form": {
+    "pages": 2,
+    "filled": false,
+    "render_method": "read-only Word PDF export + Poppler, LibreOffice unavailable"
+  },
+  "blockers": [
+    "instructor trial and real feedback pending",
+    "extraction and pair failures leave full required quality evaluation unavailable",
+    "topic semantic false positive remains",
+    "release commit not created or requested"
+  ],
+  "development_budget": {
+    "tracked_spent_usd": "0.07",
+    "existing_conservative_hold_usd": "0.02",
+    "guarded_remaining_usd": "1.91",
+    "cap_usd": "2.00"
+  },
+  "new_search_calls": 0,
+  "new_email_calls": 0,
+  "deploy_commit_push": false,
+  "backup_expiry_check": {
+    "status": "passed",
+    "exact_product_script_copy_sha256": "a7ac4653eb5071bfa0f3d47991cd633d664f37ed3c2f0057553b81e40e67c772",
+    "isolated_root": ".local/stage-e-20261027/expiry-fixture",
+    "expired_synthetic_backup_removed": true,
+    "recent_synthetic_backup_preserved": true,
+    "main_backups_touched": false,
+    "scheduler_installed": false
+  },
+  "freeze_timing_note": "Public v2 inherited original freeze created_at; actual v2 lock 2026-10-27T04:01:23Z precedes first intent 04:01:46Z; frozen artifact unchanged."
+}

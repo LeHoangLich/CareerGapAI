@@ -101,19 +101,14 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
                 equals new { ResumeVersionId = version.Id, version.CandidateId }
             join file in db.StoredFiles.AsNoTracking() on new { version.FileId, version.CandidateId }
                 equals new { FileId = file.Id, CandidateId = file.OwnerUserId }
-            join profile in db.CandidateProfiles.AsNoTracking() on selection.CandidateId equals profile.UserId
-            where file.Status == "ready" && file.Sha256 == selection.SourceHash && version.DocumentHash == selection.SourceHash &&
+            where selection.Status == "ready" && file.Status == "ready" && file.Sha256 == selection.SourceHash && version.DocumentHash == selection.SourceHash &&
                 db.Users.Any(account => account.Id == selection.CandidateId && account.AccountStatus == "active")
             orderby selection.CandidateId
             select new
             {
                 Selection = selection,
                 Version = version,
-                File = file,
-                DisplayName = db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "display_name")
-                    ? profile.DisplayName : "Ứng viên",
-                Headline = db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "headline")
-                    ? profile.Headline : null
+                File = file
             })
             .ToListAsync(ct);
 
@@ -172,25 +167,47 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
             var revisionMatch = ConfirmedRevisionMatcher.Evaluate(resumeRevision, jobRevision, options,
                 publicResumeScope: true);
             ranked.Add(new(source.Selection.CandidateId, source.Version.Id, source.Version.VersionNo,
-                source.DisplayName, source.Headline, source.Selection.PublishedAt,
+                "Ứng viên", null, source.Selection.PublishedAt,
                 result.RetrievalScore.Value, new(result.MatchedTermCount, result.QueryTermCount, result.MatchedTerms),
                 revisionMatch));
         }
 
-        // A public selection can be hidden or replaced while files are being read. Revalidate the exact
-        // candidate/version/hash set before releasing aggregate revision-match diagnostics.
+        // File reads can outlive publication, account access, or profile sharing. Revalidate the exact
+        // source and project currently shared labels only after those reads, immediately before returning.
         var publicCandidateIds = publicSources.Select(x => x.Selection.CandidateId).Distinct().ToArray();
+        var releaseTime = clock.GetUtcNow();
         var currentlyPublic = publicCandidateIds.Length == 0
             ? []
-            : await db.CandidatePublicResumes.AsNoTracking()
-                .Where(x => publicCandidateIds.Contains(x.CandidateId) && x.Status == "ready")
-                .Select(x => new { x.CandidateId, x.ResumeVersionId, x.SourceHash })
+            : await (from selection in db.CandidatePublicResumes.AsNoTracking()
+                join version in db.ResumeVersions.AsNoTracking() on new { selection.ResumeVersionId, selection.CandidateId }
+                    equals new { ResumeVersionId = version.Id, version.CandidateId }
+                join file in db.StoredFiles.AsNoTracking() on new { version.FileId, version.CandidateId }
+                    equals new { FileId = file.Id, CandidateId = file.OwnerUserId }
+                join profile in db.CandidateProfiles.AsNoTracking() on selection.CandidateId equals profile.UserId
+                where publicCandidateIds.Contains(selection.CandidateId) && selection.Status == "ready" &&
+                    file.Status == "ready" && file.Provider == storage.Provider &&
+                    file.Sha256 == selection.SourceHash && version.DocumentHash == selection.SourceHash &&
+                    db.Users.Any(account => account.Id == selection.CandidateId && account.AccountStatus == "active") &&
+                    db.Users.Any(account => account.Id == recruiterId && account.AccountStatus == "active") &&
+                    db.Jobs.Any(current => current.Id == jobId && current.CurrentVersionId == job.CurrentVersion.Id &&
+                        current.Status == "published" && current.Company!.OwnerUserId == recruiterId && current.Company.ArchivedAt == null &&
+                        (current.ApplicationDeadline == null || current.ApplicationDeadline > releaseTime))
+                select new
+                {
+                    selection.CandidateId, selection.ResumeVersionId, selection.SourceHash, selection.PublishedAt,
+                    DisplayName = db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "display_name")
+                        ? profile.DisplayName : "Ứng viên",
+                    Headline = db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "headline")
+                        ? profile.Headline : null
+                })
                 .ToListAsync(ct);
-        var currentKeys = currentlyPublic.Select(x => (x.CandidateId, x.ResumeVersionId, x.SourceHash)).ToHashSet();
+        var currentSources = currentlyPublic.ToDictionary(x => (x.CandidateId, x.ResumeVersionId, x.SourceHash));
         var originalHashes = publicSources.ToDictionary(x => (x.Selection.CandidateId, x.Version.Id),
             x => x.Selection.SourceHash);
-        ranked = ranked.Where(item => originalHashes.TryGetValue((item.CandidateId, item.ResumeVersionId), out var sourceHash) &&
-            currentKeys.Contains((item.CandidateId, item.ResumeVersionId, sourceHash))).ToList();
+        ranked = ranked.Select(item => originalHashes.TryGetValue((item.CandidateId, item.ResumeVersionId), out var sourceHash) &&
+            currentSources.TryGetValue((item.CandidateId, item.ResumeVersionId, sourceHash), out var current)
+                ? item with { DisplayName = current.DisplayName, Headline = current.Headline, PublishedAt = current.PublishedAt }
+                : null).OfType<RecruiterResumeRecommendation>().ToList();
 
         var ordered = ranked.OrderByDescending(x => x.RetrievalScore).ThenBy(x => x.CandidateId)
             .ThenBy(x => x.ResumeVersionId).Take(requestedTopK ?? options.DefaultTopK).ToArray();

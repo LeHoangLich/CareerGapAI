@@ -274,6 +274,15 @@ public sealed class AccountDeletionService(
         var isRecruiter = roles.Contains("Recruiter");
 
         await db.Database.ExecuteSqlRawAsync("SET LOCAL careergap.account_purge = 'on'", ct);
+        var ownVersions = db.ResumeVersions.Where(x => x.CandidateId == account.Id).Select(x => x.Id);
+        var affectedReports = await db.ContentReports.Where(x => x.ReporterId == account.Id || x.TargetType == "public_resume" && x.TargetId != null && ownVersions.Contains(x.TargetId.Value)).Select(x => x.Id).ToArrayAsync(ct);
+        var ownJobs = db.Jobs.Where(x => x.Company!.OwnerUserId == account.Id).Select(x => x.Id);
+        await db.ContentReports.Where(x => x.ReporterId == account.Id || x.TargetType == "public_resume" && x.TargetId != null && ownVersions.Contains(x.TargetId.Value))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]").SetProperty(x => x.TargetId, (Guid?)null), ct);
+        await db.AdminAudits.Where(x => x.ActorId == account.Id || x.TargetId == account.Id || x.TargetId != null && (affectedReports.Contains(x.TargetId.Value) || ownJobs.Contains(x.TargetId.Value)))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]"), ct);
+        await db.LearningRequests.Where(x => x.OwnerId == account.Id).ExecuteUpdateAsync(s => s
+            .SetProperty(x => x.PairJobId, (Guid?)null).SetProperty(x => x.RequirementKey, "").SetProperty(x => x.LinksJson, (string?)null).SetProperty(x => x.ExpiresAt, (DateTimeOffset?)null), ct);
 
         var aiJobIds = await db.AiJobs.Where(x => x.RequestedBy == account.Id).Select(x => x.Id).ToArrayAsync(ct);
         var applicationIds = isCandidate
@@ -282,6 +291,10 @@ public sealed class AccountDeletionService(
 
         await Matching.MatchRetention.Erase(db, db.MatchInputs.Where(x => x.CandidateId == account.Id ||
             db.AiJobs.Any(j => j.Id == x.AiJobId && j.RequestedBy == account.Id)), ct);
+        var writingIds = await db.WritingInputs.Where(x => x.CandidateId == account.Id).Select(x => x.AiJobId).ToArrayAsync(ct);
+        await db.WritingDecisions.Where(x => writingIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
+        await db.WritingResults.Where(x => writingIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
+        await db.WritingInputs.Where(x => writingIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
 
         await db.Notifications.Where(x => x.RecipientUserId == account.Id ||
             (applicationIds.Length > 0 && x.ApplicationId != null && applicationIds.Contains(x.ApplicationId.Value)) ||

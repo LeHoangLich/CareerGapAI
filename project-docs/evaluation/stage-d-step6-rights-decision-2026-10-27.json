@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-27",
+  "recorded_at_utc": "2026-10-26T20:35:13.057638+00:00",
+  "source": "direct_user_message_in_this_chat",
+  "selected_documents": [
+    {
+      "document_id": "cv-c-derived-pdf",
+      "group_id": "cv-c-origin",
+      "kind": "cv",
+      "language": "en",
+      "format": "pdf",
+      "sha256": "2c52e9b93ef43c024e3678a69f9ccdd6f086c5033f51678ccf56e745c46686a7",
+      "provider_transfer_allowed": false,
+      "allowed_scope": "local_evaluation"
+    },
+    {
+      "document_id": "jd-vi-03",
+      "group_id": "jd-vi-origin-3",
+      "kind": "jd",
+      "language": "vi",
+      "format": "text",
+      "sha256": "83b94c500f638abd2765cf41874c06363e0f1048611d059e297c7fd5a9d72977",
+      "provider_transfer_allowed": false,
+      "allowed_scope": "local_evaluation"
+    },
+    {
+      "document_id": "jd-vi-05",
+      "group_id": "jd-vi-origin-5",
+      "kind": "jd",
+      "language": "vi",
+      "format": "text",
+      "sha256": "9f1d6181a4e1603770e2c626156b21297e752768782a7a6464c384ec36afe2d5",
+      "provider_transfer_allowed": false,
+      "allowed_scope": "local_evaluation"
+    },
+    {
+      "document_id": "jd-en-02",
+      "group_id": "jd-en-origin-2",
+      "kind": "jd",
+      "language": "en",
+      "format": "text",
+      "sha256": "7ba7031816fb5dda41e0af3271760afa623c95d3b3882d261ed447b428b99eba",
+      "provider_transfer_allowed": false,
+      "allowed_scope": "local_evaluation"
+    },
+    {
+      "document_id": "jd-en-03",
+      "group_id": "jd-en-origin-3",
+      "kind": "jd",
+      "language": "en",
+      "format": "text",
+      "sha256": "3ba9bef4b8d49e9d1f64e57431d3a24a4beffe6acafee295773238e6504f9c82",
+      "provider_transfer_allowed": false,
+      "allowed_scope": "local_evaluation"
+    },
+    {
+      "document_id": "cv-veekas-professional-pdf",
+      "group_id": "cv-veekas-origin",
+      "kind": "cv",
+      "language": "en",
+      "format": "pdf",
+      "sha256": "20346f9715102952243023d7162fffd54b4c347560201b4908d262189527fc9c",
+      "provider_transfer_allowed": false,
+      "allowed_scope": "local_evaluation"
+    }
+  ],
+  "owner_action_1_completed": true,
+  "owner_action_2_decision_recorded": true,
+  "owner_action_2_rights_gate_satisfied": false,
+  "owner_action_3_started": false,
+  "provider_rights_decision": "local_only_confirmed_no_documents_authorized",
+  "provider_rights_verified": false,
+  "provider_transfer_allowed": false,
+  "api_calls_authorized": false,
+  "spend_authorized": false,
+  "step6_completed": false,
+  "full_final_freeze_complete": false,
+  "m5_accepted": false,
+  "stage_e_started": false,
+  "provider_calls": 0,
+  "new_cost_usd": "0.00",
+  "reask_rights_without_owner_changing_decision": false,
+  "legal_basis_scope": "existing_source_records_local_evaluation_not_independent_legal_audit",
+  "label_review_or_method_change_implied": false,
+  "private_receipt": {
+    "path": ".local/stage-d-20261023/step6-rights-20261027/owner-rights-decision.json",
+    "sha256": "7bf91f80ce9b60ff43a5772c5a3bf503a7ecc3ea60b7d28047d0fc274e19de90"
+  },
+  "decision_summary_vi": "Owner xác nhận cả sáu tài liệu chỉ local evaluation; không có tài liệu được phép gửi DeepSeek; chưa cấp quyền gọi API hoặc chi tiền."
+}

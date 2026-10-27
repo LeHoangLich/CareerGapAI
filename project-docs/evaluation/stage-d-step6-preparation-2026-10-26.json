@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-26",
+  "created_at_utc": "2026-10-26T14:04:02.917596+00:00",
+  "status": "prepared_not_final_frozen",
+  "refs": {
+    "source_manifest": {
+      "path": ".local/stage-d-20261023/step5/step5-current-source-manifest.json",
+      "sha256": "d8f008026f5370121ac3f7cbdc1281b77bcd85676ea6a55e9829002378ad2596"
+    },
+    "method_inventory": {
+      "path": ".local/stage-d-20261023/step6/method-protocol-review.json",
+      "sha256": "a81aebaee2d3bebc3ab9a089bf6a64a862ff4c3d000771d75e3a10e1b1c88c77"
+    },
+    "protocol": {
+      "path": "project-docs/evaluation/stage-d-final-protocol-2026-10-26.md",
+      "sha256": "7091f010430d23f5fdf341ebb12e07c9c2a98cbac9e72f3132081156c01704f9"
+    },
+    "data_plan": {
+      "path": ".local/stage-d-20261023/step6/evaluation-data-plan.json",
+      "sha256": "9bb51fa467089d35d132818f4fce587dcda81ca8e805b91c8bdab5302fe4b624"
+    },
+    "budget_plan": {
+      "path": "project-docs/evaluation/stage-d-evaluation-budget-2026-10-26.json",
+      "sha256": "52fc25b1f28eb6cea80764d28dc0e3d649776846514042f7484563890cc20503"
+    }
+  },
+  "method_parameters_plan": {
+    "path": ".local/stage-d-20261023/step6/method-parameters-plan.json",
+    "sha256": "87f989b0cd10700505cc384d451c7d007f4166ce43123d00ba112c1ad6f1940f"
+  },
+  "provider_evidence": [
+    {
+      "path": "project-docs/evaluation/stage-d-writing-provider-2026-10-23.json",
+      "sha256": "9f66430f7c41799754b772258746ba7e78d45dbb4ee51946e64d2881b314af0f"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+      "sha256": "fac95ec4233dcf9d5990093d0b43fb72afa926ee3ff249f9239a24f32ade7dad"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-email-provider-2026-10-24.json",
+      "sha256": "ff27170929b9db3047da467bb6d668ef4bca790933e86fc2eba65b94e94965c4"
+    }
+  ],
+  "provider_evidence_scope": "historical_prior_candidate_verified_provider_contract_sources_unchanged_not_new_DLL_probe",
+  "evaluation_tools": [
+    {
+      "path": "scripts/check-stage-d-freeze.py",
+      "sha256": "e605fae3a0fd7235446449a470eb521194812a81d33c8e4e545c076cf1e0af64"
+    },
+    {
+      "path": "scripts/evaluate-final-pair-captures.py",
+      "sha256": "75561c0573ab2d5d4d36e4a806f386c431585218e031e360a8e52bea8af214b4"
+    },
+    {
+      "path": "tests/evaluation/test_stage_d_freeze.py",
+      "sha256": "f394b851f53739c8dffbbd26adeac1d1b41faf54f16fa3a1f36351dd5e69d76b"
+    },
+    {
+      "path": "tests/evaluation/test_final_pair_evaluation.py",
+      "sha256": "124e650a0b0af4d14d5d70a7d40318b99340f6f5fec4c8a316dfd5ad351f18d2"
+    }
+  ],
+  "readiness": {
+    "owner_scope_approved": true,
+    "final_dataset_frozen": false,
+    "final_independence_verified": false,
+    "provider_rights_verified": false,
+    "final_reference_labels_ready": false,
+    "required_search_allowance_approved": false,
+    "funds_reconciled": false
+  },
+  "execution": {
+    "api_calls_authorized": false,
+    "planned_or_executed_calls_now": 0
+  },
+  "component_configuration_pinned": true,
+  "full_final_freeze_complete": false,
+  "step6_completed": false,
+  "m5_accepted": false,
+  "stage_e_started": false,
+  "owner_scope_decision": "conditional_target_policy_approved_actual_final_pool_pending",
+  "owner_scope_receipt": {
+    "path": ".local/stage-d-20261023/step6/owner-conditional-scope-receipt.json",
+    "sha256": "0f980fbece4e2e70c99f7581d64e8d80017868da6b9f7f08846ba9fe67db708a"
+  }
+}

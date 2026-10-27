@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "status": "synthetic_provider_functional_probe_owner_factuality_review_passed",
+  "recordedAtUtc": "2026-10-23T03:05:42.568017+07:00",
+  "baseCandidateManifest": "project-docs/evaluation/stage-d-method-candidate-2026-10-23.json",
+  "sourceBundleSha256": "8b59d856bf551f663981c11bc4039798d993526de100924b751ac74ac5d847e4",
+  "sourceFilesRechecked": 114,
+  "backendAssemblySha256": "8853252d507a183bfd40742386e3ca1c5d90daec41714fca56a0d1c2c802dfd2",
+  "gitHead": "64fbc991833f42ffad6a101579026b6ad5414aaf",
+  "workingTreeDirty": true,
+  "runtimeSourceChanged": false,
+  "contract": "cv-composition-v1",
+  "provider": "DeepSeek",
+  "modelAlias": "deepseek-flash",
+  "documentedModelVersion": "DeepSeek-V4.1-Flash-1017",
+  "providerModelVersionReturnedCaptured": false,
+  "pricingSource": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "peakCacheMissUsdPerMillionInput": "0.30",
+  "peakUsdPerMillionOutput": "1.20",
+  "maxInputTokens": 8192,
+  "maxOutputTokens": 2048,
+  "maxAttemptsPerJob": 2,
+  "probeCapUsd": "0.02",
+  "wholeDevelopmentCapUsd": "2.00",
+  "syntheticOnly": true,
+  "languages": [
+    "vi",
+    "en"
+  ],
+  "jobs": 2,
+  "attempts": 2,
+  "retries": 0,
+  "inputTokens": 1046,
+  "outputTokens": 196,
+  "conservativeUsageCostUsd": "0.000549",
+  "developmentBudgetDebitUsd": "0.01",
+  "developmentTrackedSpentUsd": "0.03",
+  "remainingDevelopmentGuardedUsd": "1.97",
+  "reservedUnknownUsd": "0.00",
+  "backendReservedRemainingUsd": "0.00",
+  "providerInvoicePreciselyVerified": false,
+  "currencyConversionApplied": false,
+  "idempotencyAndReloadVerified": true,
+  "confirmedWholeFactsAndGroupsVerified": true,
+  "contactScalarFieldsSent": false,
+  "ownerReviewStatus": "passed_synthetic_factuality_no_edits",
+  "proposalsAccepted": 2,
+  "newCvVersionsFromProposals": 2,
+  "representativeQualityEvidence": false,
+  "finalHoldoutUsed": false,
+  "searchProvider": "Fake",
+  "emailProvider": "Fake",
+  "probeApiStopped": true,
+  "evidenceDirectory": ".local/stage-d-20261023/evidence",
+  "captureSha256": "adb7a02734ff75c9f3ab761ed7877820d2f73ff9bf1939adfab64cb820cfdbef",
+  "reviewFileSha256": "54789b2770015481012d523ec10dc15e75c040a186ca869738146e371243da28",
+  "ownerReview": {
+    "recordedAtUtc": "2026-10-22T20:17:35.2655071+00:00",
+    "reviewer": "project_owner",
+    "scope": "two_synthetic_outputs_only",
+    "reviewedArtifactSha256": "54789b2770015481012d523ec10dc15e75c040a186ca869738146e371243da28",
+    "checks": [
+      {
+        "language": "vi",
+        "reviewer": "project_owner",
+        "factuality": "passed",
+        "unsupportedSkillsExperienceAchievements": false,
+        "mixedExperienceAndProject": false,
+        "wordingMatchesSource": true,
+        "editsRequired": false
+      },
+      {
+        "language": "en",
+        "reviewer": "project_owner",
+        "factuality": "passed",
+        "unsupportedSkillsExperienceAchievements": false,
+        "mixedExperienceAndProject": false,
+        "wordingMatchesSource": true,
+        "editsRequired": false
+      }
+    ],
+    "receipt": ".local/stage-d-20261023/evidence/writing-owner-review-receipt.json",
+    "applicationDecisionWritten": false,
+    "representativeQualityAcceptance": false
+  },
+  "ownerRealOutputWorkflow": {
+    "vi": {
+      "ownerDraftApplyConfirmed": true,
+      "applicationDecisionPersisted": "accept",
+      "sourceVersionNo": 1,
+      "resumeVersionCountBefore": 2,
+      "resumeVersionCountAfterAccept": 2,
+      "sourceRevisionHashUnchanged": true,
+      "pdfReviewConfirmed": true,
+      "privateVersionSaveConfirmed": true,
+      "pdfReviewConfirmationSource": "owner_direct_chat",
+      "agentActualPdfInspected": true,
+      "newVersionNo": 3,
+      "newRevisionNo": 1,
+      "versionCountAfterSave": 3,
+      "publicSelectionUnchanged": true,
+      "savedContentMatchesSourceAndAcceptedSections": true,
+      "pdfPages": 1,
+      "completed": true
+    },
+    "en": {
+      "applicationDecisionPersisted": "accept",
+      "pdfReviewConfirmed": true,
+      "privateVersionSaveConfirmed": true,
+      "ownerDraftApplyConfirmed": true,
+      "sourceVersionNo": 1,
+      "resumeVersionCountBefore": 1,
+      "resumeVersionCountAfterAccept": 1,
+      "sourceRevisionHashUnchanged": true,
+      "publicSelectionUnchanged": true,
+      "pdfReviewConfirmationSource": "owner_direct_chat",
+      "agentActualPdfInspected": true,
+      "newVersionNo": 2,
+      "newRevisionNo": 1,
+      "versionCountAfterSave": 2,
+      "savedContentMatchesSourceAndAcceptedSections": true,
+      "contentComparison": "semantic_equal_after_empty_optional_phone_to_null",
+      "pdfPages": 1,
+      "sectionHeadingLanguage": "vi",
+      "fullyLocalizedEnglishTemplate": false,
+      "completed": true
+    }
+  },
+  "workflowEvidence": {
+    "writing-owner-vi-accept-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-vi-accept-receipt.json",
+      "sha256": "4f0f369a08696edd552d1c599335c77eac0e610b097ae1b77d944ac060fff4ab"
+    },
+    "writing-owner-vi-pdf-review-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-vi-pdf-review-receipt.json",
+      "sha256": "38839c4fbb5513bf18ee3c87086bab4344e41578f01f904ffd5ac801eb2b2ae3"
+    },
+    "writing-owner-vi-save-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-vi-save-receipt.json",
+      "sha256": "c9a178ce903b1567066d6d75021e6d2d58fbbed8920f703534a8ebd234b273de"
+    },
+    "writing-owner-vi-save-checks.private.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-vi-save-checks.private.json",
+      "sha256": "14ff16a6bc4cb670547c97f73d236b67170e5b1ba507f9194e6cdfb72915c952"
+    },
+    "writing-owner-vi-content-checks.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-vi-content-checks.json",
+      "sha256": "dcbbcc5294783961f81500d47bbfa12c885eb772b9617ac572eb6f1f4287f78b"
+    },
+    "writing-owner-vi-pdf-agent-qa.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-vi-pdf-agent-qa.json",
+      "sha256": "971a9809589bf05a17111f5628e22ebc3da64abe5e44018ef56e48e5c30ea8ae"
+    },
+    "owner-writing-vi-v3.pdf": {
+      "path": ".local/stage-d-20261023/evidence/owner-writing-vi-v3.pdf",
+      "sha256": "06bf12ff4a84386396a6a2fa501c62ee04e73ed6a9fc0b7fede66203f99c9af7"
+    },
+    "owner-writing-vi-v3-page-1.png": {
+      "path": ".local/stage-d-20261023/evidence/owner-writing-vi-v3-page-1.png",
+      "sha256": "9f3e6fe04cd8288ae265db5c780d9dcd116fa950aed788bc022382f6a379b0e4"
+    },
+    "writing-owner-en-accept-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-accept-receipt.json",
+      "sha256": "c1ff379e467ba6b5428296e374bdad203fd44a152239fdf5a89039c27c569c7f"
+    },
+    "writing-owner-en-pdf-review-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-pdf-review-receipt.json",
+      "sha256": "c92c16e331da9aeb7f454472611da903e3508d0e37158850bf289f91ce91b4c8"
+    },
+    "writing-owner-en-save-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-save-receipt.json",
+      "sha256": "108f87076c9e294e72ea8a03bbc36c31d2017c41f7f03b4b840386e72574e5a1"
+    },
+    "writing-owner-en-save-checks.private.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-save-checks.private.json",
+      "sha256": "5b6d06baae206c11e2cd2fba3a87a7fd4ba5f51aef597762e6c1433d64fa1a16"
+    },
+    "writing-owner-en-content-checks.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-content-checks.json",
+      "sha256": "0c9f9c8d3322ff62d2d89e88cd9276ad0da6877f25400904707219731b5d3b2e"
+    },
+    "writing-owner-en-pdf-agent-qa.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-pdf-agent-qa.json",
+      "sha256": "efc3657160d8a05d6b6bf6c3d47fe10360435811983d506c3fe14ac569706212"
+    },
+    "owner-writing-en-v2.pdf": {
+      "path": ".local/stage-d-20261023/evidence/owner-writing-en-v2.pdf",
+      "sha256": "3ce63b9a345d6d1e4a4ae3eb22ff39359ed5c05c1039d10283ec4665c9666ec7"
+    },
+    "owner-writing-en-v2-page-1.png": {
+      "path": ".local/stage-d-20261023/evidence/owner-writing-en-v2-page-1.png",
+      "sha256": "a93c9b0ae23e69ad9803da883887f38ead44bd9d62c9e10d09cc275965b83a10"
+    },
+    "writing-owner-en-independent-audit.json": {
+      "path": ".local/stage-d-20261023/evidence/writing-owner-en-independent-audit.json",
+      "sha256": "e940003d7dc8a3c52e03a250fdb6691ce270f823300e01c3133757b2eca6aef7"
+    }
+  },
+  "initialProbeProposalsAccepted": 0,
+  "currentWorkflowStatus": "both_synthetic_owner_accept_pdf_private_version_workflows_completed"
+}

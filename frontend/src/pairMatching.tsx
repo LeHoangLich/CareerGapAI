@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
+import { LearningResources } from './learning';
 
 type Fact = { key: string; value: string; sourceType: string };
 type Criterion = { requirementKey: string; requirement: string; importance: string; status: string; evidence: Fact[]; explanation: string; needsReview: boolean; requirementSourceType: string };
-type Pair = { id: string; status: string; errorCode: string | null; provider: string; score: number | null; criteria: Criterion[] | null; location: string | null; workMode: string; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null };
+type Pair = { id: string; context: string; status: string; errorCode: string | null; provider: string; score: number | null; criteria: Criterion[] | null; location: string | null; workMode: string; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null };
 type Item = { resumeVersionId: string; jobVersionId: string; applicationId: string | null; label: string; retrievalScore: number | null; pairJobId: string | null; errorCode: string | null };
 type Batch = { searchSpaceCount: number; selectedCount: number; page: number; hasMore: boolean; items: Item[] };
 const reasons: Record<string, string> = {
@@ -34,6 +35,7 @@ function PairDetails({ pair }: { pair: Pair }) {
       <p>{c.explanation}{c.needsReview ? ' Yêu cầu này cần người dùng đánh giá thêm.' : ''}</p>
       {c.requirementSourceType === 'user_statement' && <small>Yêu cầu do recruiter bổ sung.</small>}
       {c.evidence.map(f => <blockquote key={f.key}>{f.value}<small>{f.sourceType === 'user_statement' ? 'Thông tin ứng viên tự khai đã xác nhận' : 'Nội dung CV đã xác nhận'}</small></blockquote>)}
+      {pair.context === 'self' && ['partial', 'no_evidence'].includes(c.status) && <LearningResources pairId={pair.id} requirementKey={c.requirementKey}/>}
     </li>)}</ul></details>
   </div>;
 }

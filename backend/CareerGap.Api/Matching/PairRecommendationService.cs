@@ -82,6 +82,35 @@ public sealed class PairRecommendationService(AppDb db, KeywordMatchingService b
                 Context = context, ApplicationId = item.ApplicationId }, clock.GetUtcNow(), ct, checkRevisions: false))
                 items.RemoveAt(i);
         }
+        if (request.Direction == "public_resumes" && items.Count > 0)
+        {
+            // Admission and the access checks above can await database locks. Refresh all labels
+            // together after them so a profile-sharing change does not leave an earlier name in the batch.
+            var resumeIds = items.Select(x => x.ResumeVersionId).ToArray();
+            var selectedJobVersion = items[0].JobVersionId;
+            var releaseTime = clock.GetUtcNow();
+            var currentLabels = await (from selection in db.CandidatePublicResumes.AsNoTracking()
+                join version in db.ResumeVersions.AsNoTracking() on new { selection.ResumeVersionId, selection.CandidateId }
+                    equals new { ResumeVersionId = version.Id, version.CandidateId }
+                join file in db.StoredFiles.AsNoTracking() on new { version.FileId, version.CandidateId }
+                    equals new { FileId = file.Id, CandidateId = file.OwnerUserId }
+                join profile in db.CandidateProfiles.AsNoTracking() on selection.CandidateId equals profile.UserId
+                where resumeIds.Contains(version.Id) && selection.Status == "ready" && file.Status == "ready" &&
+                    file.Sha256 == selection.SourceHash && version.DocumentHash == selection.SourceHash &&
+                    db.Users.Any(account => account.Id == selection.CandidateId && account.AccountStatus == "active") &&
+                    db.Users.Any(account => account.Id == uid && account.AccountStatus == "active") &&
+                    db.Jobs.Any(job => job.Id == request.JobId && job.CurrentVersionId == selectedJobVersion &&
+                        job.Status == "published" && job.Company!.OwnerUserId == uid && job.Company.ArchivedAt == null &&
+                        (job.ApplicationDeadline == null || job.ApplicationDeadline > releaseTime))
+                select new
+                {
+                    selection.ResumeVersionId,
+                    Label = db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "display_name")
+                        ? profile.DisplayName : "Ứng viên"
+                }).ToDictionaryAsync(x => x.ResumeVersionId, x => x.Label, ct);
+            items = items.Where(x => currentLabels.ContainsKey(x.ResumeVersionId))
+                .Select(x => x with { Label = currentLabels[x.ResumeVersionId] }).ToList();
+        }
         return new(request.Direction == "applications" ? "application-submission-order-v1-page20" : "weighted-keyword-overlap-v1",
             PairMatchingContract.Rubric, total, items.Count(x => x.PairJobId.HasValue), request.Page, more, items);
     }

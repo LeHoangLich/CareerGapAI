@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "status": "completed_owner_review_and_usage_reconciled_cap_exhausted",
+  "providerProposal": "Tavily",
+  "ownerProviderChoiceConfirmed": true,
+  "ownerCreditAllowanceConfirmed": true,
+  "accountBackendKeyVerified": true,
+  "remainingCreditsAcrossAllEnvironments": null,
+  "providerPeriodStartUtc": null,
+  "providerPeriodEndUtc": null,
+  "providerAllowanceVerifiedAtUtc": null,
+  "outsideApplicationUsageReconciled": true,
+  "accountPlanRequired": "free_no_pay_as_you_go",
+  "plannedRequests": 2,
+  "maximumDispatchedRequests": 2,
+  "proposedCreditCap": 2,
+  "maximumPaidUsd": "0.00",
+  "searchDepth": "basic",
+  "autoParameters": false,
+  "expectedCreditsPerRequestRequiresRecheck": 1,
+  "automaticRetries": 0,
+  "stopOnUnknownUsage": true,
+  "maximumUrlsPerRequest": 3,
+  "queries": [
+    {
+      "topic": "Docker",
+      "level": "beginner",
+      "language": "vi"
+    },
+    {
+      "topic": "Docker",
+      "level": "beginner",
+      "language": "en"
+    }
+  ],
+  "outboundFields": [
+    "topic",
+    "level",
+    "language"
+  ],
+  "sendCvJdOrContactDetails": false,
+  "requireSyntheticPermittedInput": true,
+  "metadataCacheMinutes": 0,
+  "storeRawPageOrSnippet": false,
+  "fetchArbitraryResultUrls": false,
+  "freshLlmCallsRequired": 0,
+  "runtimeProviderBeforeAdmission": "Fake",
+  "searchRequestsAlreadyExecuted": 2,
+  "emailRequestsAlreadyExecuted": 0,
+  "representativeQualityEvidence": false,
+  "finalHoldoutUsed": false,
+  "referenceCheckedOnAsiaSaigon": "2026-10-23",
+  "references": [
+    "https://docs.tavily.com/documentation/api-credits",
+    "https://help.tavily.com/articles/9170796666-how-can-i-create-an-api-key",
+    "https://help.tavily.com/articles/3116968635-when-do-my-monthly-api-credits-reset"
+  ],
+  "freeCreditsVerifiedAtLeastCap": true,
+  "accountCountersKeptPrivate": true,
+  "providerResetCalendarRule": "first day of each month per official help",
+  "providerResetTimezoneVerified": false,
+  "probeAdmissionStartUtc": "2026-10-23T10:30:56.923597+00:00",
+  "probeAdmissionEndUtc": "2026-10-24T10:30:56.923597+00:00",
+  "probeAdmissionIsProviderCycle": false,
+  "probeWindowDoesNotResetSharedAuthorization": true,
+  "acceptanceMetadataEvidence": {
+    "productCacheEnabled": false,
+    "privateEvidenceOnly": true,
+    "fields": [
+      "title",
+      "url",
+      "source",
+      "queryLanguage",
+      "reason"
+    ],
+    "purpose": "owner_resource_review",
+    "retentionUntilUtc": "2026-10-30T10:30:56.923597+00:00",
+    "cleanup": "manual_after_review_no_later_than_seven_days_no_scheduler_claim",
+    "snippetsOrRawPagesRetained": false,
+    "termsReviewedAtUtc": "2026-10-23T10:30:56.923597+00:00",
+    "termsSource": "https://www.tavily.com/terms",
+    "metadataCleanedAfterOwnerReview": true,
+    "cleanupCompletedAtUtc": "2026-10-23T10:50:02.711732+00:00"
+  },
+  "freeCreditsDebitedConservatively": 2,
+  "remainingAuthorizedCredits": 0,
+  "providerAccountAggregateReconciled": true,
+  "doNotRepeatOrReallocate": true,
+  "providerManifest": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+  "aggregateReconciliationEvidenceKind": "owner_dashboard_report",
+  "ownerResourceReviewStatus": "passed_two_groups"
+}

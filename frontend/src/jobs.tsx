@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from './api';
 import { CandidateKeywordRecommendations, RecruiterKeywordResumeSearch } from './matching';
 import { PairRecommendations } from './pairMatching';
+import { ReportButton } from './administration';
 
 type Session = { authenticated: boolean; userId?: string; roles: string[] };
 type Company = { id: string; name: string; slug: string; description: string | null; websiteUrl: string | null; location: string | null; industry: string | null; sizeLabel: string | null; rowVersion: number };
@@ -35,8 +36,8 @@ function toQuery(filters: SearchFilters, page: number) {
   return params.toString();
 }
 
-function JobCard({ job, candidate, saved, onToggleSaved, resumes, application, selectedVersionId, onSelectVersion, onApply, applying }: {
-  job: Job; candidate: boolean; saved: boolean; onToggleSaved: (job: Job) => void;
+function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, resumes, application, selectedVersionId, onSelectVersion, onApply, applying }: {
+  job: Job; candidate: boolean; reportable?: boolean; saved: boolean; onToggleSaved: (job: Job) => void;
   resumes: Resume[]; application?: Application; selectedVersionId?: string;
   onSelectVersion: (jobId: string, versionId: string) => void; onApply: (job: Job) => void; applying: boolean;
 }) {
@@ -49,6 +50,7 @@ function JobCard({ job, candidate, saved, onToggleSaved, resumes, application, s
     <details><summary>Yêu cầu và quyền lợi</summary><p><strong>Yêu cầu</strong><br/>{version.requirementsText}</p>{version.benefitsText && <p><strong>Quyền lợi</strong><br/>{version.benefitsText}</p>}</details>
     {job.applicationDeadline && <small>Hạn nhận hồ sơ: {new Date(job.applicationDeadline).toLocaleString('vi-VN')}</small>}
     {candidate && <button className="secondary save-job" aria-pressed={saved} onClick={() => onToggleSaved(job)}>{saved ? 'Bỏ lưu việc' : 'Lưu việc'}</button>}
+    {(candidate || reportable) && <ReportButton targetType="job" targetId={job.id}/>}
     {candidate && application && <p className="hint" role="status">Bạn đã nộp hồ sơ · {application.status} · CV phiên bản {application.resumeVersionNo}</p>}
     {candidate && !application && job.acceptingApplications && <div className="apply-row">
       {resumeVersions.length ? <><label>CV gửi<select aria-label={`CV gửi cho ${version.title}`} value={selectedVersionId ?? resumeVersions[0].id} onChange={e => onSelectVersion(job.id, e.target.value)}>
@@ -172,7 +174,7 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
     } catch (e) { setError((e as Error).message); }
   }
   const items = results?.items ?? [];
-  return <section className="card job-browser">
+  return <section className="card job-browser" id="jobs">
     <div className="section-heading"><div><p className="eyebrow">TIN TUYỂN DỤNG</p><h2>Tìm công việc</h2></div><span>{results?.total ?? 0} kết quả</span></div>
     <form className="job-filters" onSubmit={e => { e.preventDefault(); setPage(1); setAppliedFilters({ ...filters }); }}>
       <label>Từ khóa<input value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} maxLength={120} placeholder="Tên vị trí, công ty hoặc mô tả"/></label>
@@ -191,7 +193,7 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
     {error && <p role="alert" className="error">{error}</p>}
     {busy && <p role="status">Đang tìm tin…</p>}
     {!busy && !items.length && <p>Chưa có tin công khai phù hợp.</p>}
-    <div className="job-list">{items.map(job => <JobCard key={job.id} job={job} candidate={candidate} saved={savedIds.has(job.id)} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(job.id)} selectedVersionId={selectedVersionByJob[job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === job.id}/>)}</div>
+    <div className="job-list">{items.map(job => <JobCard key={job.id} job={job} candidate={candidate} reportable={session?.roles.includes('Recruiter')} saved={savedIds.has(job.id)} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(job.id)} selectedVersionId={selectedVersionByJob[job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === job.id}/>)}</div>
     {results && results.total > results.pageSize && <div className="row job-pages"><button className="secondary" disabled={page <= 1 || busy} onClick={() => setPage(x => x - 1)}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(results.total / results.pageSize))}</span><button className="secondary" disabled={page * results.pageSize >= results.total || busy} onClick={() => setPage(x => x + 1)}>Sau</button></div>}
     {candidate && saved.length > 0 && <details className="saved-jobs"><summary>Việc đã lưu ({saved.length})</summary><div className="job-list">{saved.map(x => <JobCard key={x.job.id} job={x.job} candidate={true} saved={true} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(x.job.id)} selectedVersionId={selectedVersionByJob[x.job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === x.job.id}/>)}</div></details>}
     {candidate && <section className="application-center"><div className="section-heading"><div><p className="eyebrow">HỒ SƠ ĐÃ NỘP</p><h3>Đơn ứng tuyển của bạn</h3></div><span>{applications.length}</span></div>
@@ -426,7 +428,7 @@ export function RecruiterJobManager() {
     finally { setSavingNoteId(undefined); }
   }
 
-  return <section className="card recruiter-jobs">
+  return <section className="card recruiter-jobs" id="recruiter-jobs">
     <div className="section-heading"><div><p className="eyebrow">NHÀ TUYỂN DỤNG</p><h2>Công ty và tin tuyển dụng</h2></div></div>
     {error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
     <div className="company-row"><strong>Công ty của tôi</strong>{companies.map(company => <div className="company-chip" key={company.id}><span>{company.name}</span><button className="link-button" onClick={() => { setEditingCompany(company); setCompanyForm({ name: company.name, description: company.description ?? '', websiteUrl: company.websiteUrl ?? '', location: company.location ?? '', industry: company.industry ?? '', sizeLabel: company.sizeLabel ?? '' }); }}>Sửa</button></div>)}</div>
@@ -447,7 +449,7 @@ export function RecruiterJobManager() {
     </form>
     <h3>Tin của tôi</h3>
     {!jobs.length && <p>Chưa có tin. Hãy tạo công ty rồi bắt đầu bằng một tin nháp.</p>}
-    <div className="job-list">{jobs.map(job => <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo}</p></div><span className={`job-status ${job.status}`}>{job.status}</span></div><p>{job.version.description}</p><div className="row"><button className="secondary" disabled={busy || job.status === 'closed'} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button disabled={busy} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button className="secondary" disabled={busy} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}<button className="secondary" disabled={loadingApplications === job.id} onClick={() => void toggleApplications(job)}>{loadingApplications === job.id ? 'Đang tải…' : expandedApplications[job.id] ? 'Ẩn hồ sơ' : `Hồ sơ ứng tuyển (${applicationsByJob[job.id]?.total ?? 'xem'})`}</button></div>
+    <div className="job-list">{jobs.map(job => <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><div className="row"><button className="secondary" disabled={busy || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button disabled={busy} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button className="secondary" disabled={busy} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}<button className="secondary" disabled={loadingApplications === job.id} onClick={() => void toggleApplications(job)}>{loadingApplications === job.id ? 'Đang tải…' : expandedApplications[job.id] ? 'Ẩn hồ sơ' : `Hồ sơ ứng tuyển (${applicationsByJob[job.id]?.total ?? 'xem'})`}</button></div>
       <JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
       <RecruiterKeywordResumeSearch jobId={job.id} enabled={job.status === 'published' && job.acceptingApplications}/>
       <PairRecommendations key={`applications:${job.id}`} direction="applications" jobId={job.id}/>
@@ -457,6 +459,7 @@ export function RecruiterJobManager() {
             <button className="secondary" disabled={mutatingApplicationId === application.id} onClick={() => void toggleCandidateBlock(job.id, application)}>{application.candidateBlocked ? 'Bỏ chặn ứng viên' : 'Chặn ứng viên cho tin này'}</button>
             <button className="secondary" onClick={() => void toggleNotes(application)}>{expandedNotes[application.id] ? 'Ẩn ghi chú nội bộ' : 'Ghi chú nội bộ'}</button>
             <a href={`/api/applications/${application.id}/resume`}>Mở CV đã nộp</a>
+            <a href={`/?profile=${application.candidateId}#shared-profile`} target="_blank" rel="noopener noreferrer">Xem hồ sơ được chia sẻ</a>
           </div>
           {expandedNotes[application.id] && <section className="application-notes"><strong>Ghi chú nội bộ — chỉ recruiter phụ trách tin đọc được</strong>
             {!notesByApplication[application.id]?.length ? <p>Chưa có ghi chú.</p> : <ul className="internal-note-list">{notesByApplication[application.id].map(note => <li key={note.id}><p>{note.body}</p><small>{new Date(note.createdAt).toLocaleString('vi-VN')}</small></li>)}</ul>}

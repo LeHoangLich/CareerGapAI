@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using CareerGap.Api.Ai;
 using CareerGap.Api.Data;
@@ -33,7 +34,11 @@ public static class ResumeSkillProjection
             var input = new ResumeBuilderContentRequest(0, content.TemplateVersion, content.DisplayName, content.Email,
                 content.Phone, content.Location, content.Headline, content.Summary, content.Skills, content.Experience,
                 content.Education, content.Projects, content.Certifications);
-            if (!ResumeBuilderRevisionFactory.TryPrepare(input, out var prepared, out _) || prepared!.StructuredData != revision.StructuredData || prepared.Evidence != revision.Evidence) return false;
+            // PostgreSQL jsonb normalizes property order and whitespace; compare JSON
+            // values while preserving array order and exact string content.
+            if (!ResumeBuilderRevisionFactory.TryPrepare(input, out var prepared, out _) ||
+                !JsonNode.DeepEquals(JsonNode.Parse(prepared!.StructuredData), JsonNode.Parse(revision.StructuredData)) ||
+                !JsonNode.DeepEquals(JsonNode.Parse(prepared.Evidence), JsonNode.Parse(revision.Evidence))) return false;
             if (!publicScope) skills = content.Skills.ToList();
             return true;
         }

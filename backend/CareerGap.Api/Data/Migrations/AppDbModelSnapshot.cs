@@ -159,6 +159,43 @@ namespace CareerGap.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CareerGap.Api.Data.AdminAudit", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("action");
+
+                    b.Property<Guid>("ActorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.ToTable("admin_audits");
+                });
+
             modelBuilder.Entity("CareerGap.Api.Data.AiJob", b =>
                 {
                     b.Property<Guid>("Id")
@@ -259,7 +296,7 @@ namespace CareerGap.Api.Data.Migrations
                         {
                             t.HasCheckConstraint("ck_job", "status IN ('queued','running','succeeded','failed','cancelled') AND attempt_count >= 0 AND max_attempts BETWEEN 1 AND 2 AND lease_generation >= 0");
 
-                            t.HasCheckConstraint("ck_job_type", "job_type IN ('extract_cv','match_pair') AND (job_type <> 'match_pair' OR resume_version_id IS NULL)");
+                            t.HasCheckConstraint("ck_job_type", "job_type IN ('extract_cv','match_pair','suggest_cv') AND (job_type <> 'match_pair' OR resume_version_id IS NULL)");
                         });
                 });
 
@@ -928,6 +965,97 @@ namespace CareerGap.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CareerGap.Api.Data.ContentReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid>("ReporterId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reporter_id");
+
+                    b.Property<long>("RowVersion")
+                        .IsConcurrencyToken()
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("target_type");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReporterId");
+
+                    b.HasIndex("Status", "CreatedAt");
+
+                    b.ToTable("content_reports", t =>
+                        {
+                            t.HasCheckConstraint("ck_content_report", "status IN ('open','resolved','dismissed') AND target_type IN ('job','public_resume') AND row_version >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.EmailDelivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("PeriodEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("period_end");
+
+                    b.Property<DateTimeOffset>("PeriodStart")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("period_start");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Provider", "PeriodStart");
+
+                    b.ToTable("email_deliverys", t =>
+                        {
+                            t.HasCheckConstraint("ck_email_delivery", "status IN ('sent','accepted','outcome_unknown') AND period_start < period_end");
+                        });
+                });
+
             modelBuilder.Entity("CareerGap.Api.Data.ExternalCallAttempt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1280,6 +1408,103 @@ namespace CareerGap.Api.Data.Migrations
                     b.ToTable("job_versions", t =>
                         {
                             t.HasCheckConstraint("ck_job_version_fields", "version_no > 0 AND employment_type IN ('full_time','part_time','contract','internship','temporary') AND work_mode IN ('onsite','hybrid','remote','unspecified') AND language IN ('vi','en','vi-en') AND (experience_min IS NULL OR experience_min >= 0) AND (experience_max IS NULL OR experience_max >= 0) AND (experience_min IS NULL OR experience_max IS NULL OR experience_min <= experience_max) AND (salary_min IS NULL OR salary_min >= 0) AND (salary_max IS NULL OR salary_max >= 0) AND (salary_min IS NULL OR salary_max IS NULL OR salary_min <= salary_max) AND ((salary_min IS NULL AND salary_max IS NULL AND salary_currency IS NULL AND salary_period IS NULL) OR ((salary_min IS NOT NULL OR salary_max IS NOT NULL) AND salary_currency ~ '^[A-Z]{3}$' AND salary_period IN ('hour','day','month','year','project'))) AND length(content_hash) = 64");
+                        });
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.LearningRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<int?>("ActualCredits")
+                        .HasColumnType("integer")
+                        .HasColumnName("actual_credits");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<Guid>("IdempotencyKey")
+                        .HasColumnType("uuid")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<string>("InputHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("input_hash");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("language");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("level");
+
+                    b.Property<string>("LinksJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("links_json");
+
+                    b.Property<Guid>("OwnerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("owner_id");
+
+                    b.Property<Guid?>("PairJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("pair_job_id");
+
+                    b.Property<DateTimeOffset>("PeriodEnd")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("period_end");
+
+                    b.Property<DateTimeOffset>("PeriodStart")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("period_start");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("RequirementKey")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("requirement_key");
+
+                    b.Property<int>("ReservedCredits")
+                        .HasColumnType("integer")
+                        .HasColumnName("reserved_credits");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Topic")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("topic");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PairJobId");
+
+                    b.HasIndex("OwnerId", "IdempotencyKey")
+                        .IsUnique();
+
+                    b.HasIndex("Provider", "PeriodStart");
+
+                    b.ToTable("learning_requests", t =>
+                        {
+                            t.HasCheckConstraint("ck_learning_request", "status IN ('sent','succeeded','no_results','outcome_unknown','cached') AND reserved_credits >= 0 AND (actual_credits IS NULL OR actual_credits >= 0) AND period_start < period_end");
                         });
                 });
 
@@ -1747,6 +1972,91 @@ namespace CareerGap.Api.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("CareerGap.Api.Data.WritingDecision", b =>
+                {
+                    b.Property<Guid>("AiJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_job_id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("action");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Sections")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("sections");
+
+                    b.HasKey("AiJobId");
+
+                    b.ToTable("writing_decisions", t =>
+                        {
+                            t.HasCheckConstraint("ck_writing_decision", "action IN ('accept','discard')");
+                        });
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.WritingInput", b =>
+                {
+                    b.Property<Guid>("AiJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_job_id");
+
+                    b.Property<Guid>("CandidateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("candidate_id");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasColumnType("char(64)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("payload");
+
+                    b.Property<Guid>("ResumeRevisionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resume_revision_id");
+
+                    b.Property<Guid>("ResumeVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resume_version_id");
+
+                    b.HasKey("AiJobId");
+
+                    b.HasIndex("ResumeRevisionId", "ResumeVersionId");
+
+                    b.HasIndex("ResumeVersionId", "CandidateId");
+
+                    b.ToTable("writing_inputs");
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.WritingResult", b =>
+                {
+                    b.Property<Guid>("AiJobId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ai_job_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Sections")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("sections");
+
+                    b.HasKey("AiJobId");
+
+                    b.ToTable("writing_results");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.DataProtection.EntityFrameworkCore.DataProtectionKey", b =>
                 {
                     b.Property<int>("Id")
@@ -2073,6 +2383,15 @@ namespace CareerGap.Api.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("CareerGap.Api.Data.ContentReport", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("ReporterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("CareerGap.Api.Data.ExternalCallAttempt", b =>
                 {
                     b.HasOne("CareerGap.Api.Data.AiJob", null)
@@ -2157,6 +2476,20 @@ namespace CareerGap.Api.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Job");
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.LearningRequest", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CareerGap.Api.Data.AiJob", null)
+                        .WithMany()
+                        .HasForeignKey("PairJobId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("CareerGap.Api.Data.MatchInput", b =>
@@ -2300,6 +2633,47 @@ namespace CareerGap.Api.Data.Migrations
                         .WithMany()
                         .HasForeignKey("OwnerUserId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.WritingDecision", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.WritingResult", null)
+                        .WithOne()
+                        .HasForeignKey("CareerGap.Api.Data.WritingDecision", "AiJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.WritingInput", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.AiJob", null)
+                        .WithOne()
+                        .HasForeignKey("CareerGap.Api.Data.WritingInput", "AiJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CareerGap.Api.Data.ResumeDataRevision", null)
+                        .WithMany()
+                        .HasForeignKey("ResumeRevisionId", "ResumeVersionId")
+                        .HasPrincipalKey("Id", "ResumeVersionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("CareerGap.Api.Data.ResumeVersion", null)
+                        .WithMany()
+                        .HasForeignKey("ResumeVersionId", "CandidateId")
+                        .HasPrincipalKey("Id", "CandidateId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.WritingResult", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.WritingInput", null)
+                        .WithOne()
+                        .HasForeignKey("CareerGap.Api.Data.WritingResult", "AiJobId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "scope": "whole_development_all_environments",
+  "outsideApplicationUsageReconciled": false,
+  "search": {
+    "provider": "",
+    "backendKeyConfigured": false,
+    "allowanceConfirmed": false,
+    "remainingCreditsAcrossEnvironments": 0,
+    "plannedRequests": 1,
+    "mode": "basic",
+    "creditsPerRequest": 1,
+    "periodStartUtc": "",
+    "periodEndUtc": "",
+    "verifiedAtUtc": "",
+    "cacheMetadataMinutes": 0,
+    "cacheTermsReviewed": false,
+    "queryFields": ["topic", "level", "language"]
+  },
+  "email": {
+    "provider": "",
+    "backendKeyConfigured": false,
+    "allowanceConfirmed": false,
+    "senderVerified": false,
+    "recipientControlled": false,
+    "remainingDeliveriesAcrossEnvironments": 0,
+    "plannedDeliveries": 1,
+    "periodStartUtc": "",
+    "periodEndUtc": "",
+    "verifiedAtUtc": ""
+  }
+}

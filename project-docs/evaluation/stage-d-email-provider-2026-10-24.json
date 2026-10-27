@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "status": "scoped_owner_local_email_verification_completed",
+  "executedOnAsiaSaigon": "2026-10-24",
+  "provider": "Resend",
+  "ownerAuthorizedMaximumEmails": 2,
+  "maximumPaidUsd": "0.00",
+  "planVerifiedFromOwnerScreenshots": "Free",
+  "dailyUsageBefore": 0,
+  "dailyLimitBefore": 100,
+  "monthlyUsageBefore": 0,
+  "monthlyLimitBefore": 3000,
+  "outsideAppUsageNoneOwnerConfirmed": true,
+  "recipientMatchesAccountEmailOwnerConfirmed": true,
+  "senderMode": "provider_test_sender_to_account_email_only",
+  "sender": "onboarding@resend.dev",
+  "ownerDomainDnsVerified": false,
+  "applicationEnvironment": "Development",
+  "recoveryBaseUrl": "http://127.0.0.1:5173/",
+  "applicationForgotRequests": 2,
+  "providerSendAttempts": 2,
+  "automaticRetries": 0,
+  "forgotHttpStatus": 204,
+  "journalRowsBefore": 0,
+  "journalRowsAfter": 2,
+  "journalStatus": "one_accepted_one_original_outcome_unknown",
+  "providerAccepted": true,
+  "providerDelivered": null,
+  "ownerInboxDeliveryConfirmed": true,
+  "resetAndLoginConfirmed": true,
+  "usedTokenRejectedConfirmed": false,
+  "backendKeyHasExpectedResendPrefix": true,
+  "originalProviderHttpStatusKnown": false,
+  "exactFailureCauseConfirmed": false,
+  "remainingAuthorizedAttempts": 0,
+  "reservedUnknownAttempts": 1,
+  "holdFurtherEmail": true,
+  "newDatabaseOrWindowDoesNotRenewAuthorization": true,
+  "fakeMailboxUnavailable": true,
+  "aiJobCountUnchanged": true,
+  "aiAttemptCountUnchanged": true,
+  "searchCountUnchanged": true,
+  "migrations": 19,
+  "runtimeSourceChanges": 0,
+  "fullRegressionRerun": false,
+  "recipientTokenPasswordPublished": false,
+  "qualityAccepted": false,
+  "localAdmissionWindowIsProviderBillingCycle": false,
+  "evidence": {
+    "email-owner-authorization.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-authorization.json",
+      "sha256": "e7181c7929cc5f8c59a8fe7770148de1370360734f008c28d0f270559bf0b139"
+    },
+    "email-database-before.json": {
+      "path": ".local/stage-d-20261023/evidence/email-database-before.json",
+      "sha256": "624cf7b250a8fe3a4348b2b1f95eecb99e7f1d7d75689355b23837e0daa0939a"
+    },
+    "email-real-checks.json": {
+      "path": ".local/stage-d-20261023/evidence/email-real-checks.json",
+      "sha256": "4ff8b541c5caf3e47cef06bc9bb959cdebf9a45c92de49db21f8b312c07af9a2"
+    },
+    "email-config-diagnostic.json": {
+      "path": ".local/stage-d-20261023/evidence/email-config-diagnostic.json",
+      "sha256": "8c2fcc8219ae1c297f0197334bc48c367e822cc82e2dee4f3279e7cbe82b6c01"
+    },
+    "email-config-recheck-20261024.json": {
+      "path": ".local/stage-d-20261023/evidence/email-config-recheck-20261024.json",
+      "sha256": "b03325a8b41448babbed554e4936b934fc06884d6964b6bfc6af1c4e6ea968d9"
+    },
+    "email-owner-additional-authorization.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-additional-authorization.json",
+      "sha256": "c6bba85f14f978a34bd57672fc03a19a51568d45332dcf13723c566c5c1dfab2"
+    },
+    "email-additional-database-before.json": {
+      "path": ".local/stage-d-20261023/evidence/email-additional-database-before.json",
+      "sha256": "8df96b258b0fae98ddaa8c066e6403bb80c9f1560c161664b6eafcd970a0cbef"
+    },
+    "email-additional-real-checks.json": {
+      "path": ".local/stage-d-20261023/evidence/email-additional-real-checks.json",
+      "sha256": "56a9d8aad0bda42bbb794f98f257153108803194f6ed7cd0f4f135b219c30b75"
+    },
+    "email-owner-inbox-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-inbox-receipt.json",
+      "sha256": "fd5c616b562fdd7e3ac7ed18b52630f2c04071b037dd2f3c454542c549c5202b"
+    },
+    "email-owner-reset-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-reset-receipt.json",
+      "sha256": "c935bdd5bb66a4f7da0d90db650400c9087f61e42c2f84ca26f7067ac49b3cd8"
+    },
+    "email-owner-login-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-login-receipt.json",
+      "sha256": "b1198e2d4dfe6c6874254640d387885ac26c3bd9d0d78641ac043cf05529f9f1"
+    },
+    "email-owner-used-link-ui-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-used-link-ui-receipt.json",
+      "sha256": "00d92139ab167a196d57fe624649fa5994f215e31a4c0455c11ed27c1992df55"
+    },
+    "email-owner-relogin-after-used-link-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-relogin-after-used-link-receipt.json",
+      "sha256": "cdd6776598be212dc2db3704d41faddd8f86054680d93e86ea19838c9a074832"
+    },
+    "email-token-regression-summary.json": {
+      "path": ".local/stage-d-20261023/evidence/email-token-regression-summary.json",
+      "sha256": "97b8ef5baacaaa86cd239ce84197e93dd9069c4c5e210dbfc4e0a2ca653e6472"
+    },
+    "email-token-regression/single-use-token.trx": {
+      "path": ".local/stage-d-20261023/evidence/email-token-regression/single-use-token.trx",
+      "sha256": "4064a433da089aeeb5ac744568f8f2007c91389aa65d935bd2ca364833a30e37"
+    },
+    "email-owner-post-send-quota-receipt.json": {
+      "path": ".local/stage-d-20261023/evidence/email-owner-post-send-quota-receipt.json",
+      "sha256": "ad817fa6560e9dc51053c6922baa17220ccd73a3ec41d169f92fb04d3a7878e1"
+    }
+  },
+  "providerAcceptanceConfirmed": true,
+  "probeEnvironmentStopped": false,
+  "volumeRetained": true,
+  "latestConfigurationCheck": {
+    "checkedAtUtc": "2026-10-23T18:53:29.573584+00:00",
+    "expectedVariableNamePresent": true,
+    "emailKeyHasExpectedResendPrefix": true,
+    "outerQuotesOrWhitespace": false,
+    "providerAuthenticationVerified": false,
+    "newProviderCalls": 0,
+    "newEmailRequests": 0
+  },
+  "additionalExplicitlyAuthorizedSendRequests": 1,
+  "probeEnvironmentPurpose": "owner inbox receipt and subsequent local reset workflow; cumulative delivery quota exhausted",
+  "newProviderAcceptedAtUtc": "2026-10-23T19:07:10.192452+00:00",
+  "attemptSummaries": [
+    {
+      "attempt": 1,
+      "ownerAuthorization": "original_one_email",
+      "providerAcceptanceConfirmed": false,
+      "providerOutcome": "unknown",
+      "backendKeyExpectedPrefixAtDispatch": false
+    },
+    {
+      "attempt": 2,
+      "ownerAuthorization": "explicit_additional_one_email_after_key_correction",
+      "providerAcceptanceConfirmed": true,
+      "providerOutcome": "accepted",
+      "applicationHttpStatus": 204,
+      "backendKeyExpectedPrefixAtDispatch": true
+    }
+  ],
+  "latestOwnerDashboardObservation": {
+    "plan": "Free",
+    "dailyUsed": 0,
+    "dailyLimit": 100,
+    "monthlyUsed": 0,
+    "monthlyLimit": 3000,
+    "logsFor20261024AsiaSaigon": "no_results",
+    "observationBeforeAdditionalSend": true,
+    "provesOriginalAttemptFailureOrRefund": false
+  },
+  "originalManifestArchiveSha256": "0a3823b668f77128e9cbd303b10a59cfd3f688cfead231619483c80359b6e594",
+  "ownerInboxDeliveryEvidence": "owner_gmail_inbox_screenshot",
+  "passwordResetConfirmed": true,
+  "newPasswordLoginConfirmed": true,
+  "sensitiveResetDataCopiedIntoRepositoryOrAssistantResponse": false,
+  "passwordResetConfirmationSource": "owner_direct_chat",
+  "newPasswordLoginConfirmationSource": "owner_direct_chat",
+  "usedTokenCheckInterpretation": {
+    "ownerCheckPending": false,
+    "frontendHasDedicatedInvalidResetMessage": false,
+    "frontendFailureFallback": "Chưa xử lý được yêu cầu. Hãy thử lại sau.",
+    "backendResetFailureStatus": 400,
+    "backendResetFailureCode": "invalid_or_expired_reset",
+    "failureMayAlsoMeanExpiredTokenOrInvalidAccountOrPasswordPolicy": true,
+    "genericOwnerFailureMessageAloneDoesNotProveCause": true,
+    "negativeOwnerUiObserved": true,
+    "backendHttpStatusCaptured": false,
+    "uniqueFailureCauseConfirmed": false,
+    "currentPasswordReloginPending": false,
+    "currentPasswordReloginConfirmedByOwner": true,
+    "localHttpRegressionPending": false,
+    "localHttpRegressionPassed": true,
+    "localFakeRegressionProvesImmediateUsedTokenReturns400": true
+  },
+  "usedTokenNegativeUiObserved": true,
+  "currentPasswordReloginAfterReplayConfirmed": true,
+  "ownerRecoveryFlowConfirmed": true,
+  "usedTokenControlVerifiedByLocalFakeRegression": true,
+  "localTokenRegression": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "providers": "Fake",
+    "provesSpecificRealReplayFailureCause": false
+  },
+  "postSendProviderQuotaReconciled": true,
+  "functionalEmailRecoveryValidatedForOwnerTest": true,
+  "postSendProviderQuotaSource": "owner_usage_screenshot_monthly_one_daily_zero",
+  "postSendMonthlyUsed": 1,
+  "postSendMonthlyLimit": 3000,
+  "postSendDailyUsed": 0,
+  "postSendDailyLimit": 100,
+  "localEmailRecoveryFunctionalAccepted": true,
+  "acceptanceScope": "owner_controlled_recipient_localhost_only; real_owner_observations_and_separate_Fake_HTTP_regression",
+  "representativeProductQualityAccepted": false,
+  "exactProviderInvoiceVerified": false,
+  "originalUnknownAttemptRetained": true
+}

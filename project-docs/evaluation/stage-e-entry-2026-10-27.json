@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "status": "ready_for_P20_not_executed",
+  "M5_acceptance": {
+    "path": "project-docs/evaluation/m5-local-acceptance-2026-10-27.json",
+    "sha256": "e0ea43b7ecf7a19cf091fd9697396dd9ace61da558be13e1b4bc1cb2c5753170"
+  },
+  "input_lock": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/evaluation-input-lock.json",
+    "sha256": "c9c1109e99d60e9dbea5aeb9b9f3b308be947e8f3ede7ab0c46e571810b9795b"
+  },
+  "execution_plan": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/execution-plan.private.json",
+    "sha256": "c57f9357fd91cf4751b50047e3417648b93ec8b9067b79cdc71768379883fce1"
+  },
+  "next_work": "P20 fixed-method narrow evaluation, then P21 handoff",
+  "E_handoff_guide": {
+    "path": "project-docs/tasks/stage-e-entry-2026-10-27.md",
+    "sha256": "c13cb1657b3963cff672f28a8c4b6308ed2437eccfa1695116c3b97914ed265d"
+  },
+  "existing_authorization_and_caps_preserved": true,
+  "new_owner_confirmation_required_for_same_scope": false,
+  "formal_E_evaluation_started": false,
+  "baseline_outputs_created_in_step7": 0,
+  "real_model_jobs_in_step7": 0,
+  "search_requests_in_step7": 0,
+  "email_dispatches_in_step7": 0
+}

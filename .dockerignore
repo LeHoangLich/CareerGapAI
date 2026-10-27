@@ -1,6 +1,13 @@
 .git
 .env*
 .local
+.playwright-cli
+**/appsettings.Local.json
+**/*.pfx
+**/*.pem
+**/*.key
+**/playwright-report
+**/test-results
 **/bin
 **/obj
 **/node_modules

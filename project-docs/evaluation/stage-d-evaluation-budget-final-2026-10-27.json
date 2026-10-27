@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-27",
+  "status": "approved_bounded_E_plan_no_step6_dispatch",
+  "phase_cap_usd": "2.00",
+  "tracked_spent_usd": "0.03",
+  "reserved_unknown_usd": "0.02",
+  "remaining_guarded_usd": "1.95",
+  "project_monthly_budget_target_usd": "4.00",
+  "project_monthly_remaining_usd": null,
+  "live_provider_balance_checked_in_step6": true,
+  "funds_reconciled": true,
+  "ledger_ref": {
+    "path": ".local/ai-budget/development-phase.json",
+    "sha256": "dc6b01cd78c66bfd1b153937b9ef72bcc83f6ff02e9d80b64522b5fa7aedf6db"
+  },
+  "ledger_period_does_not_reset_phase_cap": true,
+  "pricing_source": "https://api-docs.deepseek.com/quick_start/pricing/",
+  "json_mode_source": "https://api-docs.deepseek.com/guides/json_mode/",
+  "pricing_checked_client_date": "2026-10-27",
+  "model_alias": "deepseek-flash",
+  "documented_model_version": "DeepSeek-V4.1-Flash-1017",
+  "provider_returned_version_captured": false,
+  "immutable_model_version_claimed": false,
+  "input_cache_miss_peak_usd_per_million": "0.30",
+  "output_peak_usd_per_million": "1.20",
+  "input_limit_units": 16000,
+  "input_admission_semantics": "UTF8_bytes_plus_framing_not_measured_tokenizer_tokens",
+  "output_limit_tokens_per_contract": 2048,
+  "maximum_attempts_per_job_including_retry": 2,
+  "per_attempt_reserved_usd": "0.00725760",
+  "per_two_attempt_job_reserved_usd": "0.01451520",
+  "planning_scope": {
+    "final_cv_groups": 2,
+    "final_jd_groups": 4,
+    "top_k": 3,
+    "scope_status": "actual_pool_frozen",
+    "target_is_conditional_not_required_minimum": true,
+    "actual_final_cv_groups_frozen": 2,
+    "actual_final_jd_groups_frozen": 4,
+    "industry_priority": "IT",
+    "languages": [
+      "vi",
+      "en"
+    ],
+    "language_coverage_reported_separately": true
+  },
+  "evaluation_plan": {
+    "cv_extraction_jobs": 2,
+    "self_pair_matrix_jobs": 8,
+    "writing_jobs": 4,
+    "total_jobs": 14,
+    "maximum_attempts": 28,
+    "maximum_reserved_usd": "0.20321280"
+  },
+  "demo_plan": {
+    "default": "existing_synthetic_receipts_or_recorded_replay_only",
+    "new_live_demo_required_now": false,
+    "new_live_demo_calls_authorized": 0
+  },
+  "maximum_combined_jobs": 14,
+  "maximum_combined_attempts": 28,
+  "maximum_combined_reservation_usd": "0.20321280",
+  "proposed_cap_usd": "0.50",
+  "search_plan": {
+    "provider": "Tavily",
+    "planned_credits": 4,
+    "authorized_remaining_credits": 4,
+    "maximum_paid_usd": "0.00",
+    "proposed_queries": "two_eligible_catalog_topics_times_vi_en_if_final_gap_packet_exists",
+    "new_allowance_required_before_any_query": false,
+    "live_account_free_credits_verified": true,
+    "provider_reset_timezone_verified": false,
+    "no_subscription_or_pay_as_you_go_change": true,
+    "allocation_ref": {
+      "path": ".local/ai-budget/tavily-stage-e-20261027.json",
+      "sha256": "bea15bf768a24c32ac429b6f8c59b3f5e4f1e82ac5e27d771e21092d2bfdd8cd"
+    },
+    "before_dispatch_live_credit_recheck_required": true,
+    "paygo_current_setting_independently_verified_now": false,
+    "previous_owner_paygo_off_record_retained": true
+  },
+  "email_plan": {
+    "planned_dispatches": 0,
+    "authorized_remaining_dispatches": 0,
+    "reuse_scoped_owner_reset_evidence": true,
+    "original_unknown_attempt_retained": true
+  },
+  "current_dispatch": {
+    "ai_jobs": 0,
+    "search_requests": 0,
+    "email_dispatches": 0,
+    "usd": "0.00"
+  },
+  "allocation_created": true,
+  "new_spend_permission_granted": true,
+  "data_rights_expanded": true,
+  "future_preconditions": [
+    "M5_review_then_E_opening",
+    "verify_input_config_hashes",
+    "before_dispatch_live_funds_free_credits_and_ledger_check"
+  ],
+  "owner_scope_decision": "actual_limited_pool_frozen_under_delegated_authority",
+  "scope_options_ref": {
+    "path": "project-docs/evaluation/stage-d-scope-options-2026-10-26.md",
+    "sha256": "baf630ba6a7c58ee061bfef1cf744b11ac8e52c08bfd6f6a1cfb9c1cf2e092b6"
+  },
+  "owner_scope_policy_ref": {
+    "path": ".local/stage-d-20261023/step6/owner-conditional-scope-receipt.json",
+    "sha256": "0f980fbece4e2e70c99f7581d64e8d80017868da6b9f7f08846ba9fe67db708a"
+  },
+  "job_counts_are_conditional_target_cost_case_not_received_or_frozen_data": false,
+  "current_candidate_pool": {
+    "cv_groups": 2,
+    "jd_groups": 4,
+    "top_k": 3,
+    "final_pool_frozen": true
+  },
+  "scope_scenarios": {
+    "path": ".local/stage-d-20261023/step6-followup/actual-pool-budget-scenarios.json",
+    "sha256": "381d5dd1214bfd01da5fe7e73750fe61c2cd93950b44db3f89b881622baf2f8e"
+  },
+  "funds_reconciliation": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/funds-reconciliation.private.json",
+    "sha256": "72f19f5ae84ad6564b62f9bc660e13952cfba81f34ca117a1b547681cb5657a9"
+  },
+  "approved_cap_usd": "0.50",
+  "allocation_is_not_current_step6_dispatch_permission": true,
+  "authorization_evidence": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/delegated-authority-receipt.json",
+    "sha256": "9682a6b289331c64eb15a177c72e4dfb8814e3d29e47f0f29b2daaca77d94a86"
+  },
+  "new_spend_permission_scope": "approved_E_plan_only_not_current_step6_dispatch",
+  "data_rights_expanded_scope": "six_selected_professional_derivatives_and_JDs_only_after_review_under_new_delegation",
+  "available_unallocated_after_hold_and_plan_usd": "1.45"
+}

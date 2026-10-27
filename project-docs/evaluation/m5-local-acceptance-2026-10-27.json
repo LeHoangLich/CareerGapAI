@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "accepted_at_utc": "2026-10-26T21:13:52.227352+00:00",
+  "decision_actor": "codex_under_explicit_owner_delegation",
+  "owner_authorization": {
+    "path": ".local/stage-d-20261023/step7-20261027/owner-step7-authorization.json",
+    "sha256": "41a22525cc56cb34ebbe2f5c4af39cd5db7286252fd859205d35678017774ac1"
+  },
+  "acceptance_scope": "localhost_core_feature_integration_and_frozen_limited_primary_method_evaluation_plan",
+  "status": "m5_accepted_local_stage_E_ready_not_executed",
+  "conditions": [
+    {
+      "id": "M5-C1",
+      "condition": "three_core_flows_work_end_to_end_on_localhost",
+      "status": "pass_local_scope",
+      "evidence": [
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/evidence/backend-full.trx",
+          "sha256": "7c32edbeb668d28aeb1cd36201f39c692ee7b07e83fa49a7ee3c0417f17b8fb1"
+        },
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/evidence/e2e.log",
+          "sha256": "7d19f318ec996ba6c0bc35a88cc8c0de5358dc74d3bf4889ad81d4172f6c8dff"
+        }
+      ],
+      "basis": "136 current-DLL backend and9 current-DLL browser tests; historical real DeepSeek/search/email evidence retained with unchanged contracts; Fake run is not labeled real-provider proof"
+    },
+    {
+      "id": "M5-C2",
+      "condition": "writing_preserves_facts_and_learning_uses_actual_tool_URLs",
+      "status": "pass_functional_scope",
+      "evidence": [
+        {
+          "path": "project-docs/evaluation/stage-d-writing-provider-2026-10-23.json",
+          "sha256": "9f66430f7c41799754b772258746ba7e78d45dbb4ee51946e64d2881b314af0f"
+        },
+        {
+          "path": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+          "sha256": "fac95ec4233dcf9d5990093d0b43fb72afa926ee3ff249f9239a24f32ade7dad"
+        }
+      ],
+      "basis": "2 owner-reviewed DeepSeek synthetic proposals accepted/PDF/private versions;2 Tavily requests with owner review and reconciled2credits; raw URL metadata cleanup retained by receipt"
+    },
+    {
+      "id": "M5-C3",
+      "condition": "core_writing_learning_administration_features_integrated",
+      "status": "pass",
+      "evidence": [
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/evidence/backend-full.trx",
+          "sha256": "7c32edbeb668d28aeb1cd36201f39c692ee7b07e83fa49a7ee3c0417f17b8fb1"
+        },
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/entry-snapshot/prior-paths/project-docs/phase-05-improvement-and-administration.md",
+          "sha256": "8a2d990de15a3c7891fb9803701f358f455fc4b7bf2ef4424eb1365edd718586"
+        }
+      ],
+      "basis": "Existing P16-P19 implementation and current full regression; no required feature postponed under an extension label"
+    },
+    {
+      "id": "M5-C4",
+      "condition": "no_known_access_snapshot_or_automatic_screening_blocker",
+      "status": "pass_reviewed_scope",
+      "evidence": [
+        {
+          "path": ".local/stage-d-20261023/step5/step5-exit-criteria.json",
+          "sha256": "e888c2d14474b15b26a92a11de779545d2287dae10a6842e39262a4948139813"
+        },
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/evidence/backend-full.trx",
+          "sha256": "7c32edbeb668d28aeb1cd36201f39c692ee7b07e83fa49a7ee3c0417f17b8fb1"
+        }
+      ],
+      "basis": "2 permission race fixes/3 regressions retained; current matching/application/access tests all pass; no snapshot or state-changing scoring patch"
+    },
+    {
+      "id": "M5-C5",
+      "condition": "necessary_tests_and_quota_unavailable_paths_checked",
+      "status": "pass",
+      "evidence": [
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/m5-evidence-audit.json",
+          "sha256": "48aa8b735f24a5cb74a79ef20e61db1df638106d98b871b152799f8eab8e07aa"
+        },
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/evidence/docker-smoke.json",
+          "sha256": "a2535f1504f63410d6061bb5f46a052098a9a971847d3a5a0246300f547743b1"
+        }
+      ],
+      "basis": "136backend/9E2E/3frontend plus lint/typecheck/build and Linux image/smoke; tests include quota/lease/idempotency/unknown/unavailable paths and migrations; no remote CI result invented"
+    },
+    {
+      "id": "M5-C6",
+      "condition": "methods_and_untuned_final_scope_frozen_with_bounded_E_demo_plan",
+      "status": "pass_registered_primary_scope",
+      "evidence": [
+        {
+          "path": "project-docs/evaluation/stage-d-step6-final-freeze-2026-10-27.json",
+          "sha256": "5d30c6f09c3832465188d36b232bfc84ee7c7d726020a0d7d87ae1d4adc4ff22"
+        },
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/freeze-readiness-recheck.json",
+          "sha256": "afd3d72f1a018f1f373ee507f7a0003b15d47b2a7b451e2c93a27e040af3de7d"
+        }
+      ],
+      "basis": "Final freeze remains ready with exact114sources/27test sources/2DLLs, selected6/131labels/8bindings, method-specific exposure, actor/rights, k3,14jobs/cap0.50 and4free search credits; demo replay"
+    },
+    {
+      "id": "M5-C7",
+      "condition": "remaining_limits_have_impact_owner_and_planned_resolution",
+      "status": "pass",
+      "evidence": [
+        {
+          "path": ".local/stage-d-20261023/step7-20261027/limitations-register.final.json",
+          "sha256": "9a2cb09299401b0117316a93878562e1338c8535d3b4c5b9908614ee80d771a0"
+        }
+      ],
+      "basis": "Each known limit has impact/owner/when; none is hidden as a completed representative-quality or production claim"
+    }
+  ],
+  "conditions_passed": 7,
+  "conditions_total": 7,
+  "source_manifest": {
+    "path": ".local/stage-d-20261023/step5/step5-current-source-manifest.json",
+    "sha256": "d8f008026f5370121ac3f7cbdc1281b77bcd85676ea6a55e9829002378ad2596"
+  },
+  "source_bundle_sha256": "17c07f2ee2c72da8795cd2420930774c8e2d683bdedf6feb03602fef31cfd383",
+  "git_head": "64fbc991833f42ffad6a101579026b6ad5414aaf",
+  "working_tree_dirty": true,
+  "API_assembly_sha256": "a21e45f59c8ff7982660cd233a3830a2d9064cbf1b0e5d02a32703a42aa29319",
+  "final_freeze": {
+    "path": "project-docs/evaluation/stage-d-step6-final-freeze-2026-10-27.json",
+    "sha256": "5d30c6f09c3832465188d36b232bfc84ee7c7d726020a0d7d87ae1d4adc4ff22"
+  },
+  "evidence_audit": {
+    "path": ".local/stage-d-20261023/step7-20261027/m5-evidence-audit.json",
+    "sha256": "48aa8b735f24a5cb74a79ef20e61db1df638106d98b871b152799f8eab8e07aa"
+  },
+  "limitations": {
+    "path": ".local/stage-d-20261023/step7-20261027/limitations-register.final.json",
+    "sha256": "9a2cb09299401b0117316a93878562e1338c8535d3b4c5b9908614ee80d771a0"
+  },
+  "cleanup": {
+    "path": ".local/stage-d-20261023/step7-20261027/cleanup-receipt.json",
+    "sha256": "b54818fb47778ab8b3ea36eb76f4bf9f402256b2aee317b131178b2f7603822e"
+  },
+  "report": {
+    "path": "project-docs/report/m5-local-acceptance-2026-10-27.md",
+    "sha256": "ae622a6be6fddde666405285386ecb3d0dbd7136946e39f97cbd4d17f191a930"
+  },
+  "E_handoff_guide": {
+    "path": "project-docs/tasks/stage-e-entry-2026-10-27.md",
+    "sha256": "c13cb1657b3963cff672f28a8c4b6308ed2437eccfa1695116c3b97914ed265d"
+  },
+  "step7_completed": true,
+  "stage_d_completed": true,
+  "m5_accepted": true,
+  "stage_E_ready": true,
+  "stage_E_execution_started": false,
+  "M3_representative_quality_accepted": false,
+  "M6_accepted": false,
+  "owner_or_instructor_signed_report_claimed": false,
+  "provider_calls_this_step": 0,
+  "new_cost_usd": "0.00",
+  "remote_CI_run": false,
+  "commit_push_deploy_performed": false
+}

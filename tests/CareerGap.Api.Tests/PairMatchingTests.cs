@@ -63,7 +63,7 @@ public sealed class PairContractTests
     }
 }
 
-public sealed class PairMatchingTests(FoundationFixture fixture) : IClassFixture<FoundationFixture>
+public sealed partial class PairMatchingTests(FoundationFixture fixture) : IClassFixture<FoundationFixture>
 {
     private const string CandidatePassword = "StageC-Synthetic!Password-2026";
     private sealed class InvalidMatchClient : FakeLlmClient

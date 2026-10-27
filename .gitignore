@@ -13,4 +13,5 @@
 *.key
 playwright-report/
 test-results/
+.playwright-cli/
 **/__pycache__/

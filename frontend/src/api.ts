@@ -5,6 +5,16 @@ export async function refreshCsrf() {
   csrf = (await response.json()).token;
 }
 export function errorMessage(code: string, status: number): string {
+  const messages: Record<string,string> = {
+    writing_output_budget_required:'Chưa cấu hình hạn mức đầu ra cho đề xuất viết CV.', writing_output_invalid:'Đề xuất chưa đạt kiểm tra dữ kiện nguồn; CV giữ nguyên.',
+    writing_input_limit:'Dữ kiện CV vượt giới hạn soạn thử nghiệm.', writing_facts_required:'CV chưa có đủ dữ kiện nghề nghiệp đã xác nhận trong giới hạn soạn thử nghiệm.', invalid_writing_language:'Chọn tiếng Việt hoặc tiếng Anh cho đề xuất.',
+    writing_not_ready:'Đề xuất chưa xử lý xong.', invalid_writing_decision:'Hãy kiểm tra nội dung và độ dài trước khi duyệt.', writing_already_decided:'Đề xuất này đã được duyệt hoặc bỏ trước đó.',
+    search_not_configured:'Search thật chưa được cấu hình và xác nhận hạn mức. Kết quả đối chiếu vẫn xem được.', search_quota_exhausted:'Đã hết hạn mức search; kết quả đối chiếu vẫn xem được.',
+    search_provider_quota:'Provider báo hết hạn mức search; yêu cầu này cần đối soát credit.', search_unavailable:'Search chưa phản hồi; credit đang được giữ để đối soát.', search_usage_unknown:'Chưa xác định được credit đã dùng; hệ thống giữ phần dự trù.',
+    search_period_conflict:'Kỳ search chồng với sổ đã có. Cần đối soát cấu hình trước khi tiếp tục.', learning_gap_required:'Nguồn học chỉ tìm cho tiêu chí chưa có bằng chứng đầy đủ.', learning_topic_unavailable:'Danh mục hiện tại chưa hỗ trợ chủ đề này.',
+    invalid_admin_action:'Chọn thao tác và ghi lý do hợp lệ.', admin_account_protected:'Không thể khóa tài khoản quản trị bằng thao tác này.', account_state_conflict:'Trạng thái tài khoản đã thay đổi. Hãy tải lại danh sách.', report_conflict:'Báo cáo đã được xử lý hoặc vừa thay đổi.', report_limit:'Đã đạt giới hạn báo cáo trong ngày.', invalid_report:'Hãy ghi lý do báo cáo từ 3 đến 1.000 ký tự.'
+  };
+  if(messages[code])return messages[code];
   if (status === 401) return 'Phiên đăng nhập đã hết hạn hoặc thông tin đăng nhập chưa đúng.';
   if (status === 403 || status === 404) return 'Bạn không có quyền truy cập tài nguyên này.';
   if (code === 'quota_exhausted') return 'Đã hết hạn mức phân tích. Bạn vẫn có thể mở CV riêng của mình.';

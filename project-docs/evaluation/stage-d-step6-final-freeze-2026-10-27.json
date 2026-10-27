@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "client_date": "2026-10-27",
+  "created_at_utc": "2026-10-26T20:54:32.037963+00:00",
+  "status": "final_frozen",
+  "refs": {
+    "source_manifest": {
+      "path": ".local/stage-d-20261023/step5/step5-current-source-manifest.json",
+      "sha256": "d8f008026f5370121ac3f7cbdc1281b77bcd85676ea6a55e9829002378ad2596"
+    },
+    "method_inventory": {
+      "path": ".local/stage-d-20261023/step6/method-protocol-review.json",
+      "sha256": "a81aebaee2d3bebc3ab9a089bf6a64a862ff4c3d000771d75e3a10e1b1c88c77"
+    },
+    "protocol": {
+      "path": "project-docs/evaluation/stage-d-final-protocol-2026-10-27.md",
+      "sha256": "1074cc05ff8de7e577a6d59381d1e486717474c553e7cdd45cb159cfd3cb2347"
+    },
+    "data_plan": {
+      "path": ".local/stage-d-20261023/step6-final-20261027/evaluation-data-plan.final.json",
+      "sha256": "3c9f39a40c63c53847d694c8f723b2e5778ab5ee2648374e466e341059d42c29"
+    },
+    "budget_plan": {
+      "path": "project-docs/evaluation/stage-d-evaluation-budget-final-2026-10-27.json",
+      "sha256": "2d75e62f0c15e7d514c7ce015483f40f7931a0464d63470d0cfda02e5bda7e0f"
+    }
+  },
+  "method_parameters_plan": {
+    "path": ".local/stage-d-20261023/step6/method-parameters-plan.json",
+    "sha256": "87f989b0cd10700505cc384d451c7d007f4166ce43123d00ba112c1ad6f1940f"
+  },
+  "provider_evidence": [
+    {
+      "path": "project-docs/evaluation/stage-d-writing-provider-2026-10-23.json",
+      "sha256": "9f66430f7c41799754b772258746ba7e78d45dbb4ee51946e64d2881b314af0f"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+      "sha256": "fac95ec4233dcf9d5990093d0b43fb72afa926ee3ff249f9239a24f32ade7dad"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-email-provider-2026-10-24.json",
+      "sha256": "ff27170929b9db3047da467bb6d668ef4bca790933e86fc2eba65b94e94965c4"
+    }
+  ],
+  "provider_evidence_scope": "historical_prior_candidate_verified_provider_contract_sources_unchanged_not_new_DLL_probe",
+  "evaluation_tools": [
+    {
+      "path": "scripts/check-stage-d-freeze.py",
+      "sha256": "e605fae3a0fd7235446449a470eb521194812a81d33c8e4e545c076cf1e0af64"
+    },
+    {
+      "path": "scripts/evaluate-final-pair-captures.py",
+      "sha256": "75561c0573ab2d5d4d36e4a806f386c431585218e031e360a8e52bea8af214b4"
+    },
+    {
+      "path": "tests/evaluation/test_stage_d_freeze.py",
+      "sha256": "f394b851f53739c8dffbbd26adeac1d1b41faf54f16fa3a1f36351dd5e69d76b"
+    },
+    {
+      "path": "tests/evaluation/test_final_pair_evaluation.py",
+      "sha256": "124e650a0b0af4d14d5d70a7d40318b99340f6f5fec4c8a316dfd5ad351f18d2"
+    }
+  ],
+  "readiness": {
+    "owner_scope_approved": true,
+    "final_dataset_frozen": true,
+    "final_independence_verified": true,
+    "provider_rights_verified": true,
+    "final_reference_labels_ready": true,
+    "required_search_allowance_approved": true,
+    "funds_reconciled": true
+  },
+  "execution": {
+    "api_calls_authorized": false,
+    "planned_or_executed_calls_now": 0,
+    "explanation": "step6 metadata freeze; E execution remains behind separate M5/E stage entry"
+  },
+  "component_configuration_pinned": true,
+  "full_final_freeze_complete": true,
+  "step6_completed": true,
+  "m5_accepted": false,
+  "stage_e_started": false,
+  "owner_scope_decision": "delegated_scoped_final_freeze",
+  "owner_scope_receipt": {
+    "path": ".local/stage-d-20261023/step6/owner-conditional-scope-receipt.json",
+    "sha256": "0f980fbece4e2e70c99f7581d64e8d80017868da6b9f7f08846ba9fe67db708a"
+  },
+  "prior_step6_preparation_manifest": {
+    "path": "project-docs/evaluation/stage-d-step6-preparation-2026-10-26.json",
+    "sha256": "88acdcebd965f4484530da54424f69386f213c16b26fc93eb9d04bb9c241a75a"
+  },
+  "local_followup_summary": {
+    "path": ".local/stage-d-20261023/step6-followup/local-preparation-summary.json",
+    "sha256": "07fa77ff8b4598ca5928d224b4aaee96dd82ae4f13917909069f4986eb697439"
+  },
+  "owner_actions_guide": {
+    "path": "project-docs/tasks/stage-d-step6-owner-actions-2026-10-26.md",
+    "sha256": "5a4714ee792a50d497d9dcf10ee815a77625987067f327cf47892088e4eeda56"
+  },
+  "latest_report": {
+    "path": "project-docs/report/stage-d-step6-completed-2026-10-27.md",
+    "sha256": "1510c759fbde6040d79622f1636cce08ba8958c7fe335f5a92443f0dadf9ccc0"
+  },
+  "exact_candidate_documents_for_rights_review": {
+    "path": ".local/stage-d-20261023/step6-followup/exact-candidate-documents-for-rights-review.json",
+    "sha256": "dc4725df31013eeebf5e20f33a7373644ad48c107e4fcfc9f5d28a0bae252584"
+  },
+  "prior_step6_followup_manifest": {
+    "path": "project-docs/evaluation/stage-d-step6-followup-2026-10-26.json",
+    "sha256": "62b2a3d8b24c58fe4cdcd9d32042355fba6d56117b713e43beb781d772a492b8"
+  },
+  "actual_candidate_pool_accepted_by_owner": true,
+  "owner_selection_receipt": {
+    "path": "project-docs/evaluation/stage-d-step6-owner-selection-2026-10-27.json",
+    "sha256": "364743f344d67b3b7b14e98ac3d4387ebc5545df6fce28d89911f7dc3f9a109c"
+  },
+  "owner_action_1_completed": true,
+  "owner_action_2_decision_recorded": true,
+  "owner_action_2_rights_gate_satisfied": true,
+  "owner_action_3_started": true,
+  "provider_rights_decision": "selected_six_professional_derivatives_JDs_reviewed_and_allowed_under_new_delegation",
+  "provider_rights_verified": true,
+  "provider_transfer_allowed": true,
+  "api_calls_authorized": false,
+  "spend_authorized": false,
+  "provider_rights_decision_received": true,
+  "owner_rights_decision": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/rights-and-minimization-review.json",
+    "sha256": "b0c264a0d0dc563bab09fda25a1476b5e6afaa558bdf19fce6d4cb6d78801162"
+  },
+  "prior_owner_selection_preparation": {
+    "path": "project-docs/evaluation/stage-d-step6-preparation-2026-10-27.json",
+    "sha256": "93a06cfb487a81e6f02998ff3565b14a27f078a175a80b22a5b0a4b3e730220f"
+  },
+  "final_freeze_scope": "registered_primary_method_limited_2cv_en_4jd_not_all_components_pristine_or_quality_acceptance",
+  "owner_delegation": {
+    "path": "project-docs/evaluation/stage-d-step6-delegation-2026-10-27.json",
+    "sha256": "d6532bf5a54239c507d9488f26de73defdd6bd91df46c852a8da6118868c5841"
+  },
+  "owner_actions_completed": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "spend_authorized_for_E_plan": true,
+  "spend_authorized_for_current_step6": false,
+  "evaluation_input_lock": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/evaluation-input-lock.json",
+    "sha256": "c9c1109e99d60e9dbea5aeb9b9f3b308be947e8f3ede7ab0c46e571810b9795b"
+  },
+  "runtime_options": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/runtime-options.private.json",
+    "sha256": "cdbba373123be97edefc2fa16af7a12ecbff263b01dea90831aa19de2f48ecb3"
+  },
+  "prior_local_only_decision_preserved": true,
+  "owner_action_3_completed": true,
+  "owner_action_4_completed": true,
+  "next_step": 7,
+  "execution_plan": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/execution-plan.private.json",
+    "sha256": "c57f9357fd91cf4751b50047e3417648b93ec8b9067b79cdc71768379883fce1"
+  },
+  "isolated_database": {
+    "path": ".local/stage-d-20261023/step6-final-20261027/isolated-database-receipt.json",
+    "sha256": "2fb6805aa76534813885c3996119fd97c8f30dfae0df8a9a75ea4cf9c82ca58d"
+  }
+}

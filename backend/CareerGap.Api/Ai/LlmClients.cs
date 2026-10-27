@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using CareerGap.Api.Files;
 using CareerGap.Api.Matching;
+using CareerGap.Api.Writing;
 
 namespace CareerGap.Api.Ai;
 
@@ -24,6 +25,7 @@ public sealed class AiOptions
     // Full CV repeats source evidence and needs its own explicitly budgeted limit.
     public int? FullCvMaxOutputTokens { get; set; }
     public int? MatchMaxOutputTokens { get; set; }
+    public int? WritingMaxOutputTokens { get; set; }
     public decimal UserPeriodLimit { get; set; } = .25m;
     public decimal FakeUserTestCreditLimit { get; set; } = 200m;
     public int UserMaxActiveJobs { get; set; } = 3;
@@ -84,6 +86,8 @@ public static class OutputValidator
 }
 public class FakeLlmClient : ILlmClient
 {
+    public virtual Task<LlmReply> WriteAsync(WritingPayload payload, MethodParameters parameters, CancellationToken ct)
+    { ct.ThrowIfCancellationRequested(); return Task.FromResult(new LlmReply(PairMatchingContract.Serialize(WritingContract.Fake(payload)), 100, 100)); }
     public virtual Task<LlmReply> MatchAsync(PairPayload payload, MethodParameters parameters, CancellationToken ct)
     { ct.ThrowIfCancellationRequested(); return Task.FromResult(new LlmReply(PairMatchingContract.Serialize(PairMatchingContract.Fake(payload)), 0, 0)); }
     public virtual Task<LlmReply> ExtractAsync(ParsedDocument doc, MethodParameters parameters, CancellationToken ct)

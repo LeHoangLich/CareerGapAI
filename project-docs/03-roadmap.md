@@ -1,5 +1,18 @@
 # CareerGap AI – Roadmap Phát triển
 
+> 27/10 — E đã thực thi14jobs/23attempts:CV0/2,pair2/8,writing4/4; P/R/F1 và LLM rerank chưa tính được. Clean directory/9E2E/3FE và restore19migrations/43bảng/18objects đạt; đã chuẩn bị bộ dùng thử, chưa có feedback giảng viên. **E/M6 chưa hoàn thành**, còn lỗi AI/topic và chưa release commit. [Báo cáo hiện hành](report/stage-e-2026-10-27.md). Các ghi nhận E chưa chạy bên dưới là lịch sử.
+
+
+> 27/10 — **M5 đạt phạm vi localhost**, bước7 đối chiếu7/7điềukiện theo ủyquyền owner; [biênbản](report/m5-local-acceptance-2026-10-27.md). D hoànthành; côngviệc kếtiếp E/P20 theo [runbook](tasks/stage-e-entry-2026-10-27.md). Chưa thựcthi đánhgiáchínhthức hoặc nghiệmthu M3quality/M6,không đổi điều kiện chất lượng/deploy. Các ghi nhận M5pending trướcđây là lịch sử.
+
+> 27/10: bước6 D→E đã hoàn thành cho thử nghiệm hẹp 2CVAnh×4JD theo ủy quyền mới; [biên bản](report/stage-d-step6-completed-2026-10-27.md) và [manifest](evaluation/stage-d-step6-final-freeze-2026-10-27.json) ghim phương pháp/dữ liệu/quyền/bindings/chi phí, preflight ready. Chưa nghiệm thu M5 hoặc mởE; tiếp theo bước7. Các trạng thái pending trước đây giữ làm lịch sử, không phải tiến độ hiện hành.
+
+> D tuần tự25/10: công việc7–8 writing synthetic đã hoàn thành accept/PDF/private version, Việt version3 và Anh version2/revision1; nguồn/public selection giữ nguyên. PDF nội dung Anh còn tiêu đề mục Việt của simple-v1. [Report mục14](report/stage-d-2026-10-23.md#14-codex-ra-23-nhan-nguon-theo-uy-quyen). Công việc9 đã được Codex rà theo ủy quyền:21nhãn giữ nguyên,2sửa locator; human review vẫn pending; M3/M5/chất lượng đại diện/final split/E/deploy vẫn mở. Email accepted1/unknown1, search2credits/allowance0 và DeepSeek1,97USD giữ nguyên; không provider call mới. Các trạng thái chờ dưới đây là lịch sử.
+
+> D tuần tự 24/10: Resend đã được chọn/cấp đúng 1 email miễn phí/0 USD; attempt thật có journal `outcome_unknown`, chưa nghiệm thu giao thư/reset. Cấu hình key không có prefix dự kiến `re_`, cần sửa và đối soát attempt cũ; không retry/cấp lại lượt. [Report mục 9](report/stage-d-2026-10-23.md#9-email-resend-mot-luot-chua-ro-ket-qua). Công việc email chưa hoàn thành, M5/final freeze/E/deploy chưa mở; các ghi nhận chuẩn bị email dưới đây là lịch sử.
+
+> D/GĐ5 được chủ dự án yêu cầu tiếp tục ngày 23/10: [report D](report/stage-d-2026-10-23.md) ghi writing DeepSeek thật 2/2 synthetic và Tavily hai Basic requests/6 links đã được chủ dự án rà; Overview xác nhận đúng 2 credits lúc 17:45. Cap search đã dùng hết. Công việc 6 đang chuẩn bị email; email thật, dữ liệu/chất lượng và final freeze vẫn thiếu, M5 chưa nghiệm thu. DeepSeek còn 1,97/2 USD. Không mở GĐ6 hoặc deploy. Các ghi nhận “GĐ5 chưa mở” bên dưới là lịch sử.
+
 > Cập nhật C ngày 22/10: đã thực hiện P10–P15 theo yêu cầu chủ dự án dù M3 chất lượng đại diện còn thiếu đầu vào. [Report C](report/stage-c-2026-10-22.md) ghi nghiệm thu chức năng local và so sánh tuning synthetic, không nâng thành chất lượng thực tế. Quyết định phân tích lại: JD snapshot lúc nộp. Các đoạn “chưa mở C” bên dưới là lịch sử trước yêu cầu này; GĐ5/deploy chưa mở.
 
 > Kiểm chứng local M3 tiếp 21/10: [report](report/m3-local-acceptance-2026-10-21.md) ghi native DOCX, corpus v2/292 nhãn, parser JD v3 và 94 backend/9 E2E đạt. M3 chất lượng đại diện còn native vi CV/người rà/quyền transfer; không còn thiếu DOCX gốc, chưa mở C hoặc deploy.
