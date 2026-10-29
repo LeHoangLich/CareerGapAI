@@ -1,17 +1,19 @@
+import { openView } from './helpers';
 import { test, expect } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
-test('login → private CV → fake job → PDF → logout', async ({ page }) => {
+test('login → private CV → fake job → PDF → logout', async ({ page }, testInfo) => {
   const email = process.env.DEMO_EMAIL;
   const password = process.env.DEMO_PASSWORD;
   const fixture = process.env.CAREERGAP_DOCX_FIXTURE;
   if (!email || !password || !fixture) throw new Error('Set DEMO_EMAIL, DEMO_PASSWORD, CAREERGAP_DOCX_FIXTURE without printing secrets. Start API/Vite first.');
-  await page.goto('/');
+  await page.goto('/#access');
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   // Playwright failure snapshots can include input values; clear credentials immediately after submit.
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+  await openView(page, 'private-resumes');
   await expect(page.getByRole('heading', { name: 'CV riêng của bạn' })).toBeVisible();
   await page.getByLabel('Thêm vào CV', { exact: true }).setInputFiles(fixture);
   const uploadedResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/resumes');
@@ -28,10 +30,11 @@ test('login → private CV → fake job → PDF → logout', async ({ page }) =>
   await item.getByRole('button', { name: 'Thử trích xuất v1', exact: true }).click();
   await expect(page.getByText('Đã xử lý', { exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.getByText('Mô phỏng bằng từ khóa · không gọi AI thật')).toBeVisible();
+  await openView(page, 'cv-builder');
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Xuất PDF mẫu giả' }).click();
   const pdf = await download;
-  const output = path.resolve('../.local/evidence'); fs.mkdirSync(output, { recursive: true });
+  const output = path.resolve(process.env.CAREERGAP_E2E_EVIDENCE_DIRECTORY ?? testInfo.outputPath('evidence')); fs.mkdirSync(output, { recursive: true });
   await pdf.saveAs(path.join(output, 'synthetic-vietnamese-probe.pdf'));
   await page.screenshot({ path: path.join(output, 'browser-desktop.png'), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });

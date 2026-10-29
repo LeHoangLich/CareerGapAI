@@ -1,8 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Dialog, ValidatedForm } from './ui';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api } from './api';
-import { CandidateKeywordRecommendations, RecruiterKeywordResumeSearch } from './matching';
+import { RecruiterKeywordResumeSearch } from './matching';
+import { JobDiscoveryWorkspace } from './jobDiscoveryWorkspace';
 import { PairRecommendations } from './pairMatching';
 import { ReportButton } from './administration';
+import { Bell, Briefcase, MagnifyingGlass, MapPin, SlidersHorizontal, ArrowRight } from '@phosphor-icons/react';
+import { StaticLoading } from './workspace';
+import { PersistentView } from './persistentView';
+import type { WorkspaceView } from './navigation';
 
 type Session = { authenticated: boolean; userId?: string; roles: string[] };
 type Company = { id: string; name: string; slug: string; description: string | null; websiteUrl: string | null; location: string | null; industry: string | null; sizeLabel: string | null; rowVersion: number };
@@ -29,6 +35,8 @@ const recruiterTransitions: Record<string, string[]> = { submitted: ['reviewing'
 
 function statusLabel(status: string) { return statusLabels[status] ?? status; }
 const importanceLabels: Record<string, string> = { required: 'Bắt buộc', optional: 'Tùy chọn', unspecified: 'Chưa xác định' };
+const employmentLabels: Record<string, string> = { full_time: 'Toàn thời gian', part_time: 'Bán thời gian', contract: 'Hợp đồng', internship: 'Thực tập', temporary: 'Tạm thời' };
+const workModeLabels: Record<string, string> = { onsite: 'Tại văn phòng', hybrid: 'Linh hoạt', remote: 'Từ xa', unspecified: 'Chưa xác định' };
 
 function toQuery(filters: SearchFilters, page: number) {
   const params = new URLSearchParams({ page: String(page), pageSize: '10' });
@@ -44,8 +52,8 @@ function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, res
   const version = job.version;
   const resumeVersions = resumes.flatMap(resume => resume.versions.map(item => ({ ...item, resumeTitle: resume.title })));
   return <article className="job-card" data-job-id={job.id}>
-    <div className="job-title-row"><div><h3>{version.title}</h3><p>{job.company.name} · {version.location || job.company.location || 'Chưa có địa điểm'}</p></div><span className={`job-status ${job.status}`}>{job.status === 'published' ? job.acceptingApplications ? 'Đang nhận hồ sơ' : 'Đã hết hạn' : 'Đã đóng'}</span></div>
-    <div className="job-meta"><span>{version.employmentType}</span><span>{version.workMode}</span><span>{version.industry || 'Chưa phân ngành'}</span><span>{version.experienceMin ?? '—'}–{version.experienceMax ?? '—'} năm</span></div>
+    <div className="job-title-row"><div className="job-identity"><span className="company-mark" aria-hidden="true">{job.company.name.trim().slice(0, 2).toLocaleUpperCase('vi-VN')}</span><div><h3>{version.title}</h3><p className="company-name">{job.company.name}</p></div></div><span className={`job-status ${job.status}`}>{job.status === 'published' ? job.acceptingApplications ? 'Đang nhận hồ sơ' : 'Đã hết hạn' : 'Đã đóng'}</span></div>
+    <div className="job-meta"><span><MapPin size={14} aria-hidden="true"/>{version.location || job.company.location || 'Chưa có địa điểm'}</span><span>{employmentLabels[version.employmentType] ?? version.employmentType}</span><span>{workModeLabels[version.workMode] ?? version.workMode}</span><span>{version.industry || 'Chưa phân ngành'}</span><span>{version.experienceMin ?? '—'}–{version.experienceMax ?? '—'} năm</span></div>
     <p className="job-description">{version.description}</p>
     <details><summary>Yêu cầu và quyền lợi</summary><p><strong>Yêu cầu</strong><br/>{version.requirementsText}</p>{version.benefitsText && <p><strong>Quyền lợi</strong><br/>{version.benefitsText}</p>}</details>
     {job.applicationDeadline && <small>Hạn nhận hồ sơ: {new Date(job.applicationDeadline).toLocaleString('vi-VN')}</small>}
@@ -61,7 +69,7 @@ function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, res
   </article>;
 }
 
-export function PublicJobBrowser({ session }: { session?: Session }) {
+export function PublicJobBrowser({ session, activeView, intro }: { session?: Session; activeView: WorkspaceView; intro?: ReactNode }) {
   const [filters, setFilters] = useState(emptyFilters);
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
   const [page, setPage] = useState(1);
@@ -71,13 +79,16 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [applicationHistory, setApplicationHistory] = useState<Record<string, ApplicationHistory[]>>({});
   const [expandedHistory, setExpandedHistory] = useState<Record<string, boolean>>({});
+  const [withdrawal, setWithdrawal] = useState<Application>();
   const [withdrawingId, setWithdrawingId] = useState<string>();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedVersionByJob, setSelectedVersionByJob] = useState<Record<string, string>>({});
   const [applyingJobId, setApplyingJobId] = useState<string>();
   const [applicationMessage, setApplicationMessage] = useState('');
+  const [applicationDataState, setApplicationDataState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const advancedFilters = useRef<HTMLDetailsElement>(null);
   const submissionKeys = useRef(new Map<string, string>());
   const candidate = session?.authenticated === true && session.roles.includes('Candidate');
 
@@ -99,6 +110,7 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
   useEffect(() => { void refreshSaved(); }, [refreshSaved]);
   const refreshApplicationData = useCallback(async () => {
     if (!session?.authenticated) { setResumes([]); setApplications([]); setNotifications([]); return; }
+    setApplicationDataState('loading');
     try {
       const noticeRequest = api<Notification[]>('/api/notifications');
       if (candidate) {
@@ -114,7 +126,8 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
       } else {
         setResumes([]); setApplications([]); setNotifications(await noticeRequest);
       }
-    } catch (e) { setError((e as Error).message); }
+      setApplicationDataState('ready');
+    } catch (e) { setApplicationDataState('error'); setError((e as Error).message); }
   }, [candidate, session?.authenticated]);
   useEffect(() => {
     const refresh = () => { void refreshApplicationData(); };
@@ -152,6 +165,7 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
     try {
       await api(`/api/applications/${application.id}/withdraw`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rowVersion: application.rowVersion }) });
       setApplicationMessage(`Bạn đã rút hồ sơ cho “${application.jobTitle}”.`);
+      setWithdrawal(undefined);
       await refreshApplicationData();
     } catch (e) { setError((e as Error).message); }
     finally { setWithdrawingId(undefined); }
@@ -174,37 +188,59 @@ export function PublicJobBrowser({ session }: { session?: Session }) {
     } catch (e) { setError((e as Error).message); }
   }
   const items = results?.items ?? [];
-  return <section className="card job-browser" id="jobs">
-    <div className="section-heading"><div><p className="eyebrow">TIN TUYỂN DỤNG</p><h2>Tìm công việc</h2></div><span>{results?.total ?? 0} kết quả</span></div>
-    <form className="job-filters" onSubmit={e => { e.preventDefault(); setPage(1); setAppliedFilters({ ...filters }); }}>
-      <label>Từ khóa<input value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} maxLength={120} placeholder="Tên vị trí, công ty hoặc mô tả"/></label>
-      <label>Kỹ năng<input value={filters.skill} onChange={e => setFilters({ ...filters, skill: e.target.value })} maxLength={100} placeholder="Ví dụ: PostgreSQL"/></label>
-      <label>Ngành<input value={filters.industry} onChange={e => setFilters({ ...filters, industry: e.target.value })} maxLength={100}/></label>
-      <label>Địa điểm<input value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })} maxLength={250}/></label>
-      <label>Hình thức<select value={filters.workMode} onChange={e => setFilters({ ...filters, workMode: e.target.value })}><option value="">Tất cả</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option><option value="unspecified">Chưa xác định</option></select></label>
-      <label>Loại công việc<select value={filters.employmentType} onChange={e => setFilters({ ...filters, employmentType: e.target.value })}><option value="">Tất cả</option><option value="full_time">Toàn thời gian</option><option value="part_time">Bán thời gian</option><option value="contract">Hợp đồng</option><option value="internship">Thực tập</option><option value="temporary">Tạm thời</option></select></label>
-      <label>Kinh nghiệm của bạn (năm)<input type="number" min="0" max="99.99" step="0.01" value={filters.experienceYears} onChange={e => setFilters({ ...filters, experienceYears: e.target.value })}/></label>
-      <button disabled={busy}>Tìm việc</button>
-    </form>
-    {candidate && <CandidateKeywordRecommendations resumes={resumes} onSearchTitle={title => {
-      const next = { ...filters, q: title };
-      setFilters(next); setAppliedFilters(next); setPage(1);
-    }}/>}
+  const jobResults = <>
     {error && <p role="alert" className="error">{error}</p>}
-    {busy && <p role="status">Đang tìm tin…</p>}
-    {!busy && !items.length && <p>Chưa có tin công khai phù hợp.</p>}
+    {applicationMessage && <p role="status">{applicationMessage}</p>}
+    {busy && <StaticLoading label="Đang tìm tin…"/>}
+    {!busy && !items.length && !error && <div className="empty-state"><Briefcase size={28} aria-hidden="true"/><h3>Chưa có tin công khai phù hợp.</h3><p>Thử thay đổi từ khóa hoặc mở rộng bộ lọc để tìm cơ hội khác.</p></div>}
     <div className="job-list">{items.map(job => <JobCard key={job.id} job={job} candidate={candidate} reportable={session?.roles.includes('Recruiter')} saved={savedIds.has(job.id)} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(job.id)} selectedVersionId={selectedVersionByJob[job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === job.id}/>)}</div>
     {results && results.total > results.pageSize && <div className="row job-pages"><button className="secondary" disabled={page <= 1 || busy} onClick={() => setPage(x => x - 1)}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(results.total / results.pageSize))}</span><button className="secondary" disabled={page * results.pageSize >= results.total || busy} onClick={() => setPage(x => x + 1)}>Sau</button></div>}
     {candidate && saved.length > 0 && <details className="saved-jobs"><summary>Việc đã lưu ({saved.length})</summary><div className="job-list">{saved.map(x => <JobCard key={x.job.id} job={x.job} candidate={true} saved={true} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(x.job.id)} selectedVersionId={selectedVersionByJob[x.job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === x.job.id}/>)}</div></details>}
-    {candidate && <section className="application-center"><div className="section-heading"><div><p className="eyebrow">HỒ SƠ ĐÃ NỘP</p><h3>Đơn ứng tuyển của bạn</h3></div><span>{applications.length}</span></div>
-      {applicationMessage && <p role="status">{applicationMessage}</p>}
-      {!applications.length ? <p>Chưa có đơn ứng tuyển.</p> : <ul className="application-list">{applications.map(application => <li key={application.id}><div><strong>{application.jobTitle}</strong><small>{application.companyName} · {new Date(application.submittedAt).toLocaleString('vi-VN')} · {statusLabel(application.status)}</small><div className="row application-actions"><a href={`/api/applications/${application.id}/resume`}>CV đã nộp · v{application.resumeVersionNo}</a>{activeApplicationStatuses.includes(application.status) && <button className="secondary" disabled={withdrawingId === application.id} onClick={() => void withdraw(application)}>{withdrawingId === application.id ? 'Đang rút…' : 'Rút hồ sơ'}</button>}<button className="secondary" onClick={() => void toggleHistory(application)}>{expandedHistory[application.id] ? 'Ẩn lịch sử' : 'Lịch sử trạng thái'}</button></div>{expandedHistory[application.id] && <ul className="status-history">{(applicationHistory[application.id] ?? []).map((entry, index) => <li key={`${entry.changedAt}-${index}`}><span>{entry.fromStatus ? `${statusLabel(entry.fromStatus)} → ` : ''}{statusLabel(entry.toStatus)}</span><small>{new Date(entry.changedAt).toLocaleString('vi-VN')}</small></li>)}</ul>}</div></li>)}</ul>}
-    </section>}
-    {session?.authenticated && <section className="application-center notification-center"><div className="section-heading"><div><p className="eyebrow">CẬP NHẬT</p><h3>Thông báo</h3></div><span>{notifications.filter(x => !x.readAt).length} chưa đọc</span></div>
-      {!notifications.length ? <p>Chưa có thông báo.</p> : <ul className="application-list">{notifications.map(notification => <li key={notification.id} className={notification.readAt ? 'notification-read' : ''}><div><strong>{notification.title}</strong><small>{notification.body} · {new Date(notification.createdAt).toLocaleString('vi-VN')}</small></div>{!notification.readAt && <button className="secondary" onClick={() => void markNotificationRead(notification)}>Đánh dấu đã đọc</button>}</li>)}</ul>}
-    </section>}
     {!candidate && <p className="hint">Đăng nhập bằng tài khoản ứng viên để lưu tin quan tâm.</p>}
-  </section>;
+  </>;
+  return <><PersistentView active={activeView === 'jobs'} name="jobs">{intro}<section className="card job-browser" id="jobs">
+    <div className="section-heading"><div><p className="eyebrow">KHÁM PHÁ CƠ HỘI</p><h1>Tìm công việc</h1></div><span className="result-count">{results ? `${results.total} kết quả` : busy ? 'Đang tải…' : 'Chưa có kết quả'}</span></div>
+    <ValidatedForm className="job-filters job-search-bar" onInvalidCapture={event => {
+      if (advancedFilters.current?.contains(event.target as Node)) advancedFilters.current.open = true;
+    }} onSubmit={e => { e.preventDefault(); setPage(1); setAppliedFilters({ ...filters }); }}>
+      <label>Từ khóa<input value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} maxLength={120} placeholder="Vị trí hoặc công ty bạn quan tâm"/></label>
+      <label>Địa điểm<input value={filters.location} onChange={e => setFilters({ ...filters, location: e.target.value })} maxLength={250} placeholder="Tỉnh, thành phố"/></label>
+      <button disabled={busy}><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc</button>
+      <details className="advanced-job-filters" ref={advancedFilters}>
+        <summary><SlidersHorizontal size={16} aria-hidden="true"/>Bộ lọc nâng cao<span className="filter-count">{[appliedFilters.skill, appliedFilters.industry, appliedFilters.workMode, appliedFilters.employmentType, appliedFilters.experienceYears].filter(value => value.trim()).length} đang áp dụng</span></summary>
+        <div className="advanced-filter-grid">
+      <label>Kỹ năng<input value={filters.skill} onChange={e => setFilters({ ...filters, skill: e.target.value })} maxLength={100} placeholder="Ví dụ: PostgreSQL"/></label>
+      <label>Ngành<input value={filters.industry} onChange={e => setFilters({ ...filters, industry: e.target.value })} maxLength={100} placeholder="Tất cả ngành nghề"/></label>
+      <label>Hình thức<select value={filters.workMode} onChange={e => setFilters({ ...filters, workMode: e.target.value })}><option value="">Tất cả</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option><option value="unspecified">Chưa xác định</option></select></label>
+      <label>Loại công việc<select value={filters.employmentType} onChange={e => setFilters({ ...filters, employmentType: e.target.value })}><option value="">Tất cả</option><option value="full_time">Toàn thời gian</option><option value="part_time">Bán thời gian</option><option value="contract">Hợp đồng</option><option value="internship">Thực tập</option><option value="temporary">Tạm thời</option></select></label>
+      <label>Kinh nghiệm của bạn (năm)<input type="number" min="0" max="99.99" step="0.01" value={filters.experienceYears} onChange={e => setFilters({ ...filters, experienceYears: e.target.value })}/></label>
+        </div>
+      </details>
+    </ValidatedForm>
+    {candidate ? <JobDiscoveryWorkspace resumes={resumes} onSearchTitle={title => {
+      const next = { ...filters, q: title };
+      setFilters(next); setAppliedFilters(next); setPage(1);
+    }}>{jobResults}</JobDiscoveryWorkspace> : jobResults}
+  </section></PersistentView><PersistentView active={activeView === 'applications' && session?.authenticated === true} name="applications">
+    {error && <p role="alert" className="error">{error}</p>}
+    {applicationDataState === 'loading' && <StaticLoading label="Đang tải đơn và thông báo…"/>}
+    {applicationDataState === 'error' && <div className="application-data-error"><p>Chưa tải đủ đơn và thông báo. Bạn có thể kiểm tra lại.</p><button type="button" className="secondary" onClick={() => { setError(''); void refreshApplicationData(); }}>Tải lại đơn và thông báo</button></div>}
+    <Dialog open={!!withdrawal} title="Rút hồ sơ ứng tuyển?" busy={!!withdrawingId} onClose={() => setWithdrawal(undefined)}>
+      <p>Bạn đang rút hồ sơ cho “{withdrawal?.jobTitle}”. Nhà tuyển dụng sẽ thấy trạng thái đã rút. Nếu ứng tuyển lại, bạn cần thực hiện một lượt nộp mới theo điều kiện của tin.</p>
+      {error && <p role="alert" className="error">{error}</p>}
+      <div className="dialog-actions"><button type="button" className="secondary" disabled={!!withdrawingId} onClick={() => setWithdrawal(undefined)}>Giữ hồ sơ</button>
+        <button type="button" className="danger" disabled={!!withdrawingId} onClick={() => { if (withdrawal) void withdraw(withdrawal); }}>{withdrawingId ? 'Đang rút…' : 'Xác nhận rút hồ sơ'}</button></div>
+    </Dialog>
+    <div className="application-workspace" aria-busy={applicationDataState === 'loading'}>
+    {candidate && <section className="card application-center" id="applications"><div className="section-heading"><div><p className="eyebrow">HỒ SƠ ĐÃ NỘP</p><h2>Đơn ứng tuyển của bạn</h2></div><span>{applicationDataState === 'ready' ? applications.length : '—'}</span></div>
+      {applicationMessage && <p role="status">{applicationMessage}</p>}
+      {!applications.length ? applicationDataState === 'ready' && <div className="empty-state application-empty"><Briefcase size={32} aria-hidden="true"/><h3>Cơ hội tiếp theo đang chờ bạn</h3><p>Chưa có đơn ứng tuyển. Khám phá việc phù hợp và chọn phiên bản CV bạn muốn gửi.</p><a className="empty-state-cta" href="#jobs">Khám phá việc làm ngay<ArrowRight size={16} aria-hidden="true"/></a></div> : <ul className="application-list">{applications.map(application => <li key={application.id}><div><strong>{application.jobTitle}</strong><small>{application.companyName} · {new Date(application.submittedAt).toLocaleString('vi-VN')} · {statusLabel(application.status)}</small><div className="row application-actions"><a href={`/api/applications/${application.id}/resume`}>CV đã nộp · v{application.resumeVersionNo}</a>{activeApplicationStatuses.includes(application.status) && <button className="secondary" disabled={withdrawingId === application.id} onClick={() => { setError(''); setWithdrawal(application); }}>{withdrawingId === application.id ? 'Đang rút…' : 'Rút hồ sơ'}</button>}<button className="secondary" aria-expanded={!!expandedHistory[application.id]} aria-controls={`application-history-${application.id}`} onClick={() => void toggleHistory(application)}>{expandedHistory[application.id] ? 'Ẩn lịch sử' : 'Lịch sử trạng thái'}</button></div><ul hidden={!expandedHistory[application.id]} id={`application-history-${application.id}`} className="status-history">{(applicationHistory[application.id] ?? []).map((entry, index) => <li key={`${entry.changedAt}-${index}`}><span>{entry.fromStatus ? `${statusLabel(entry.fromStatus)} → ` : ''}{statusLabel(entry.toStatus)}</span><small>{new Date(entry.changedAt).toLocaleString('vi-VN')}</small></li>)}</ul></div></li>)}</ul>}
+    </section>}
+    {session?.authenticated && <section className="card application-center notification-center"><div className="section-heading"><div><p className="eyebrow">CẬP NHẬT</p><h2>Thông báo</h2></div><span>{applicationDataState === 'ready' ? `${notifications.filter(x => !x.readAt).length} chưa đọc` : 'Chưa tải xong'}</span></div>
+      {!notifications.length ? applicationDataState === 'ready' && <div className="empty-state notification-empty"><Bell size={28} aria-hidden="true"/><h3>Chưa có thông báo</h3><p>Cập nhật về hồ sơ ứng tuyển sẽ xuất hiện tại đây.</p></div> : <ul className="application-list">{notifications.map(notification => <li key={notification.id} className={notification.readAt ? 'notification-read' : ''}><div><strong>{notification.title}</strong><small>{notification.body} · {new Date(notification.createdAt).toLocaleString('vi-VN')}</small></div>{!notification.readAt && <button className="secondary" onClick={() => void markNotificationRead(notification)}>Đánh dấu đã đọc</button>}</li>)}</ul>}
+    </section>}
+    </div>
+  </PersistentView></>;
 }
 
 function JobRequirementReview({ job }: { job: Job }) {
@@ -304,7 +340,7 @@ function JobRequirementReview({ job }: { job: Job }) {
   </section>;
 }
 
-export function RecruiterJobManager() {
+export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView }) {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [applicationsByJob, setApplicationsByJob] = useState<Record<string, Page<Application>>>({});
@@ -431,14 +467,17 @@ export function RecruiterJobManager() {
   return <section className="card recruiter-jobs" id="recruiter-jobs">
     <div className="section-heading"><div><p className="eyebrow">NHÀ TUYỂN DỤNG</p><h2>Công ty và tin tuyển dụng</h2></div></div>
     {error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
+    <div hidden={activeView !== 'recruiter-company'}>
     <div className="company-row"><strong>Công ty của tôi</strong>{companies.map(company => <div className="company-chip" key={company.id}><span>{company.name}</span><button className="link-button" onClick={() => { setEditingCompany(company); setCompanyForm({ name: company.name, description: company.description ?? '', websiteUrl: company.websiteUrl ?? '', location: company.location ?? '', industry: company.industry ?? '', sizeLabel: company.sizeLabel ?? '' }); }}>Sửa</button></div>)}</div>
-    <form className="editor-form" onSubmit={saveCompany}><h3>{editingCompany ? 'Cập nhật công ty' : 'Tạo hồ sơ công ty'}</h3>
+    <ValidatedForm className="editor-form" onSubmit={saveCompany}><h3>{editingCompany ? 'Cập nhật công ty' : 'Tạo hồ sơ công ty'}</h3>
       <label>Tên công ty<input required maxLength={200} value={companyForm.name} onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}/></label>
       <label>Giới thiệu<textarea maxLength={4000} value={companyForm.description} onChange={e => setCompanyForm({ ...companyForm, description: e.target.value })}/></label>
       <div className="form-columns"><label>Website HTTPS<input type="url" placeholder="https://example.com" value={companyForm.websiteUrl} onChange={e => setCompanyForm({ ...companyForm, websiteUrl: e.target.value })}/></label><label>Địa điểm<input maxLength={250} value={companyForm.location} onChange={e => setCompanyForm({ ...companyForm, location: e.target.value })}/></label><label>Ngành<input maxLength={100} value={companyForm.industry} onChange={e => setCompanyForm({ ...companyForm, industry: e.target.value })}/></label><label>Quy mô<input maxLength={50} placeholder="11-50" value={companyForm.sizeLabel} onChange={e => setCompanyForm({ ...companyForm, sizeLabel: e.target.value })}/></label></div>
       <div className="row"><button disabled={busy}>{busy ? 'Đang lưu…' : editingCompany ? 'Lưu công ty' : 'Tạo công ty'}</button>{editingCompany && <button type="button" className="secondary" onClick={() => { setEditingCompany(undefined); setCompanyForm({ name: '', description: '', websiteUrl: '', location: '', industry: '', sizeLabel: '' }); }}>Hủy sửa</button>}</div>
-    </form>
-    <form className="editor-form" onSubmit={saveJob}><h3>{editingJob ? `Sửa JD · bản mới từ v${editingJob.version.versionNo}` : 'Tạo tin nháp'}</h3>
+    </ValidatedForm>
+    </div>
+    <div hidden={activeView !== 'recruiter-jobs'}>
+    <ValidatedForm className="editor-form" onSubmit={saveJob}><h3>{editingJob ? `Sửa JD · bản mới từ v${editingJob.version.versionNo}` : 'Tạo tin nháp'}</h3>
       {!editingJob && <label>Công ty<select required value={companyId} onChange={e => setCompanyId(e.target.value)}><option value="">Chọn công ty</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
       <label>Chức danh<input required maxLength={200} value={jobForm.title} onChange={e => setJobForm({ ...jobForm, title: e.target.value })}/></label>
       <label>Mô tả công việc<textarea required maxLength={12000} value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })}/></label>
@@ -446,12 +485,16 @@ export function RecruiterJobManager() {
       <label>Quyền lợi<textarea maxLength={5000} value={jobForm.benefitsText} onChange={e => setJobForm({ ...jobForm, benefitsText: e.target.value })}/></label>
       <div className="form-columns"><label>Ngành<input maxLength={100} value={jobForm.industry} onChange={e => setJobForm({ ...jobForm, industry: e.target.value })}/></label><label>Địa điểm<input maxLength={250} value={jobForm.location} onChange={e => setJobForm({ ...jobForm, location: e.target.value })}/></label><label>Loại công việc<select value={jobForm.employmentType} onChange={e => setJobForm({ ...jobForm, employmentType: e.target.value })}><option value="full_time">Toàn thời gian</option><option value="part_time">Bán thời gian</option><option value="contract">Hợp đồng</option><option value="internship">Thực tập</option><option value="temporary">Tạm thời</option></select></label><label>Hình thức<select value={jobForm.workMode} onChange={e => setJobForm({ ...jobForm, workMode: e.target.value })}><option value="unspecified">Chưa xác định</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option></select></label><label>Kinh nghiệm tối thiểu (năm)<input type="number" min="0" max="99.99" step="0.01" value={jobForm.experienceMin} onChange={e => setJobForm({ ...jobForm, experienceMin: e.target.value })}/></label><label>Kinh nghiệm tối đa (năm)<input type="number" min="0" max="99.99" step="0.01" value={jobForm.experienceMax} onChange={e => setJobForm({ ...jobForm, experienceMax: e.target.value })}/></label><label>Ngôn ngữ JD<select value={jobForm.language} onChange={e => setJobForm({ ...jobForm, language: e.target.value })}><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="vi-en">Việt–Anh</option></select></label><label>Hạn nhận hồ sơ<input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)}/></label></div>
       <div className="row"><button disabled={busy || (!editingJob && !companyId)}>{busy ? 'Đang lưu…' : editingJob ? 'Lưu phiên bản mới' : 'Tạo tin nháp'}</button>{editingJob && <button type="button" className="secondary" onClick={() => { setEditingJob(undefined); setJobForm(emptyJob); setDeadline(''); }}>Hủy sửa</button>}</div>
-    </form>
-    <h3>Tin của tôi</h3>
+    </ValidatedForm>
+    </div>
+    <div hidden={activeView === 'recruiter-company'}>
+    <h3>{activeView === 'recruiter-applicants' ? 'Ứng viên theo tin tuyển dụng' : 'Tin của tôi'}</h3>
     {!jobs.length && <p>Chưa có tin. Hãy tạo công ty rồi bắt đầu bằng một tin nháp.</p>}
-    <div className="job-list">{jobs.map(job => <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><div className="row"><button className="secondary" disabled={busy || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button disabled={busy} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button className="secondary" disabled={busy} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}<button className="secondary" disabled={loadingApplications === job.id} onClick={() => void toggleApplications(job)}>{loadingApplications === job.id ? 'Đang tải…' : expandedApplications[job.id] ? 'Ẩn hồ sơ' : `Hồ sơ ứng tuyển (${applicationsByJob[job.id]?.total ?? 'xem'})`}</button></div>
-      <JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
+    <div className="job-list">{jobs.map(job => <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><div className="row" hidden={activeView !== 'recruiter-jobs'}><button className="secondary" disabled={busy || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button disabled={busy} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button className="secondary" disabled={busy} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}<a href="#recruiter-applicants">Xem ứng viên</a></div>
+      <div hidden={activeView !== 'recruiter-jobs'}><JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
       <RecruiterKeywordResumeSearch jobId={job.id} enabled={job.status === 'published' && job.acceptingApplications}/>
+      </div>
+      <div hidden={activeView !== 'recruiter-applicants'}><button className="secondary" disabled={loadingApplications === job.id} onClick={() => void toggleApplications(job)}>{loadingApplications === job.id ? 'Đang tải…' : expandedApplications[job.id] ? 'Ẩn hồ sơ' : `Hồ sơ ứng tuyển (${applicationsByJob[job.id]?.total ?? 'xem'})`}</button>
       <PairRecommendations key={`applications:${job.id}`} direction="applications" jobId={job.id}/>
       {expandedApplications[job.id] && <div className="job-applications"><h4>Hồ sơ ứng tuyển</h4>{!applicationsByJob[job.id]?.items.length ? <p>Chưa có hồ sơ cho tin này.</p> : <ul className="application-list">{applicationsByJob[job.id].items.map(application => <li key={application.id}>
         <div><strong>{statusLabel(application.status)}</strong><small>Nộp lúc {new Date(application.submittedAt).toLocaleString('vi-VN')} · CV phiên bản {application.resumeVersionNo}</small>
@@ -468,6 +511,8 @@ export function RecruiterJobManager() {
           </section>}
         </div>
       </li>)}</ul>}</div>}
+      </div>
     </article>)}</div>
+    </div>
   </section>;
 }

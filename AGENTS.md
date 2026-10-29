@@ -1,5 +1,11 @@
 # Hướng dẫn coding agent — CareerGap AI
 
+> 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](project-docs/report/handoff-sync-2026-10-29.md).
+
+
+> 28/10 — Bằng chứng owner U1/U5 đã bổ sung; actor lượt cũ26/10 là chủ dự án. Dashboard Tavily17:13VN khớp4/1000=D2+E2, ResearcherFree/PAYGoff, không dùng ngoài app theo owner; Usage chi tiết bị khóa, không lấy số0 mờ làm dữ liệu. Đối soát tổng hoàn thành, allowance0/capđóng/responseAPI cũ giữ lịch sử. Còn phản hồi người đánh giá và nhận xét chất lượng để chốt M6; không tăng human benchmark labels hoặc nghiệm thu đại diện. 0provider calls/phí/runtime change. [Bổ sung bằng chứng](project-docs/report/stage-e-external-evidence-2026-10-28.md).
+
+
 > 27/10 — Đã hoàn tất phần kỹ thuật E sau sửa: CV2/2, pair8/8 trên method mới; F1 exact0,623 và34/44 trạng thái tham chiếu, rerank CV→JD nDCG0,917 so baseline1,00, không cải thiện. Đây là regression trên tập đã xem, giữ kết quả E đầu. Backend159/159, E2E9/9, FE4/4/lint/typecheck/build; restore current DLL19migrations/43tables/11files/3ledger, Docker+3HTTP và full writing UI→PDF→new private version đạt. Demo đã chuyển sang DB persistent riêng, hai role và proposal Fake chưa duyệt sẵn cho giảng viên. DeepSeekfollowup debit0,04+hold0,01; total spent0,11+hold0,03/remaining1,86 trong2USD; một journal unknown trung gian giữreservation, không hoàn. Tavily mới2credits/2requestsDocker, Git khônggap; UsageAPI tổngchưađổi, giữdebit/capđóng; email0. Chưa xác nhận phản hồi giảng viên, M6/representative quality chưa nghiệmthu. Không push/deploy; userWord giữ hash. Xem báo cáo sau sửa và bộ dùng thử hiện hành. Các trạng thái lỗi kỹ thuật chưa sửa phía dưới là lịch sử. [Báo cáo](project-docs/report/stage-e-followup-2026-10-27.md), [manifest](project-docs/evaluation/stage-e-followup-2026-10-27.json), [bộ dùng thử](project-docs/handoff/stage-e-fixed-20261027/README.md).
 
 

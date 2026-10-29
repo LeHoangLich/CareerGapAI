@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-28",
+  "status": "owner_U1_U5_and_Tavily_aggregate_completed_external_evaluator_pending",
+  "historical_manifest": "project-docs/evaluation/stage-e-followup-2026-10-27.json",
+  "report": "project-docs/report/stage-e-external-evidence-2026-10-28.md",
+  "owner_historical_trial_date_as_reported": "2026-10-26",
+  "U1_retest": "owner report + screenshots, passed within visible synthetic/Fake UI scope",
+  "U5_retest": "owner report, clear disabled-AI message/manual file/session pass",
+  "independent_evaluator_feedback_received": false,
+  "Tavily": {
+    "aggregate_reconciliation": "completed_by_owner_dashboard_and_statement",
+    "observed_at_local": "2026-10-28 17:13 Asia/Saigon",
+    "used": 4,
+    "limit": 1000,
+    "expected_D_plus_E": 4,
+    "paygo_enabled": false,
+    "paygo_credits_displayed": 0,
+    "detailed_logs_accessible": false,
+    "reset_text": "Resets monthly",
+    "exact_reset_date_timezone_verified": false,
+    "allowance_reopened": false
+  },
+  "new_provider_calls": 0,
+  "new_spend": 0,
+  "runtime_changed": false,
+  "M6_accepted": false,
+  "representative_quality_accepted": false,
+  "human_benchmark_labels_added": 0,
+  "remaining_external_actions": [
+    "actual instructor/evaluator trial confirmation and quality assessment"
+  ],
+  "private_receipts": [
+    {
+      "path": ".local/stage-e-followup-20261027/owner-trial-attribution-20261028.json",
+      "sha256": "a79e4ef522e88dee560702cc3404fbafc8dfb1d2dd81eab611fc1c1d6e5bf199"
+    },
+    {
+      "path": ".local/stage-e-followup-20261027/owner-U1-retest-receipt-20261028.json",
+      "sha256": "acae4196fe3e0bd99caffe0f8b608f9a0c186f8c70d90e1f6e030fbd2e92dff7"
+    },
+    {
+      "path": ".local/stage-e-followup-20261027/owner-U5-retest-receipt-20261028.json",
+      "sha256": "ead8dd07b7e425f1dfd8f09e61120d02e15e0f653efb354ad9eee8d65df092f4"
+    },
+    {
+      "path": ".local/stage-e-followup-20261027/external-evidence-20261028/tavily-owner-reconciliation-receipt.json",
+      "sha256": "c1a455500e4dcd9ba2b86101afedb6a53e827825e6e824afc85ecd327522c23f"
+    }
+  ]
+}

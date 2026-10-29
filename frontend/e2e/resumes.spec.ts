@@ -1,3 +1,4 @@
+import { openView } from './helpers';
 import { expect, test } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
@@ -12,12 +13,13 @@ test('candidate names a private resume, appends a version, and selects the inten
   const password = `${randomBytes(24).toString('base64')}Aa1!`;
   const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
-  await page.goto('/');
+  await page.goto('/#access');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+  await openView(page, 'private-resumes');
   await expect(page.getByRole('heading', { name: 'CV riêng của bạn' })).toBeVisible();
 
   const upload = page.getByLabel('Thêm vào CV', { exact: true });

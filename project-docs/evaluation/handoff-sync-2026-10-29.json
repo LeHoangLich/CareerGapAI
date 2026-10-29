@@ -1,0 +1,174 @@
+{
+  "date": "2026-10-29",
+  "status": "local_handoff_synchronized_M6_external_evaluation_pending",
+  "M6_accepted": false,
+  "independent_evaluator_feedback_received": false,
+  "representative_quality_accepted": false,
+  "source_scope": "current multi-view StyleGuide frontend; backend/method/schema/dataset unchanged",
+  "regression": {
+    "directory": ".local/frontend-step3-20261029-184738-7756",
+    "result_sha256": "56f3b1c2ec0bff424d8f82b3b221a77274c6743a326d27305184c68bddd8fdae",
+    "completed": true,
+    "cleanup": true,
+    "backend_passed": 159,
+    "frontend_unit_passed": 11,
+    "e2e_passed": 21,
+    "runner_tests_passed": 6,
+    "mixed_integrated_and_mock_UI_tests": true,
+    "apiAssemblySha256": "464a3107ea1853cc01f9c19ff3505278db04261a92aec5e90bb21667978a1b13",
+    "sourceInventorySha256": "41f56eefd39fa2240bad135226b3e9850c04a66c2b6a87db77b2117269999b5a"
+  },
+  "Docker": {
+    "status": "passed",
+    "image": "sha256:a19a3bf89d9d9169ccdc7f326812fec4651c4c3ff191b8226b5ae6feac228842",
+    "checks": [
+      {
+        "path": "/api/health",
+        "status": 200,
+        "bytes": 15
+      },
+      {
+        "path": "/api/jobs",
+        "status": 200,
+        "bytes": 2696
+      },
+      {
+        "path": "/",
+        "status": 200,
+        "bytes": 601
+      },
+      {
+        "path": "/assets/index-Ch50BNEB.js",
+        "status": 200,
+        "bytes": 407337
+      }
+    ],
+    "worker_js_packaged": true,
+    "all_providers_Fake_AI_off": true,
+    "provider_calls": 0,
+    "Linux_binary_separate_from_Windows_evaluation": true
+  },
+  "restore": {
+    "status": "passed",
+    "database": "careergap_restore_handoff_20261029115541",
+    "tables": 43,
+    "objects": 4,
+    "data_protection_keys_match": true,
+    "synthetic_only": true,
+    "API_started_on_restored_data": false,
+    "deletion_ledger_in_snapshot_preserved": true,
+    "separate_post_backup_ledger_replay": "existing product CLI/previous E proof applies; no post-backup mutations in this isolated snapshot test",
+    "real_provider_calls": 0
+  },
+  "rehearsal": {
+    "actor": "automated synthetic/Fake",
+    "writing_PDF_new_version": true,
+    "private_CV_application_snapshot_bytes": true,
+    "recruiter_manual_screening_and_saved_note": true,
+    "AI_disabled_message_manual_file_session": true,
+    "human_acceptance_claimed": false
+  },
+  "new_real_provider_calls": 0,
+  "budget_ledgers_unchanged": true,
+  "source_raw_corpus_and_secrets_distributed": false,
+  "new_demo_URL": "http://127.0.0.1:5190/",
+  "frontend_production_static_without_Vite": true,
+  "Windows_evaluation_and_Linux_binary_separate": true,
+  "historical_replay_permission_evidence": "2026-10-27; unchanged backend source, no new post-backup ledger replay claimed",
+  "research_results": "original E negative + post-fix viewed-set regression retained; not new independent final",
+  "human_benchmark_labels_added": 0,
+  "M6_external_remaining": [
+    "actual instructor trial/feedback",
+    "review of narrow scope/rubric/quality limitations"
+  ],
+  "presentation": {
+    "path": "project-docs/handoff/stage-e-20261029/CareerGapAI-ban-giao-20261029-v3.pptx",
+    "sha256": "eb3676981e0c62c40398fb0514a4fc5b6f2f6fd1666129282d1afdb9a92a3e51",
+    "validation_receipt_sha256": "d9cf215707e50b8d3d8651b946be5dab62e1d95fa72eef5ed17c95693676624c",
+    "slides": 10,
+    "all_slides_visually_reviewed": true,
+    "native_PowerPoint_check": false
+  },
+  "artifacts": [
+    {
+      "path": "project-docs/handoff/stage-e-20261029/CareerGapAI-ban-giao-20261029-v3.pptx",
+      "bytes": 321538,
+      "sha256": "eb3676981e0c62c40398fb0514a4fc5b6f2f6fd1666129282d1afdb9a92a3e51"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/CV-synthetic-dung-thu.docx",
+      "bytes": 1219,
+      "sha256": "f7739309a707788f57292746efdbcbab4a67dd4d90ec5c190d3b43124995bca2"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/demo-videos/01-candidate-writing-matching-application.webm",
+      "bytes": 4288533,
+      "sha256": "ac96158be0cf675b58fd3f6c3dc6c252b1a7e637a87a473be991a655dedfb0e0"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/demo-videos/02-recruiter-snapshot-screening.webm",
+      "bytes": 3321997,
+      "sha256": "678ad18177a12bfc5b65107baa94319844338e917ae81eddf917c196a501b335"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/demo-videos/03-disabled-AI-file-access.webm",
+      "bytes": 804109,
+      "sha256": "4204813c8acd361a76b056bce7a377d162dcbcb97a1c7f9beb58631a38360b31"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/demo.html",
+      "bytes": 1764,
+      "sha256": "8f77fda2176059d9c4458efb048cf91ed243e0566bb0ae2041a56e7788ff2c1f"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/huong-dan-dung-thu.md",
+      "bytes": 5087,
+      "sha256": "2041d0ad60c7bb6bcc3889569905da07301beec1c5e2d67ba9d4134d7397c517"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/images/builder.png",
+      "bytes": 130185,
+      "sha256": "7ac608bd0b2248c73649d68d30941d020f88c7e89a10c1986a96d72235f6b6b2"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/images/fault.png",
+      "bytes": 90340,
+      "sha256": "c80ad51f87c4c979041de3d46900f9939266d8304e34c767dc33e21cca1af1ac"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/images/jobs.png",
+      "bytes": 148706,
+      "sha256": "98eb35fd1a64aa04c3cf31f125769c5db1c8425d2ca84402c2af4a216ae066ed"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/images/recruiter.png",
+      "bytes": 94538,
+      "sha256": "119e9c2ba1ca1ac5218606237bdf72026fe2b5c955697ca1c1542c9eec63702f"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/JD-synthetic-dung-thu.txt",
+      "bytes": 147,
+      "sha256": "25dd77dfaf8a78fe82c2b9d23c2482417ae8cdae748772d3825618ccd0563920"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/nghiem-thu-M6.md",
+      "bytes": 3136,
+      "sha256": "f4d74373398669618844133dbd2485dc07cb57595830e003932c682e9bc76fcc"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/Phieu-dung-thu-CareerGapAI.docx",
+      "bytes": 38557,
+      "sha256": "ff83082221955afc7f6c486033f99b76e93c7b28dcd9d84402be4772b69d71c4"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/README.md",
+      "bytes": 1180,
+      "sha256": "b22e944e4c2e2508f779fcec1613ff3e28831aa32601ba6f2a81fb4f4eb8ed80"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261029/van-hanh-local.md",
+      "bytes": 3317,
+      "sha256": "008860533ce1c418b34cc25ed41c143c3b94165244326b00ccfcb0bd69c199a7"
+    }
+  ]
+}

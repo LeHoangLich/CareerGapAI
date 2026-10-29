@@ -1,3 +1,4 @@
+import { openView } from './helpers';
 import { test, expect } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 
@@ -6,13 +7,14 @@ test('candidate registers, controls profile sharing, changes password, and recov
   const initialPassword = `${randomBytes(24).toString('base64')}Aa1!`;
   const changedPassword = `${randomBytes(24).toString('base64')}Bb2!`;
   const resetPassword = `${randomBytes(24).toString('base64')}Cc3!`;
-  await page.goto('/');
+  await page.goto('/#access');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(initialPassword);
   await page.getByLabel('Tên hiển thị (ứng viên)', { exact: true }).fill('Ứng viên E2E');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+  await openView(page, 'profile');
   await expect(page.getByRole('heading', { name: 'Hồ sơ và quyền chia sẻ' })).toBeVisible();
   const profilePanel = page.locator('section.card').filter({ has: page.getByRole('heading', { name: 'Hồ sơ và quyền chia sẻ' }) });
 
@@ -29,6 +31,7 @@ test('candidate registers, controls profile sharing, changes password, and recov
   await expect(profilePanel.getByRole('textbox', { name: 'Email liên hệ', exact: true })).toHaveValue('candidate-contact@example.invalid');
   await expect(page.getByRole('checkbox', { name: 'Tiêu đề', exact: true })).toBeChecked();
 
+  await openView(page, 'account');
   await page.getByLabel('Mật khẩu hiện tại', { exact: true }).fill(initialPassword);
   await page.getByLabel('Mật khẩu mới', { exact: true }).fill(changedPassword);
   await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
@@ -49,5 +52,6 @@ test('candidate registers, controls profile sharing, changes password, and recov
   await page.getByLabel('Mật khẩu', { exact: true }).fill(resetPassword);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+  await openView(page, 'profile');
   await expect(page.getByRole('heading', { name: 'Hồ sơ và quyền chia sẻ' })).toBeVisible();
 });

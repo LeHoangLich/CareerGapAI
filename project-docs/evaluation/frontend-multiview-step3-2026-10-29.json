@@ -1,0 +1,244 @@
+{
+  "id": "frontend-multiview-step3-local-20261029",
+  "date": "2026-10-29",
+  "scope": "Local frontend multi-view regression; synthetic/Fake; not representative AI or M6 acceptance",
+  "runtime": {
+    "node": "24.16.0",
+    "dotnet": "10.0.401",
+    "postgres": "16.15",
+    "browser": "Chromium",
+    "platform": "Windows"
+  },
+  "runDirectory": ".local/frontend-step3-20261029-030649-530b",
+  "completed": true,
+  "checks": {
+    "backend": {
+      "passed": 159,
+      "failed": 0,
+      "skipped": 0
+    },
+    "e2e": {
+      "passed": 14,
+      "failed": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "integrationTests": 12,
+      "mockOnlyTests": 2
+    },
+    "frontendUnit": {
+      "passed": 11
+    },
+    "lint": true,
+    "typecheck": true,
+    "build": true
+  },
+  "providerAudit": {
+    "non_fake_methods": 0,
+    "usd_budgets": 0,
+    "jobs": [
+      {
+        "job_type": "match_pair",
+        "status": "succeeded",
+        "count": 1
+      },
+      {
+        "job_type": "extract_cv",
+        "status": "succeeded",
+        "count": 3
+      },
+      {
+        "job_type": "suggest_cv",
+        "status": "succeeded",
+        "count": 1
+      }
+    ],
+    "budgets": [
+      {
+        "service": "Fake",
+        "unit": "test_credit",
+        "spent_amount": 5.0,
+        "reserved_amount": 0.0
+      }
+    ]
+  },
+  "apiAssemblySha256": "d5a6c62e3d1f32230b8a8e95c2b67a77ac381b363473126053656672cceefb84",
+  "backendTestDependencyEqualsServedAssembly": true,
+  "sourceInventory": ".local/frontend-step3-20261029-030649-530b/source-sha256.json",
+  "previousAssertionLinesPreserved": 133,
+  "pdfChecks": [
+    {
+      "file": "builder-long.pdf",
+      "sha256": "fe1bc49d5e33c6afc568b489fdddc12f4977edd185be6c4edcea3cf796a853fa",
+      "pages": 2,
+      "a4": true,
+      "noReplacement": true,
+      "allPagesHaveText": true,
+      "withinBounds": true,
+      "vietnameseNamePresent": true
+    },
+    {
+      "file": "builder-short.pdf",
+      "sha256": "9799f72de979e5e5cfa621948060f8c92702a8243958f288b78fc43e1fea14a6",
+      "pages": 1,
+      "a4": true,
+      "noReplacement": true,
+      "allPagesHaveText": true,
+      "withinBounds": true,
+      "vietnameseNamePresent": true
+    },
+    {
+      "file": "synthetic-vietnamese-probe.pdf",
+      "sha256": "a519ac43c264e5956561c46bfdada6d3f3445c3ceff337e2ba3bfd082f9d1368",
+      "pages": 3,
+      "a4": true,
+      "noReplacement": true,
+      "allPagesHaveText": true,
+      "withinBounds": true,
+      "vietnameseNamePresent": true
+    }
+  ],
+  "ownedProcessesAndContainerCleaned": true,
+  "demo5183ReadOnlySmoke": 200,
+  "limitations": [
+    "Firefox and WebKit binaries unavailable; not tested",
+    "Actual browser zoom 200% not verified",
+    "No remote CI, deploy or production proof",
+    "Fake success does not establish AI quality or evaluator acceptance"
+  ],
+  "historicalRuns": [
+    {
+      "directory": ".local/frontend-step3-20261029-025652-62db",
+      "scope": "3 targeted E2E passed"
+    },
+    {
+      "directory": ".local/frontend-step3-20261029-030042-3c70",
+      "scope": "14 E2E passed; backend skipped"
+    },
+    {
+      "directory": ".local/frontend-step3-20261029-030330-9d73",
+      "scope": "backend 159/E2E 14 passed; runner final audit failed due wrong table name; not an overall successful run"
+    }
+  ],
+  "postgresReadinessFollowup": {
+    "failedRunDirectory": ".local/frontend-step3-20261029-034306-c82b",
+    "cause": "Unix socket pg_isready accepted temporary initialization server before it stopped; subsequent psql raced with final server startup",
+    "fix": "Authenticated TCP SQL query against exact target database; retry, per-probe timeout, total deadline and retained diagnostics",
+    "runnerTests": {
+      "passed": 6,
+      "failed": 0
+    },
+    "coldStarts": {
+      "passed": 5,
+      "failed": 0,
+      "allCleaned": true,
+      "evidence": ".local/postgres-readiness-20261029-034603/result.json"
+    },
+    "runDirectory": ".local/frontend-step3-20261029-034613-f1c1",
+    "completed": true,
+    "cleanup": true,
+    "postgresReadyAttempts": 3,
+    "checks": {
+      "backendPassed": 159,
+      "e2ePassed": 14,
+      "frontendUnitPassed": 11,
+      "lint": true,
+      "typecheck": true,
+      "build": true
+    },
+    "apiAssemblySha256": "c25815d1bc920535df86f86c115b6a2a6c5ec2366498b054cd29738c3b3e9832",
+    "assemblyEquivalenceEvidence": ".local/frontend-step3-20261029-034613-f1c1/assembly-equivalence.json",
+    "providerAudit": {
+      "non_fake_methods": 0,
+      "usd_budgets": 0,
+      "jobs": [
+        {
+          "job_type": "match_pair",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "job_type": "extract_cv",
+          "status": "succeeded",
+          "count": 3
+        },
+        {
+          "job_type": "suggest_cv",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "budgets": [
+        {
+          "service": "Fake",
+          "unit": "test_credit",
+          "spent_amount": 5.0,
+          "reserved_amount": 0.0
+        }
+      ]
+    },
+    "files": {
+      "scripts/test-frontend-regression.py": "f9d2e9e1512429d747e38348229740b5d254783992358f203493f271b1c9a677",
+      "scripts/test_frontend_regression.py": "2d0b47b4a815593325d65e973d0fd399578f39f94c0e6b3b9f9d6df89f46c05a"
+    }
+  },
+  "playwrightDependencyFollowup": {
+    "failedRunDirectory": ".local/frontend-step3-20261029-034958-3816",
+    "failure": "All 14 E2E tests failed during browser launch: Chromium headless shell executable unavailable; no UI assertions ran",
+    "fix": "Pinned local Playwright CLI install chromium and headless launch preflight before Docker; preserve configured PLAYWRIGHT_BROWSERS_PATH",
+    "runDirectory": ".local/frontend-step3-20261029-035256-5f50",
+    "completed": true,
+    "cleanup": true,
+    "checks": {
+      "runnerPassed": 6,
+      "backendPassed": 159,
+      "frontendUnitPassed": 11,
+      "e2e": {
+        "startTime": "2026-10-28T20:54:30.519Z",
+        "duration": 68119.08,
+        "expected": 14,
+        "skipped": 0,
+        "unexpected": 0,
+        "flaky": 0
+      },
+      "lint": true,
+      "typecheck": true,
+      "build": true
+    },
+    "playwrightVersion": "1.64.1",
+    "browserVersion": "156.0.8078.4",
+    "downloadVerified": false,
+    "browserAlreadyCached": true,
+    "apiAssemblySha256": "cfda439a31f8ebf7ea4eb7111169bd9a61d3bae0e8405ed978a1231474b80444",
+    "assemblyEquivalenceEvidence": ".local/frontend-step3-20261029-035256-5f50/assembly-equivalence.json",
+    "providerAudit": {
+      "non_fake_methods": 0,
+      "usd_budgets": 0,
+      "jobs": [
+        {
+          "job_type": "match_pair",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "job_type": "extract_cv",
+          "status": "succeeded",
+          "count": 3
+        },
+        {
+          "job_type": "suggest_cv",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "budgets": [
+        {
+          "service": "Fake",
+          "unit": "test_credit",
+          "spent_amount": 5.0,
+          "reserved_amount": 0.0
+        }
+      ]
+    },
+    "runnerSha256": "5dfd91109b8ba19322daa56ba26f6a15f3179b5594c3323b0a8f334d276e64e9"
+  }
+}

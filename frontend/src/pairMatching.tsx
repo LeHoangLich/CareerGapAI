@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { LearningResources } from './learning';
+import { ResultPlacement } from './resultPlacement';
+import { StaticLoading } from './workspace';
+import { AiBadge } from './ui';
 
 type Fact = { key: string; value: string; sourceType: string };
 type Criterion = { requirementKey: string; requirement: string; importance: string; status: string; evidence: Fact[]; explanation: string; needsReview: boolean; requirementSourceType: string };
@@ -27,6 +30,7 @@ function PairDetails({ pair }: { pair: Pair }) {
   const required = pair.criteria?.filter(c => c.importance === 'required' && c.status !== 'met' && c.status !== 'not_assessed').length ?? 0;
   const manual = pair.criteria?.filter(c => c.status === 'not_assessed').length ?? 0;
   return <div className="pair-result">
+    <AiBadge>{pair.provider === 'Fake' ? 'AI mô phỏng · cần đối chiếu' : 'AI đối chiếu · cần rà soát'}</AiBadge>
     <p><strong>Điểm đối chiếu {pair.score?.toFixed(2)}/100</strong> · rubric thử nghiệm{pair.provider === 'Fake' ? ' · Kết quả mô phỏng kiểm thử' : ''}</p>
     <p className="hint">Điểm cho cặp CV–JD này, không phải xác suất trúng tuyển hoặc kết luận năng lực. {required} yêu cầu bắt buộc chưa được chứng minh đầy đủ.</p>
     <p className="hint">Địa điểm: {pair.location ?? 'chưa nêu'} · hình thức: {pair.workMode} · lương: {pair.salaryMin == null && pair.salaryMax == null ? 'chưa công bố' : `${pair.salaryMin ?? '?'}–${pair.salaryMax ?? '?'} ${pair.salaryCurrency ?? ''} ${pair.salaryPeriod ?? ''}`}. Chưa đánh giá sự phù hợp các điều kiện này vì chưa có mong muốn được xác nhận của ứng viên.{manual > 0 && ` ${manual} tiêu chí cần đối chiếu thủ công, không tính vào điểm.`}</p>
@@ -67,7 +71,7 @@ export function PairAnalysisButton({ resumeVersionId, jobVersionId, applicationI
     {error && <p role="alert">{error}</p>}{pair && <PairDetails pair={pair}/>}</div>;
 }
 
-export function PairRecommendations({ direction, resumeVersionId, jobId }: { direction: 'jobs' | 'public_resumes' | 'applications'; resumeVersionId?: string; jobId?: string }) {
+export function PairRecommendations({ direction, resumeVersionId, jobId, resultsTarget }: { direction: 'jobs' | 'public_resumes' | 'applications'; resumeVersionId?: string; jobId?: string; resultsTarget?: HTMLElement | null }) {
   const [batch, setBatch] = useState<Batch>(); const [results, setResults] = useState<Record<string, Pair>>({});
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
   useEffect(() => {
@@ -93,12 +97,19 @@ export function PairRecommendations({ direction, resumeVersionId, jobId }: { dir
     return x != null && y != null ? y - x : x != null ? -1 : y != null ? 1 : 0;
   });
   return <section className="pair-recommendations" aria-label="Đối chiếu AI có bằng chứng"><h4>Phân tích AI có bằng chứng</h4><button disabled={busy || direction === 'jobs' && !resumeVersionId} onClick={() => void start()}>{busy ? 'Đang chọn tập…' : direction === 'applications' ? 'Phân tích tối đa 3 hồ sơ trong trang' : 'Gợi ý và phân tích tối đa 3 cặp'}</button>
-    <p className="hint">Rubric thử nghiệm: bắt buộc trọng số 2, ưu tiên/chưa phân loại trọng số 1; đáp ứng 1, một phần 0,5, chưa có bằng chứng 0. Chỉ các mục đã phân tích thành công được xếp theo điểm. AI không thay đổi trạng thái đơn.</p>
+    {resultsTarget === undefined ? <p className="hint">Rubric thử nghiệm: bắt buộc trọng số 2, ưu tiên/chưa phân loại trọng số 1; đáp ứng 1, một phần 0,5, chưa có bằng chứng 0. Chỉ các mục đã phân tích thành công được xếp theo điểm. AI không thay đổi trạng thái đơn.</p>
+      : <details className="pair-method-details"><summary>Phương pháp và giới hạn</summary><p className="hint">Rubric thử nghiệm: bắt buộc trọng số 2, ưu tiên/chưa phân loại trọng số 1; đáp ứng 1, một phần 0,5, chưa có bằng chứng 0. Chỉ các mục đã phân tích thành công được xếp theo điểm. AI không thay đổi trạng thái đơn.</p></details>}
+    <ResultPlacement target={resultsTarget}>
+    {(busy || error || batch) && <section className={resultsTarget !== undefined ? 'matching-output' : undefined} aria-label="Kết quả đối chiếu AI">
+    {resultsTarget !== undefined && <div className="section-heading"><div><p className="eyebrow">ĐỐI CHIẾU CÓ BẰNG CHỨNG</p><h3>Kết quả phân tích AI</h3></div><span className="badge">CV–JD</span></div>}
+    {busy && <StaticLoading label="Đang chọn tập phân tích…"/>}
     {error && <p role="alert">{error}</p>}{batch && <><p>Đã chọn {batch.selectedCount}/{batch.searchSpaceCount} mục để phân tích sâu{direction === 'applications' ? ` · trang ${batch.page}, 20 hồ sơ/trang, chọn theo thứ tự nộp` : ' sau bước tìm từ khóa'}.</p>
       <ol>{ordered.map(i => <li key={`${i.resumeVersionId}:${i.jobVersionId}:${i.applicationId}`}><strong>{i.label}</strong>{i.retrievalScore != null && <small> · điểm tìm từ khóa {i.retrievalScore.toFixed(3)}</small>}
         {i.applicationId && <a href={`/api/applications/${i.applicationId}/resume`} target="_blank" rel="noreferrer">Mở CV đã nộp</a>}
         {i.pairJobId ? results[i.pairJobId] ? <PairDetails pair={results[i.pairJobId]}/> : <p>Đang tải hoặc kết quả không còn quyền truy cập.</p> : <p>Chưa chấm · {reason(i.errorCode)}</p>}
         {!i.pairJobId && i.applicationId && <PairAnalysisButton resumeVersionId={i.resumeVersionId} jobVersionId={i.jobVersionId} applicationId={i.applicationId} context="application"/>}
       </li>)}</ol>{direction === 'applications' && <div className="row">{batch.page > 1 && <button disabled={busy} onClick={() => void start(batch.page - 1)}>Trang trước</button>}{batch.hasMore && <button disabled={busy} onClick={() => void start(batch.page + 1)}>Trang tiếp</button>}</div>}</>}
+    </section>}
+    </ResultPlacement>
   </section>;
 }

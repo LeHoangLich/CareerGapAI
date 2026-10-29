@@ -1,3 +1,4 @@
+import { openView } from './helpers';
 import { expect, test } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 
@@ -8,25 +9,30 @@ test('recruiter creates company and job versions; only published current jobs ar
   const password = `${randomBytes(24).toString('base64')}Aa1!`;
   const title = `E2E Backend Engineer ${suffix}`;
 
-  await page.goto('/');
+  await page.goto('/#access');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
   await page.locator('select[name="role"]').selectOption('Recruiter');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+  await openView(page, 'recruiter-jobs');
   await expect(page.getByRole('heading', { name: 'Công ty và tin tuyển dụng' })).toBeVisible();
 
   const manager = page.locator('.recruiter-jobs');
-  await manager.getByLabel('Tên công ty', { exact: true }).fill(`E2E Company ${suffix}`);
+  await openView(page, 'recruiter-company');
+    await manager.getByLabel('Tên công ty', { exact: true }).fill(`E2E Company ${suffix}`);
   await manager.getByRole('button', { name: 'Tạo công ty', exact: true }).click();
   await expect(manager.getByRole('status').filter({ hasText: 'Hồ sơ công ty đã được lưu.' })).toBeVisible();
 
+  await openView(page, 'jobs');
   const browser = page.locator('.job-browser');
   await browser.getByLabel('Từ khóa', { exact: true }).fill(title);
+  await openView(page, 'jobs');
   await browser.getByRole('button', { name: 'Tìm việc', exact: true }).click();
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 
+  await openView(page, 'recruiter-jobs');
   const jobEditor = manager.locator('.editor-form').last();
   await jobEditor.getByLabel('Chức danh', { exact: true }).fill(title);
   await jobEditor.getByLabel('Mô tả công việc', { exact: true }).fill('Xây dựng API tuyển dụng bằng C# và PostgreSQL.');
@@ -34,8 +40,10 @@ test('recruiter creates company and job versions; only published current jobs ar
   await jobEditor.getByRole('button', { name: 'Tạo tin nháp', exact: true }).click();
   const managedJob = manager.locator('.job-card').filter({ hasText: title });
   await expect(managedJob).toContainText('Bản nháp');
+  await openView(page, 'jobs');
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 
+  await openView(page, 'recruiter-jobs');
   const jdReview = managedJob.locator('.job-revision-review');
   await jdReview.getByRole('button', { name: 'Tách yêu cầu từ JD (local)' }).click();
   await expect(jdReview.getByRole('checkbox')).toHaveCount(3);
@@ -51,9 +59,11 @@ test('recruiter creates company and job versions; only published current jobs ar
   await expect(jdReview).toContainText('không phải trích dẫn từ JD');
 
   await managedJob.getByRole('button', { name: 'Công khai', exact: true }).click();
+  await openView(page, 'jobs');
   await browser.getByRole('button', { name: 'Tìm việc', exact: true }).click();
   await expect(browser.locator('.job-card').filter({ hasText: title })).toBeVisible();
 
+  await openView(page, 'recruiter-jobs');
   await managedJob.getByRole('button', { name: 'Sửa JD', exact: true }).click();
   await jobEditor.locator('textarea').nth(0).fill('Phiên bản 2: phát triển API và kiểm thử PostgreSQL.');
   await jobEditor.getByRole('button', { name: 'Lưu phiên bản mới', exact: true }).click();
@@ -62,6 +72,7 @@ test('recruiter creates company and job versions; only published current jobs ar
 
   await managedJob.getByRole('button', { name: 'Đóng tin', exact: true }).click();
   await expect(managedJob).toContainText('Đã đóng');
+  await openView(page, 'jobs');
   await browser.getByRole('button', { name: 'Tìm việc', exact: true }).click();
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 });

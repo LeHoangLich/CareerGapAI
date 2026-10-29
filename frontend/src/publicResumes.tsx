@@ -60,7 +60,7 @@ export function PublicResumeBrowser({ session }: { session?: Session }) {
     return () => { cancelled = true; };
   }, [isCandidate, isRecruiter, page]);
   if (!isCandidate && !isRecruiter) return null;
-  return <section className="card public-resume-browser" id="public-resumes"><div className="section-heading"><h2>Kho CV công khai</h2><span className="badge">{isCandidate ? 'Bản đã ẩn liên hệ' : 'Quyền recruiter'}</span></div>
+  return <section className="card public-resume-browser" id="public-resumes"><div className="section-heading"><h1>Kho CV công khai</h1><span className="badge">{isCandidate ? 'Bản đã ẩn liên hệ' : 'Quyền recruiter'}</span></div>
     <p>{isCandidate ? 'Bạn chỉ thấy CV có bản dẫn xuất đã kiểm tra. Các liên hệ, link và ảnh từ file gốc không được chuyển sang bản này.' : 'CV được ứng viên chủ động công khai. Recruiter có thể mở file gốc theo quyền của kho CV.'}</p>
     {error && <p role="alert" className="error">{error}</p>}
     <ul className="public-resume-list">{items.map(item => <li key={item.candidateId}>

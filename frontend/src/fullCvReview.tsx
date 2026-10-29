@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from './api';
+import { AiBadge } from './ui';
 
 type Field = { path: string; value: string };
 type Evidence = { path: string; sourceType: string; segmentId: string | null; quote: string | null };
@@ -52,6 +53,7 @@ export function FullCvReview({ versionId, refreshKey }: { versionId: string; ref
   }, [versionId, refreshKey]);
   if (!revision) return <>{message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}</>;
   return <section className="card full-cv-review"><h2>Rà soát toàn bộ dữ liệu CV</h2>
+    <AiBadge accepted={revision.origin !== 'ai_extracted'}/>
     <p>{revision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'} · revision {revision.revisionNo}. Trường thiếu được để trống. Nội dung sửa hoặc thêm là thông tin bạn tự xác nhận.</p>
     {fields.map(field => {
       const original = revision.structuredData.fields.find(item => item.path === field.path);

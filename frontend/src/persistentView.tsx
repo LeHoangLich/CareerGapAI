@@ -1,0 +1,30 @@
+import { createContext, useContext, useLayoutEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+
+const ViewOutletContext = createContext<HTMLDivElement | null>(null);
+
+export function ViewOutlet({ children }: { children: ReactNode }) {
+  const [outlet, setOutlet] = useState<HTMLDivElement | null>(null);
+  return <ViewOutletContext.Provider value={outlet}>
+    <div className="workspace-view-outlet" ref={setOutlet}/>
+    {children}
+  </ViewOutletContext.Provider>;
+}
+
+/** Keep the React tree and native form controls alive; only the active view joins the document. */
+export function PersistentView({ active, name, children }: { active: boolean; name: string; children: ReactNode }) {
+  const outlet = useContext(ViewOutletContext);
+  const [container] = useState(() => {
+    const element = document.createElement('div');
+    element.className = 'workspace-view';
+    element.dataset.workspaceView = name;
+    return element;
+  });
+  useLayoutEffect(() => {
+    container.dataset.workspaceView = name;
+    if (!active || !outlet) return;
+    outlet.appendChild(container);
+    return () => { container.remove(); };
+  }, [active, outlet, container, name]);
+  return createPortal(children, container);
+}
