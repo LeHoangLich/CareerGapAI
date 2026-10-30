@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "release": "20261030",
+  "sourceCommit": "d1192254e424fcbbe83adba31b369746e0c0f53c",
+  "sourceBaseCommit": "25cc3017013071a8a4fec516b24b3de02f5227b6",
+  "archiveSha256": "60f3c2f8a3e23033d678e90073005e874bf7195d69697d6d7d8351863a723dc6",
+  "archiveBytes": 12653913,
+  "archiveFileCount": 356,
+  "allWorkingTreeMembersMatchArchive": true,
+  "commitMatchesArchive": {
+    "exactFiles": 225,
+    "lineEndingNormalizedFiles": 131
+  },
+  "cleanSourceBuild": {
+    "status": "passed",
+    "scope": "fresh extraction on same Windows host with dependency cache; not a new OS",
+    "archiveSha256": "60f3c2f8a3e23033d678e90073005e874bf7195d69697d6d7d8351863a723dc6",
+    "fileHashesVerified": 356,
+    "commands": [
+      {
+        "name": "restore",
+        "exitCode": 0,
+        "seconds": 2.47
+      },
+      {
+        "name": "backend-build",
+        "exitCode": 0,
+        "seconds": 3.83
+      },
+      {
+        "name": "npm-ci",
+        "exitCode": 0,
+        "seconds": 41.89
+      },
+      {
+        "name": "frontend-unit",
+        "exitCode": 0,
+        "seconds": 1.89
+      },
+      {
+        "name": "frontend-build",
+        "exitCode": 0,
+        "seconds": 12.92
+      },
+      {
+        "name": "launcher-help",
+        "exitCode": 0,
+        "seconds": 0.22
+      }
+    ],
+    "noDotenvOrOldBuildOutputsCopied": true,
+    "frontendUnitPassed": 11,
+    "realProviderCalls": 0,
+    "missingHistoricalRuntimeRefusedBeforeDatabaseOrFileMutation": true
+  },
+  "demo": {
+    "url": "http://127.0.0.1:5190/",
+    "mode": "start",
+    "release": "20261030",
+    "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c"
+  },
+  "docker": {
+    "status": "passed",
+    "image": "sha256:c17aaea01d410263376c4e155062cb2ec203d39748006e459a54562d491cf87b",
+    "checks": [
+      {
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "path": "/api/jobs",
+        "status": 200
+      },
+      {
+        "path": "/",
+        "status": 200
+      }
+    ],
+    "mainJs200": true,
+    "workerPackaged": true,
+    "authenticatedLatestLookup": true,
+    "providers": "Fake",
+    "aiDisabled": true,
+    "newExternalAttempts": 0,
+    "database": "separate disposable clone of synthetic backup",
+    "productionDatabaseUsed": false,
+    "linuxBinarySeparateFromWindows": true
+  },
+  "backupRestore": {
+    "tables": 43,
+    "objects": 7,
+    "dataProtectionKeysMatched": true
+  },
+  "rollbackAndFaultChecksPassed": true,
+  "regression": {
+    "backendPassed": 160,
+    "frontendUnitPassed": 11,
+    "e2ePassed": 21,
+    "mixedIntegratedAndMockE2E": true
+  },
+  "oldHandoffAndOwnerFilesVerifiedUnchanged": true,
+  "providerCalls": 0,
+  "realSpendUsd": 0,
+  "M6Accepted": false,
+  "externalReview": "deferred_until_owner_reopens",
+  "verificationIsCompanionOutsideArchive": true
+}
