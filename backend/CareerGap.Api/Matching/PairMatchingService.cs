@@ -8,6 +8,8 @@ namespace CareerGap.Api.Matching;
 
 public sealed record CreatePairRequest(Guid ResumeVersionId, Guid JobVersionId, Guid IdempotencyKey,
     string Context = "self", Guid? ApplicationId = null);
+public sealed record LatestPairRequest(Guid ResumeVersionId, Guid JobVersionId,
+    string Context = "self", Guid? ApplicationId = null);
 public sealed record PairJobView(Guid Id, string Status, string? ErrorCode, string Provider, string Method,
     string Rubric, string Context, Guid ResumeVersionId, Guid ResumeRevisionId, Guid JobVersionId,
     Guid JobRevisionId, Guid? ApplicationId, decimal? Score, IReadOnlyList<ScoredCriterion>? Criteria,
@@ -16,6 +18,23 @@ public sealed record PairJobView(Guid Id, string Status, string? ErrorCode, stri
 
 public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider clock)
 {
+    public async Task<PairJobView?> ReadLatest(Guid uid, LatestPairRequest request, CancellationToken ct)
+    {
+        if (request.Context is not ("self" or "public_pool" or "application") ||
+            (request.Context == "application") != request.ApplicationId.HasValue)
+            throw new JobError("invalid_match_context", 400);
+        // Discover only this requester's exact CV/JD/context. Read rechecks current access;
+        // discovery never admits a job, reserves budget or calls a provider.
+        var id = await (from job in db.AiJobs.AsNoTracking()
+            join input in db.MatchInputs.AsNoTracking() on job.Id equals input.AiJobId
+            where job.RequestedBy == uid && job.JobType == "match_pair" &&
+                input.ResumeVersionId == request.ResumeVersionId && input.JobVersionId == request.JobVersionId &&
+                input.Context == request.Context && input.ApplicationId == request.ApplicationId
+            orderby job.CreatedAt descending, job.Id descending
+            select (Guid?)job.Id).FirstOrDefaultAsync(ct);
+        return id.HasValue ? await Read(uid, id.Value, ct) : null;
+    }
+
     public async Task<AiJob> Enqueue(Guid uid, CreatePairRequest request, CancellationToken ct)
     {
         if (request.Context is not ("self" or "public_pool" or "application") ||
@@ -62,6 +81,7 @@ public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider 
         var method = await db.AiMethods.AsNoTracking().SingleAsync(x => x.Id == job.MethodVersionId, ct);
         var result = await db.MatchResults.AsNoTracking().SingleOrDefaultAsync(x => x.AiJobId == id, ct);
         var payload = JsonSerializer.Deserialize<PairPayload>(input.Payload, OutputValidator.Json)!;
+        if (!await CanAccess(db, uid, input, clock.GetUtcNow(), ct)) return null;
         return new(job.Id, job.Status, job.ErrorCode, method.Provider, method.ConfigHash, payload.Rubric, input.Context,
             input.ResumeVersionId, input.ResumeRevisionId, input.JobVersionId, input.JobRevisionId, input.ApplicationId,
             result?.Score, result is null ? null : JsonSerializer.Deserialize<ScoredCriterion[]>(result.Criteria, OutputValidator.Json),
@@ -115,6 +135,18 @@ public static class PairMatchingEndpoints
 {
     public static void MapPairMatching(this WebApplication app)
     {
+        app.MapGet("/api/matching/pairs/latest", async (Guid resumeVersionId, Guid jobVersionId,
+            string? context, Guid? applicationId, ClaimsPrincipal user, PairMatchingService service, CancellationToken ct) =>
+        {
+            try
+            {
+                var pair = await service.ReadLatest(Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!),
+                    new(resumeVersionId, jobVersionId, context ?? "self", applicationId), ct);
+                // Absence and revoked access have the same shape; do not reveal other owners' jobs.
+                return Results.Ok(new { pair });
+            }
+            catch (JobError e) { return Results.Problem(statusCode: e.Status, title: e.Code); }
+        }).RequireAuthorization();
         app.MapPost("/api/matching/pairs", async (CreatePairRequest request, ClaimsPrincipal user, PairMatchingService service, CancellationToken ct) =>
         {
             try

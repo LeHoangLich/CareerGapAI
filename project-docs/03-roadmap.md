@@ -1,5 +1,9 @@
 # CareerGap AI – Roadmap Phát triển
 
+> 30/10 — Đã đồng bộ sửa xem lại kết quả vào demo5190/release20261030 và [bộ bàn giao mới](handoff/stage-e-20261030/README.md), giữ rollback29 và dữ liệu synthetic. Fresh backend160/160, FE11/11/lint/typecheck/build, E2E21/21; backup/restore và production/Docker history đã kiểm. Đánh giá ngoài hoãn theo owner; M6 chưa nghiệm thu, không đổi điều kiện. [Biên bản](report/handoff-sync-2026-10-30.md). Ghi nhận demo chưa cập nhật bên dưới là trước lần đồng bộ này.
+
+> 30/10 — Chủ dự án tạm hoãn đánh giá giảng viên cho đến khi mở lại; M6 vẫn chờ, giữ điều kiện nghiệm thu. Tiếp tục kỹ thuật sau diễn tập: đã thêm xem lại kết quả CV–JD qua UI/API chỉ đọc, không tạo job/attempt; backend160/160, FE11/11 và lint/typecheck/build, E2E tích hợp1/1 đạt trên môi trường riêng. Demo5190 và gói bàn giao29/10 chưa cập nhật sửa này. [Báo cáo và ranh giới phiên bản](report/pair-history-followup-2026-10-30.md).
+
 > 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](report/handoff-sync-2026-10-29.md).
 
 

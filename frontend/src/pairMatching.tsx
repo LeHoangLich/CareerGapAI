@@ -44,9 +44,15 @@ function PairDetails({ pair }: { pair: Pair }) {
   </div>;
 }
 
-export function PairAnalysisButton({ resumeVersionId, jobVersionId, applicationId, context = 'self' }: { resumeVersionId: string; jobVersionId: string; applicationId?: string; context?: string }) {
+type PairSelection = { resumeVersionId: string; jobVersionId: string; applicationId?: string; context?: string };
+export function PairAnalysisButton(props: PairSelection) {
+  return <PairAnalysis key={`${props.resumeVersionId}:${props.jobVersionId}:${props.applicationId ?? ''}:${props.context ?? 'self'}`} {...props}/>;
+}
+
+function PairAnalysis({ resumeVersionId, jobVersionId, applicationId, context = 'self' }: PairSelection) {
   const [id, setId] = useState<string>(); const [pair, setPair] = useState<Pair>();
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
   useEffect(() => {
     if (!id) return;
     let disposed = false; let timer: ReturnType<typeof setTimeout>;
@@ -61,13 +67,27 @@ export function PairAnalysisButton({ resumeVersionId, jobVersionId, applicationI
     void poll(); return () => { disposed = true; clearTimeout(timer); };
   }, [id]);
   async function start() {
-    setBusy(true); setError(''); setPair(undefined); setId(undefined);
+    setBusy(true); setError(''); setNotice(''); setPair(undefined); setId(undefined);
     try {
       const value = await api<{ id: string }>('/api/matching/pairs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId, jobVersionId, applicationId, context, idempotencyKey: crypto.randomUUID() }) });
       setId(value.id);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
+  async function readLatest() {
+    setBusy(true); setError(''); setNotice(''); setPair(undefined); setId(undefined);
+    const query = new URLSearchParams({ resumeVersionId, jobVersionId, context });
+    if (applicationId) query.set('applicationId', applicationId);
+    try {
+      const value = await api<{ pair: Pair | null }>(`/api/matching/pairs/latest?${query}`);
+      if (value.pair) {
+        setPair(value.pair); setId(value.pair.id);
+        setNotice('Kết quả đã lưu theo dữ liệu và phương pháp tại lần phân tích trước. Xem lại không tạo yêu cầu AI mới.');
+      } else setNotice('Chưa có kết quả đã lưu có thể xem cho cặp CV–JD này.');
+    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  }
   return <div><button className="secondary" disabled={busy || pair?.status === 'queued' || pair?.status === 'running'} onClick={() => void start()}>{busy ? 'Đang gửi…' : applicationId ? 'Phân tích theo hồ sơ lúc nộp' : 'Phân tích cặp CV–JD'}</button>
+    <button className="secondary" disabled={busy} onClick={() => void readLatest()}>Xem kết quả đã lưu</button>
+    {notice && <p className="hint" role="status">{notice}</p>}
     {error && <p role="alert">{error}</p>}{pair && <PairDetails pair={pair}/>}</div>;
 }
 

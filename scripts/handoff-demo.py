@@ -1,17 +1,21 @@
 """Windows localhost handoff demo: isolated persistent synthetic DB, all providers Fake.
-Usage: python scripts/handoff-demo.py start|fault|stop
+Usage: python scripts/handoff-demo.py start|fault|stop [--release 20261029|20261030]
 Requires Docker Desktop, .NET SDK, Node and npm ci in frontend. Never loads .env.
 """
 from pathlib import Path
-import sys,os,json,secrets,subprocess,time,urllib.request,shutil
+import sys,os,json,secrets,subprocess,time,urllib.request,shutil,argparse,hashlib
 
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'.local/handoff-demo-20261029'
 CONTAINER='careergap-handoff-demo-20261029'
 OWNER='careergap.handoff=20261029'
 URL='http://127.0.0.1:5190/'
-MODE=sys.argv[1] if len(sys.argv)>1 else 'start'
-if MODE not in ('start','fault','stop'):raise SystemExit(__doc__)
+parser=argparse.ArgumentParser(description=__doc__)
+parser.add_argument('mode',choices=['start','fault','stop'],nargs='?',default='start')
+parser.add_argument('--release',choices=['20261029','20261030'],default='20261030')
+args=parser.parse_args();MODE=args.mode;RELEASE=args.release
+if MODE!='stop' and RELEASE=='20261029' and not (OUT/'runtime/CareerGap.Api.dll').is_file():
+ raise SystemExit('Historical runtime 20261029 is absent; restore the original runtime/source in a separate workspace. Do not build current source under a historical release.')
 OUT.mkdir(parents=True,exist_ok=True)
 flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
 env={k:v for k,v in os.environ.items() if k.upper() in {'PATH','SYSTEMROOT','WINDIR','TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA','PROGRAMFILES','PROGRAMFILES(X86)','PROGRAMW6432','COMSPEC','PATHEXT','DOTNET_ROOT'}}
@@ -48,14 +52,15 @@ for _ in range(120):
  time.sleep(.5)
 else:raise RuntimeError('Owned database not ready')
 e=dict(env,ASPNETCORE_ENVIRONMENT='Development',DOTNET_ENVIRONMENT='Development',ConnectionStrings__Database=f"Host=127.0.0.1;Port=55449;Database=careergap_test_ui_handoff_demo;Username=handoff_demo;Password={cfg['password']}",Storage__Provider='Local',Storage__Root=str(OUT/'files'),Ai__Provider='Fake',Ai__Enabled='false' if MODE=='fault' else 'true',Ai__ApiKey='',Ai__MonthlyLimit='0',Ai__PollSeconds='1',Ai__PrivateDiagnostics='false',Search__Provider='Fake',Search__ApiKey='',Email__Provider='Fake',Email__ApiKey='',Recovery__BaseUrl=URL,Logging__LogLevel__Default='Warning')
-runtime=OUT/'runtime'
+runtime=OUT/'runtime' if RELEASE=='20261029' else OUT/'releases'/RELEASE/'runtime'
+build=OUT/'build' if RELEASE=='20261029' else OUT/'releases'/RELEASE/'build'
 if not (runtime/'CareerGap.Api.dll').exists():
  if not (ROOT/'frontend/node_modules').exists():raise RuntimeError('Run npm ci in frontend first')
  npm=shutil.which('npm.cmd' if os.name=='nt' else 'npm')
  run('frontend-build',[npm,'run','build'],ROOT/'frontend')
- run('backend-restore',['dotnet','restore','backend/CareerGap.Api/CareerGap.Api.csproj','--locked-mode','--artifacts-path',str(OUT/'build')])
- run('backend-build',['dotnet','build','backend/CareerGap.Api/CareerGap.Api.csproj','--no-restore','--artifacts-path',str(OUT/'build')])
- shutil.copytree(OUT/'build/bin/CareerGap.Api/debug',runtime,ignore=shutil.ignore_patterns('appsettings.Local.json'))
+ run('backend-restore',['dotnet','restore','backend/CareerGap.Api/CareerGap.Api.csproj','--locked-mode','--artifacts-path',str(build)])
+ run('backend-build',['dotnet','build','backend/CareerGap.Api/CareerGap.Api.csproj','--no-restore','--artifacts-path',str(build)])
+ shutil.copytree(build/'bin/CareerGap.Api/debug',runtime,ignore=shutil.ignore_patterns('appsettings.Local.json'))
  shutil.copytree(ROOT/'frontend/dist',runtime/'wwwroot')
 if not cfg.get('migrated'):
  migrate=OUT/'migrate';migrate.mkdir(exist_ok=True)
@@ -72,7 +77,7 @@ if not cfg.get('seeded'):
  (OUT/'accounts.private.md').write_text(accounts,encoding='utf-8')
 with (OUT/'api.log').open('ab') as log:
  p=subprocess.Popen(['dotnet',str(runtime/'CareerGap.Api.dll'),'--urls',URL.rstrip('/')],cwd=runtime,env=e,stdout=log,stderr=subprocess.STDOUT,creationflags=flags)
-save(OUT/'process.json',{'pid':p.pid,'mode':MODE,'providers':'Fake','real_keys_loaded':False,'URL':URL,'database':'isolated synthetic handoff demo','stopped':False})
+save(OUT/'process.json',{'pid':p.pid,'mode':MODE,'release':RELEASE,'runtime':str(runtime),'assembly_sha256':hashlib.sha256((runtime/'CareerGap.Api.dll').read_bytes()).hexdigest(),'providers':'Fake','real_keys_loaded':False,'URL':URL,'database':'isolated synthetic handoff demo','stopped':False})
 for _ in range(100):
  if p.poll() is not None:raise RuntimeError('Demo exited; see private api.log')
  try:
@@ -81,5 +86,5 @@ for _ in range(100):
  except OSError:pass
  time.sleep(.2)
 else:raise RuntimeError('Demo API not ready')
-print('Demo ready '+URL+' ; all providers Fake, mode='+MODE)
+print('Demo ready '+URL+' ; all providers Fake, mode='+MODE+' ; release='+RELEASE)
 print('Private accounts: '+str(OUT/'accounts.private.md'))

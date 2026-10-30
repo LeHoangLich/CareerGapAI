@@ -1,5 +1,7 @@
 # CareerGap AI
 
+> 30/10 — Bản demo/bàn giao hiện hành có Xem kết quả đã lưu CV–JD, runtime20261030 tại5190 và rollback29/10 đã thử; dữ liệu/tài khoản synthetic giữ nguyên. Backend160/160, FE11/11 + lint/typecheck/build, E2E21/21 mới đạt; backup/restore43bảng/7objects, production UI và Docker lookup đã kiểm. Gói29/10 giữ lịch sử. Đánh giá giảng viên đang hoãn theo owner, M6 chưa nghiệm thu. [Bộ mới](project-docs/handoff/stage-e-20261030/README.md) · [Biên bản](project-docs/report/handoff-sync-2026-10-30.md).
+
 > 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](project-docs/report/handoff-sync-2026-10-29.md).
 
 

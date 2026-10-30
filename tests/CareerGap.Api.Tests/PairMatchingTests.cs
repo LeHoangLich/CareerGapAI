@@ -140,6 +140,47 @@ public sealed partial class PairMatchingTests(FoundationFixture fixture) : IClas
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
+    private static string LatestUrl(Setup s, string context = "self", Guid? application = null) =>
+        $"/api/matching/pairs/latest?resumeVersionId={s.Cv}&jobVersionId={s.Jd}&context={context}" +
+        (application.HasValue ? $"&applicationId={application}" : "");
+
+    [Fact] public async Task LatestLookupIsReadOnlyExactScopedAndAvailableWhenAiDisabled()
+    {
+        var s = await Prepare(); var url = LatestUrl(s);
+        Assert.Equal(JsonValueKind.Null, (await s.Candidate.GetFromJsonAsync<JsonElement>(url)).GetProperty("pair").ValueKind);
+        Assert.Equal(HttpStatusCode.BadRequest, (await s.Candidate.GetAsync(LatestUrl(s, "invalid"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await s.Candidate.GetAsync(LatestUrl(s, "application"))).StatusCode);
+        var id = await Enqueue(s.Candidate, s);
+        Assert.Equal("queued", (await s.Candidate.GetFromJsonAsync<JsonElement>(url)).GetProperty("pair").GetProperty("status").GetString());
+        await Drain(id);
+        var newest = await Enqueue(s.Candidate, s); // A cached job is still a distinct historical run.
+        using var scope = fixture.App.Services.CreateScope(); var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+        var jobsBefore = await db.AiJobs.CountAsync(x => x.RequestedBy == s.CandidateId);
+        var attemptsBefore = await db.ExternalCallAttempts.CountAsync();
+        var options = scope.ServiceProvider.GetRequiredService<Microsoft.Extensions.Options.IOptions<AiOptions>>().Value;
+        var enabledBefore = options.Enabled;
+        try
+        {
+            options.Enabled = false;
+            for (var i = 0; i < 2; i++)
+            {
+                var pair = (await s.Candidate.GetFromJsonAsync<JsonElement>(url)).GetProperty("pair");
+                Assert.Equal(newest, pair.GetProperty("id").GetGuid());
+                Assert.Equal(s.CvRevision, pair.GetProperty("resumeRevisionId").GetGuid());
+                Assert.Equal(s.JdRevision, pair.GetProperty("jobRevisionId").GetGuid());
+                Assert.Equal(50m, pair.GetProperty("score").GetDecimal());
+            }
+        }
+        finally { options.Enabled = enabledBefore; }
+        var (other, _) = await fixture.User(); var (admin, _) = await fixture.User("Admin");
+        foreach (var client in new[] { other, admin, s.Recruiter })
+            Assert.Equal(JsonValueKind.Null, (await client.GetFromJsonAsync<JsonElement>(url)).GetProperty("pair").ValueKind);
+        Assert.Equal(JsonValueKind.Null, (await s.Candidate.GetFromJsonAsync<JsonElement>(
+            $"/api/matching/pairs/latest?resumeVersionId={s.Cv}&jobVersionId={Guid.NewGuid()}")).GetProperty("pair").ValueKind);
+        Assert.Equal(jobsBefore, await db.AiJobs.CountAsync(x => x.RequestedBy == s.CandidateId));
+        Assert.Equal(attemptsBefore, await db.ExternalCallAttempts.CountAsync());
+    }
+
     [Fact] public async Task PairIsDurableGroundedOwnerOnlyAndCacheHitBindsItsOwnKey()
     {
         var s = await Prepare(); var id = await Enqueue(s.Candidate, s); await Drain(id);
@@ -172,6 +213,7 @@ public sealed partial class PairMatchingTests(FoundationFixture fixture) : IClas
         Assert.Equal(HttpStatusCode.NotFound, (await s.Recruiter.GetAsync($"/api/matching/pairs/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await s.Recruiter.GetAsync($"/api/ai/jobs/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await s.Recruiter.GetAsync($"/api/matching/pairs/{id}/evaluation-capture")).StatusCode);
+        Assert.Equal(JsonValueKind.Null, (await s.Recruiter.GetFromJsonAsync<JsonElement>(LatestUrl(s, "public_pool"))).GetProperty("pair").ValueKind);
         Assert.Equal(HttpStatusCode.NotFound, (await s.Recruiter.PostAsJsonAsync("/api/matching/pairs", new CreatePairRequest(s.Cv, s.Jd, Guid.NewGuid(), "public_pool"))).StatusCode);
     }
     [Fact] public async Task NewConfirmationsDoNotBackfillApplicationAndExistingKeyKeepsItsInputs()
@@ -202,7 +244,12 @@ public sealed partial class PairMatchingTests(FoundationFixture fixture) : IClas
         var reanalyzed = await Enqueue(s.Recruiter, s, "application", appId);
         var pinned = await s.Recruiter.GetFromJsonAsync<PairJobView>($"/api/matching/pairs/{reanalyzed}");
         Assert.Equal(s.Jd, pinned!.JobVersionId); Assert.Equal(s.JdRevision, pinned.JobRevisionId);
+        var latest = (await s.Recruiter.GetFromJsonAsync<JsonElement>(LatestUrl(s, "application", appId))).GetProperty("pair");
+        Assert.Equal(s.Jd, latest.GetProperty("jobVersionId").GetGuid());
+        Assert.Equal(s.CvRevision, latest.GetProperty("resumeRevisionId").GetGuid());
+        Assert.Equal(JsonValueKind.Null, (await s.Recruiter.GetFromJsonAsync<JsonElement>(LatestUrl(s, "application", Guid.NewGuid()))).GetProperty("pair").ValueKind);
         Assert.Equal(HttpStatusCode.NotFound, (await s.Candidate.GetAsync($"/api/matching/pairs/{self}")).StatusCode);
+        Assert.Equal(JsonValueKind.Null, (await s.Candidate.GetFromJsonAsync<JsonElement>(LatestUrl(s))).GetProperty("pair").ValueKind);
     }
     [Fact] public async Task PublicRevocationBeforeDispatchMakesNoExternalAttempt()
     {

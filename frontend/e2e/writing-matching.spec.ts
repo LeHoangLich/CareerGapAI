@@ -75,6 +75,29 @@ test('Fake writing and matching run through workers; private CV application pres
     const results = candidate.getByRole('region', { name: 'Kết quả đối chiếu AI', exact: true });
     await expect(results.locator('.pair-result').first()).toContainText('Kết quả mô phỏng kiểm thử', { timeout: 30000 });
     await expect(candidate.locator('.job-discovery-controls .pair-result')).toHaveCount(0);
+    // Reopen through ordinary UI after a full page reload; do not rewrite idempotency keys.
+    await candidate.reload();
+    await openView(candidate, 'jobs');
+    await candidate.getByLabel('CV dùng để gợi ý việc', { exact: true }).selectOption(version.id);
+    await candidate.getByRole('button', { name: 'Tìm việc theo CV', exact: true }).click();
+    const historyRow = candidate.locator('.job-discovery-results .matching-results > li').filter({ hasText: title });
+    let pairPosts = 0;
+    candidate.on('request', request => {
+      if (request.method() === 'POST' && ['/api/matching/pairs', '/api/matching/recommendations'].includes(new URL(request.url()).pathname)) pairPosts++;
+    });
+    const lookup = candidate.waitForResponse(response => new URL(response.url()).pathname === '/api/matching/pairs/latest');
+    await historyRow.getByRole('button', { name: 'Xem kết quả đã lưu', exact: true }).click();
+    const historical = await lookup;
+    expect(historical.request().method()).toBe('GET');
+    const stored = (await historical.json()).pair;
+    expect(batch.items.map((item: { pairJobId: string }) => item.pairJobId)).toContain(stored.id);
+    await expect(historyRow.locator('.pair-result')).toContainText('Kết quả mô phỏng kiểm thử');
+    await expect(historyRow).toContainText('Xem lại không tạo yêu cầu AI mới.');
+    await historyRow.locator('summary').filter({ hasText: 'Xem tiêu chí và bằng chứng' }).click();
+    await historyRow.getByRole('button', { name: 'Tìm nguồn học cho tiêu chí này', exact: true }).first().click();
+    await historyRow.getByRole('button', { name: 'Tìm tài liệu học', exact: true }).first().click();
+    await expect(historyRow).toContainText('Search đang dùng mô phỏng local; chưa tìm kiếm web thật.');
+    expect(pairPosts).toBe(0);
     await candidate.getByLabel('Từ khóa', { exact: true }).fill(title);
     await candidate.getByRole('button', { name: 'Tìm việc', exact: true }).click();
     const publicJob = candidate.locator('.job-list > .job-card').filter({ hasText: title });
