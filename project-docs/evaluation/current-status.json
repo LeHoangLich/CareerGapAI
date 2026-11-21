@@ -1,0 +1,26 @@
+{
+  "date": "2026-11-01",
+  "project_status": "final_defense_ready",
+  "milestone_M6": "final_defense_ready",
+  "acceptance_type": "internal_owner_acceptance",
+  "stage_E": "complete",
+  "stage_GD6": "complete",
+  "progress": {
+    "scope": "owner-accepted internal deliverables P01-P21, equal-count convention; not accuracy, coverage or academic grade",
+    "total": 21,
+    "complete": 21,
+    "waiting": 0,
+    "not_started": 0,
+    "percent_complete": 100
+  },
+  "defense_baseline": "20261031",
+  "source_freeze": {
+    "status": "frozen",
+    "manifest": "project-docs/evaluation/source-freeze-2026-11-01.json",
+    "sha256": "0a13ad0ce3bb3ce843515de428d5347dca2facc7c7b9b9b328bc1dc33412498e",
+    "file_count": 222,
+    "all_checkout_hashes_match": true
+  },
+  "authoritative_manifest": "project-docs/evaluation/m6-internal-acceptance-2026-11-01.json",
+  "authoritative_manifest_sha256": "aeafd70088ba1ebf412f918d2a610da71eb7cba78fee6967408691ea40bd3509"
+}

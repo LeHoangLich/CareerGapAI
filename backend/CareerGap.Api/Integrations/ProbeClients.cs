@@ -10,6 +10,7 @@ public interface IWebSearchClient
 public interface IEmailSender
 {
     Task SendPasswordRecoveryAsync(string recipient, Uri recoveryLink, CancellationToken ct);
+    Task SendBusinessVerificationAsync(string recipient, Uri link, CancellationToken ct) => throw new IntegrationError("email_not_configured");
 }
 public sealed record LocalPasswordRecovery(string Recipient, string Link, DateTimeOffset CreatedAt);
 public sealed class LocalMailOutbox
@@ -31,6 +32,8 @@ public sealed class FakeWebSearchClient : IWebSearchClient
 }
 public sealed class FakeEmailSender(LocalMailOutbox outbox) : IEmailSender
 {
+    public Task SendBusinessVerificationAsync(string recipient, Uri link, CancellationToken ct)
+    { ct.ThrowIfCancellationRequested(); outbox.Add(new LocalPasswordRecovery(recipient,link.ToString(),DateTimeOffset.UtcNow)); return Task.CompletedTask; }
     public Task SendPasswordRecoveryAsync(string recipient, Uri recoveryLink, CancellationToken ct)
     { ct.ThrowIfCancellationRequested(); outbox.Add(new LocalPasswordRecovery(recipient, recoveryLink.ToString(), DateTimeOffset.UtcNow)); return Task.CompletedTask; }
 }

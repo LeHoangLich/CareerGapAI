@@ -1,0 +1,448 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "status": "owner_accepted_limited_pilot_quality",
+  "acceptor": "Lê Hoàng Lịch (Project Owner)",
+  "technical_compiler": "Codex (Authorized by Owner)",
+  "scope": "pilot_2cv_4jd_limited",
+  "owner_pilot_quality_accepted": true,
+  "acceptance_basis": "explicit_owner_chat_decision_2026-10-30_after_results",
+  "decision": "owner accepts limited pilot as sufficient for thesis presentation/defense with disclosed limitations; does not bind external evaluator",
+  "new_preregistered_threshold": false,
+  "dataset": {
+    "cv": 2,
+    "cv_en": 2,
+    "cv_vi": 0,
+    "jd": 4,
+    "jd_en_it": 2,
+    "jd_vi_non_it": 2,
+    "groups": 6,
+    "field_labels": 131,
+    "cv_labels": 95,
+    "jd_labels": 36,
+    "pair_references": 8,
+    "criterion_judgments": 72,
+    "criterion_exclusions": 28,
+    "k": 3
+  },
+  "initial_E_execution": {
+    "schema_version": 1,
+    "scope": "2EnglishCVx4JD_narrow_registered_primary_methods",
+    "requests_unique": 14,
+    "admitted_jobs": 14,
+    "attempts": 23,
+    "succeeded_jobs": 6,
+    "failed_jobs": 8,
+    "statuses_by_kind": {
+      "cv_extraction": {
+        "failed": 2
+      },
+      "pair": {
+        "succeeded": 2,
+        "failed": 6
+      },
+      "writing": {
+        "succeeded": 4
+      }
+    },
+    "provider_cost_upper_bound_usd": "0.03049410",
+    "input_tokens": 57091,
+    "output_tokens": 11139,
+    "unknown_attempts": 0,
+    "median_job_ms": 8611.748,
+    "p95_job_ms_nearest_rank": 12433.526,
+    "latency_scope": "application job created-to-finished incl queue/retry; excludes pre-admission HTTP429 wait; not isolated provider latency",
+    "admission_429_observations": 7,
+    "cv_extraction": {
+      "documents": 2,
+      "groups": 2,
+      "scoredDocuments": 0,
+      "failedOrMissingDocuments": 2,
+      "tp": 0,
+      "fp": 0,
+      "fn": 0,
+      "precision": null,
+      "recall": null,
+      "f1": null
+    },
+    "baseline": {
+      "cvToJobs": {
+        "queryCount": 2,
+        "queriesWithLabeledPositives": 2,
+        "zeroPositiveQueries": 0,
+        "queriesWithNonzeroIdealDcg": 2,
+        "queriesWithResults": 2,
+        "judgedCandidatePairs": 8,
+        "selectedPairs": 6,
+        "positiveSelectedPairs": 4,
+        "judgmentCoverage": 1.0,
+        "selectedLabelCoverage": 1.0,
+        "meanSelectionRecallOnPositiveQueries": 1.0,
+        "meanPrecisionAtKOnAllQueries": 0.6666666666666666,
+        "top1RelevantRateOnAllQueries": 1,
+        "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+        "recallDenominatorQueries": 2,
+        "precisionDenominatorQueries": 2,
+        "top1DenominatorQueries": 2,
+        "ndcgDenominatorQueries": 2
+      },
+      "jobsToResumes": {
+        "queryCount": 4,
+        "queriesWithLabeledPositives": 2,
+        "zeroPositiveQueries": 2,
+        "queriesWithNonzeroIdealDcg": 2,
+        "queriesWithResults": 3,
+        "judgedCandidatePairs": 8,
+        "selectedPairs": 6,
+        "positiveSelectedPairs": 4,
+        "judgmentCoverage": 1.0,
+        "selectedLabelCoverage": 1.0,
+        "meanSelectionRecallOnPositiveQueries": 1.0,
+        "meanPrecisionAtKOnAllQueries": 0.5,
+        "top1RelevantRateOnAllQueries": 0.5,
+        "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+        "recallDenominatorQueries": 2,
+        "precisionDenominatorQueries": 4,
+        "top1DenominatorQueries": 4,
+        "ndcgDenominatorQueries": 2
+      }
+    },
+    "LLM_rerank_metrics": null,
+    "LLM_rerank_unavailable_reason": "six_failed_pairs_guard_rejected_incomplete_score_matrix; no failed pair mapped to zero",
+    "criterion_statuses_scored_successful_only": 10,
+    "criterion_status_matches_successful_only": 10,
+    "exact_evidence_successful_only": true,
+    "writing_jobs_passed_source_group_controls": 4,
+    "search_requests": 0,
+    "learning_quality_actual_search_sample": 0,
+    "raw_failed_response_bodies_available": false,
+    "raw_failed_response_limitation": "existing runtime retains error and token/cost but not rejected raw LLM body; do not infer exact offending claim",
+    "human_or_instructor_review": false,
+    "representative_quality_accepted": false,
+    "M6_accepted": false
+  },
+  "postfix": {
+    "scope": "post-fix regression on viewed final, not new independent final",
+    "cv": {
+      "documents": 2,
+      "groups": 2,
+      "scoredDocuments": 2,
+      "failedOrMissingDocuments": 0,
+      "tp": 43,
+      "fp": 11,
+      "fn": 41,
+      "precision": 0.7962962962962963,
+      "recall": 0.5119047619047619,
+      "f1": 0.6231884057971014
+    },
+    "cv_protocol": "cv-capture-exact-path-value-v1",
+    "cv_positive_labels": 84,
+    "cv_absent_labels": 11,
+    "correct_absent": 11,
+    "cv_partial_match": {
+      "precision": null,
+      "recall": null,
+      "f1": null,
+      "reason": "not_defined_or_measured_in_historical_Stage_E_protocol; no posthoc replacement"
+    },
+    "parser_recovered_values": 81,
+    "parser_expected_values": 84,
+    "parser_recovery_is_not_partial_F1": true,
+    "unscored_predictions": 28,
+    "source_disagreements_on_exact_TP": 0,
+    "pair_successful": 8,
+    "pair_total": 8,
+    "criterion_matches": 34,
+    "criterion_denominator": 44,
+    "comparison": {
+      "cvToJobs": {
+        "baseline": {
+          "queryCount": 2,
+          "queriesWithLabeledPositives": 2,
+          "zeroPositiveQueries": 0,
+          "queriesWithNonzeroIdealDcg": 2,
+          "queriesWithResults": 2,
+          "judgedCandidatePairs": 8,
+          "selectedPairs": 6,
+          "positiveSelectedPairs": 4,
+          "judgmentCoverage": 1.0,
+          "selectedLabelCoverage": 1.0,
+          "meanSelectionRecallOnPositiveQueries": 1.0,
+          "meanPrecisionAtKOnAllQueries": 0.6666666666666666,
+          "top1RelevantRateOnAllQueries": 1,
+          "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+          "recallDenominatorQueries": 2,
+          "precisionDenominatorQueries": 2,
+          "top1DenominatorQueries": 2,
+          "ndcgDenominatorQueries": 2
+        },
+        "rerankedSelectedSet": {
+          "queryCount": 2,
+          "queriesWithLabeledPositives": 2,
+          "zeroPositiveQueries": 0,
+          "queriesWithNonzeroIdealDcg": 2,
+          "queriesWithResults": 2,
+          "judgedCandidatePairs": 8,
+          "selectedPairs": 6,
+          "positiveSelectedPairs": 4,
+          "judgmentCoverage": 1.0,
+          "selectedLabelCoverage": 1.0,
+          "meanSelectionRecallOnPositiveQueries": 1.0,
+          "meanPrecisionAtKOnAllQueries": 0.6666666666666666,
+          "top1RelevantRateOnAllQueries": 1,
+          "meanNdcgAtKOnNonzeroIdealQueries": 0.9169956161990744,
+          "recallDenominatorQueries": 2,
+          "precisionDenominatorQueries": 2,
+          "top1DenominatorQueries": 2,
+          "ndcgDenominatorQueries": 2
+        }
+      },
+      "jobsToResumes": {
+        "baseline": {
+          "queryCount": 4,
+          "queriesWithLabeledPositives": 2,
+          "zeroPositiveQueries": 2,
+          "queriesWithNonzeroIdealDcg": 2,
+          "queriesWithResults": 3,
+          "judgedCandidatePairs": 8,
+          "selectedPairs": 6,
+          "positiveSelectedPairs": 4,
+          "judgmentCoverage": 1.0,
+          "selectedLabelCoverage": 1.0,
+          "meanSelectionRecallOnPositiveQueries": 1.0,
+          "meanPrecisionAtKOnAllQueries": 0.5,
+          "top1RelevantRateOnAllQueries": 0.5,
+          "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+          "recallDenominatorQueries": 2,
+          "precisionDenominatorQueries": 4,
+          "top1DenominatorQueries": 4,
+          "ndcgDenominatorQueries": 2
+        },
+        "rerankedSelectedSet": {
+          "queryCount": 4,
+          "queriesWithLabeledPositives": 2,
+          "zeroPositiveQueries": 2,
+          "queriesWithNonzeroIdealDcg": 2,
+          "queriesWithResults": 3,
+          "judgedCandidatePairs": 8,
+          "selectedPairs": 6,
+          "positiveSelectedPairs": 4,
+          "judgmentCoverage": 1.0,
+          "selectedLabelCoverage": 1.0,
+          "meanSelectionRecallOnPositiveQueries": 1.0,
+          "meanPrecisionAtKOnAllQueries": 0.5,
+          "top1RelevantRateOnAllQueries": 0.5,
+          "meanNdcgAtKOnNonzeroIdealQueries": 1.0,
+          "recallDenominatorQueries": 2,
+          "precisionDenominatorQueries": 4,
+          "top1DenominatorQueries": 4,
+          "ndcgDenominatorQueries": 2
+        }
+      }
+    },
+    "cv_to_jd_rerank_improvement": false,
+    "pair_method": "d9f739d47d2e8d8f9eabb4ca57439a46c8541a1140525fafa3c05679b7c181ac"
+  },
+  "writing": {
+    "E_successful": 4,
+    "E_total": 4,
+    "whole_facts_and_groups_passed": 4,
+    "review_actor": "codex_source_contract_review_not_human_preference",
+    "cases": [
+      {
+        "documentId": "cv-c-derived-pdf",
+        "language": "vi",
+        "sections": 12,
+        "wholeFactsAndGroupsPass": true,
+        "automaticallyAccepted": false
+      },
+      {
+        "documentId": "cv-c-derived-pdf",
+        "language": "en",
+        "sections": 12,
+        "wholeFactsAndGroupsPass": true,
+        "automaticallyAccepted": false
+      },
+      {
+        "documentId": "cv-veekas-professional-pdf",
+        "language": "vi",
+        "sections": 6,
+        "wholeFactsAndGroupsPass": true,
+        "automaticallyAccepted": false
+      },
+      {
+        "documentId": "cv-veekas-professional-pdf",
+        "language": "en",
+        "sections": 6,
+        "wholeFactsAndGroupsPass": true,
+        "automaticallyAccepted": false
+      }
+    ],
+    "new_followup_real_writing_calls": 0,
+    "D_synthetic_owner_review_passed": 2,
+    "synthetic_D_not_added_to_final_sample": true
+  },
+  "search": {
+    "D_requests": 2,
+    "D_credits": 2,
+    "D_owner_review": "passed_two_groups",
+    "E_followup_requests": 2,
+    "E_followup_credits": 2,
+    "E_results": 6,
+    "E_unique_urls": 4,
+    "E_url_review": {
+      "read_429": 2,
+      "shell_only": 1,
+      "readable": 1
+    },
+    "E_vietnamese_content_quality_accepted": false,
+    "dashboard": {
+      "aggregate_reconciliation": "completed_by_owner_dashboard_and_statement",
+      "observed_at_local": "2026-10-28 17:13 Asia/Saigon",
+      "used": 4,
+      "limit": 1000,
+      "expected_D_plus_E": 4,
+      "paygo_enabled": false,
+      "paygo_credits_displayed": 0,
+      "detailed_logs_accessible": false,
+      "reset_text": "Resets monthly",
+      "exact_reset_date_timezone_verified": false,
+      "allowance_reopened": false
+    },
+    "dashboard_is_historical_not_new_read": true,
+    "remaining_allowance": 0
+  },
+  "email": {
+    "attempts": 2,
+    "accepted": 1,
+    "unknown": 1,
+    "owner_inbox_reset_login_confirmed": true,
+    "negative_replay_UI_observed": true,
+    "real_replay_specific_failure_cause_confirmed": false,
+    "separate_fake_single_use_HTTP_regression_passed": 1,
+    "historical_monthly_used": 1,
+    "historical_monthly_limit": 3000,
+    "historical_daily_used": 0,
+    "historical_daily_limit": 100,
+    "project_sender_domain_verified": false,
+    "scope": "provider_test_sender_to_owner_controlled_recipient_localhost",
+    "new_E_email_requests": 0,
+    "remaining_allowance": 0
+  },
+  "label_review": {
+    "authorized_technical_reviewed": 318,
+    "direct_human_reviewed": 0,
+    "independent_expert_review": false,
+    "overlay_preserved": true,
+    "historical_metrics_recomputed_with_overlay": false
+  },
+  "limitations": [
+    "no_native_Vietnamese_CV",
+    "language_domain_confounding",
+    "two_reflowed_professional_PDFs_not_representative_formats",
+    "postfix_is_viewed_set_regression_not_new_holdout; upstream exposure and initial registered-method freeze retained",
+    "CV_to_JD_nDCG_regressed",
+    "JD_to_CV_pool_two_with_k_three",
+    "human_direct_label_review_zero",
+    "no_external_evaluator_feedback",
+    "partial_match_not_measured",
+    "Vietnamese_learning_content_not_accepted",
+    "not_representative_quality",
+    "not_production_ready"
+  ],
+  "budget_historical_snapshot": {
+    "known_cost_upper_bound_usd": "0.03773130",
+    "development_debit_usd": "0.04",
+    "new_unknown_hold_usd": "0.01",
+    "unknown_journal_attempts": 1,
+    "backend_reserved_usd": "0.00971520",
+    "all_backend_attempts": 26,
+    "backend_jobs": 22,
+    "direct_diagnostic_calls": 2,
+    "provider_HTTP_calls_with_reply": 27,
+    "provider_preflight_failure_before_HTTP": 1,
+    "tracked_development_spent_usd": "0.11",
+    "total_conservative_holds_usd": "0.03",
+    "guarded_remaining_usd": "1.86",
+    "development_limit_usd": "2.00",
+    "no_budget_reset_or_unknown_refund": true,
+    "exact_invoice_verified": false,
+    "CNY_converted": false
+  },
+  "milestones": {
+    "M3_changed": false,
+    "M5_changed": false,
+    "M6_accepted": false,
+    "P20_complete": false,
+    "external_review": "deferred_until_owner_reopens"
+  },
+  "execution": {
+    "external_API_calls": 0,
+    "new_cost_usd": "0.00",
+    "runtime_changes": false,
+    "historical_results_changed": false,
+    "labels_changed": false,
+    "ledger_changed": false,
+    "handoff_changed": false,
+    "additional_API_or_transfer_authorization": false
+  },
+  "evidence": [
+    {
+      "path": "project-docs/evaluation/stage-e-results-2026-10-27.json",
+      "sha256": "c6a5a1dcf53187073b85cff276414c90b821b55f82128b8dbf84af8475952b93"
+    },
+    {
+      "path": "project-docs/report/stage-e-2026-10-27.md",
+      "sha256": "40b878ebc07421d39042eefe73ea0fba127c435db8de633c8e8904a4299b2806"
+    },
+    {
+      "path": "project-docs/evaluation/stage-e-followup-2026-10-27.json",
+      "sha256": "643fd8e4c6ad7b1e7b445d1870e488b256d5e429605d5731a96995521eea91b1"
+    },
+    {
+      "path": "project-docs/report/stage-e-followup-2026-10-27.md",
+      "sha256": "4fa566cf28563f154a4f7a2a7434394afe8fd5cb6dc59cba7f6aef74583a7bb8"
+    },
+    {
+      "path": "project-docs/evaluation/stage-e-external-evidence-2026-10-28.json",
+      "sha256": "f877f070b2c5b5cfa569fb4691dd4b6d41af5de0350edc0f2f2ce41aca6c8169"
+    },
+    {
+      "path": "project-docs/report/stage-e-external-evidence-2026-10-28.md",
+      "sha256": "300fb053414eb343e18165ee8ce9017b5aa7a78294ee8e6bf1f78620b6d88407"
+    },
+    {
+      "path": "project-docs/evaluation/label-review-2026-10-30.json",
+      "sha256": "0c44f576a70fc8634d4b047462f2b913ba717beac144680e7d3de4ffcf47f646"
+    },
+    {
+      "path": "project-docs/report/label-review-2026-10-30.md",
+      "sha256": "c25f894590ebc62047453c2c8eae474ed61df07e449af853c0652481f088d9dc"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+      "sha256": "fac95ec4233dcf9d5990093d0b43fb72afa926ee3ff249f9239a24f32ade7dad"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-email-provider-2026-10-24.json",
+      "sha256": "ff27170929b9db3047da467bb6d668ef4bca790933e86fc2eba65b94e94965c4"
+    },
+    {
+      "path": "project-docs/evaluation/stage-d-writing-provider-2026-10-23.json",
+      "sha256": "9f66430f7c41799754b772258746ba7e78d45dbb4ee51946e64d2881b314af0f"
+    },
+    {
+      "path": ".local/stage-e-followup-20261027/cv-report-v4.private.json",
+      "sha256": "82bdb3dd06c63dacfb79a55e92bdd963c27a80ec7b2400959151ada1d5e3ebdd"
+    },
+    {
+      "path": ".local/stage-e-20261027/writing-source-review.json",
+      "sha256": "d07a33f174b126e1fa1a417a4812d8c5b7b7cbe0b8bb80e8ccdb93fe1050c04d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/CvCaptureEvaluation.cs",
+      "sha256": "5383daf86de3e995a4fec8b119e01420da1208ca477d32758c20022dd2d22b67"
+    }
+  ],
+  "report": "project-docs/report/quality-acceptance-2026-10-30.md"
+}

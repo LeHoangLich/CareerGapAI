@@ -80,9 +80,9 @@ public sealed class CompanyJobTests(FoundationFixture fixture) : IClassFixture<F
         }
 
         var updatedRowVersion = updated.GetProperty("rowVersion").GetInt64();
-        var publish = await owner.PostAsJsonAsync($"/api/jobs/{jobId}/publish", new { rowVersion = updatedRowVersion });
+        var publish = await fixture.PublishWithVerifiedBusinessFixture(owner, jobId, new { rowVersion = updatedRowVersion });
         Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
-        Assert.Equal(HttpStatusCode.NotFound, (await otherRecruiter.PostAsJsonAsync($"/api/jobs/{jobId}/publish", new { rowVersion = updatedRowVersion + 1 })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await fixture.PublishWithVerifiedBusinessFixture(otherRecruiter, jobId, new { rowVersion = updatedRowVersion + 1 })).StatusCode);
         var search = await fixture.App.CreateClient().GetFromJsonAsync<JsonElement>($"/api/jobs?q={Uri.EscapeDataString(suffix)}&workMode=remote&page=1&pageSize=10");
         Assert.Equal(1, search!.GetProperty("total").GetInt32());
         Assert.Equal($"Platform Engineer {suffix}", search.GetProperty("items")[0].GetProperty("version").GetProperty("title").GetString());
@@ -101,7 +101,7 @@ public sealed class CompanyJobTests(FoundationFixture fixture) : IClassFixture<F
         Assert.Equal(HttpStatusCode.Created, expiredCreate.StatusCode);
         var expiringDraft = await expiredCreate.Content.ReadFromJsonAsync<JsonElement>();
         var expiringId = expiringDraft.GetProperty("id").GetGuid();
-        var expiringPublish = await owner.PostAsJsonAsync($"/api/jobs/{expiringId}/publish", new { rowVersion = expiringDraft.GetProperty("rowVersion").GetInt64() });
+        var expiringPublish = await fixture.PublishWithVerifiedBusinessFixture(owner, expiringId, new { rowVersion = expiringDraft.GetProperty("rowVersion").GetInt64() });
         Assert.Equal(HttpStatusCode.OK, expiringPublish.StatusCode);
         using (var scope = fixture.App.Services.CreateScope())
         {

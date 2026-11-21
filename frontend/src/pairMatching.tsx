@@ -1,3 +1,4 @@
+import { WeeklyRoadmap } from './weeklyRoadmap';
 import { useEffect, useState } from 'react';
 import { api } from './api';
 import { LearningResources } from './learning';
@@ -7,7 +8,10 @@ import { AiBadge } from './ui';
 
 type Fact = { key: string; value: string; sourceType: string };
 type Criterion = { requirementKey: string; requirement: string; importance: string; status: string; evidence: Fact[]; explanation: string; needsReview: boolean; requirementSourceType: string };
-type Pair = { id: string; context: string; status: string; errorCode: string | null; provider: string; score: number | null; criteria: Criterion[] | null; location: string | null; workMode: string; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null };
+export type CriterionGroupSummary = { key: string; label: string; status: string; totalCriteria: number; metCount: number; partialCount: number; noEvidenceCount: number; summary: string };
+export type Pair = { id: string; context: string; status: string; errorCode: string | null; provider: string; score: number | null; criteria: Criterion[] | null; location: string | null; workMode: string; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null; careerContext?: string | null; criterionGroups?: CriterionGroupSummary[] | null };
+export const careerContextLabels: Record<string, string> = { career_start: 'Bắt đầu nghề (Career Start)', career_switch: 'Chuyển ngành (Career Switch)', promotion: 'Thăng tiến (Promotion)' };
+const groupStatusLabels: Record<string, string> = { met: 'Đáp ứng', partial: 'Một phần', no_evidence: 'Chưa có bằng chứng', not_requested: 'Không yêu cầu' };
 type Item = { resumeVersionId: string; jobVersionId: string; applicationId: string | null; label: string; retrievalScore: number | null; pairJobId: string | null; errorCode: string | null };
 type Batch = { searchSpaceCount: number; selectedCount: number; page: number; hasMore: boolean; items: Item[] };
 const reasons: Record<string, string> = {
@@ -25,15 +29,17 @@ const reasons: Record<string, string> = {
 };
 const reason = (code: string | null) => code ? reasons[code] ?? 'Chưa phân tích được. Hãy kiểm tra đầu vào hoặc thử lại sau.' : 'Chưa được chọn phân tích sâu trong lượt này.';
 
-function PairDetails({ pair }: { pair: Pair }) {
+export function PairDetails({ pair }: { pair: Pair }) {
   if (pair.status !== 'succeeded') return <p role="status">{pair.status === 'failed' || pair.status === 'cancelled' ? reason(pair.errorCode) : 'Đang chờ hoặc đang phân tích…'}</p>;
   const required = pair.criteria?.filter(c => c.importance === 'required' && c.status !== 'met' && c.status !== 'not_assessed').length ?? 0;
   const manual = pair.criteria?.filter(c => c.status === 'not_assessed').length ?? 0;
   return <div className="pair-result">
     <AiBadge>{pair.provider === 'Fake' ? 'AI mô phỏng · cần đối chiếu' : 'AI đối chiếu · cần rà soát'}</AiBadge>
-    <p><strong>Điểm đối chiếu {pair.score?.toFixed(2)}/100</strong> · rubric thử nghiệm{pair.provider === 'Fake' ? ' · Kết quả mô phỏng kiểm thử' : ''}</p>
+    <p><strong>Điểm đối chiếu {pair.score?.toFixed(2)}/100</strong> · rubric thử nghiệm{pair.provider === 'Fake' ? ' · Kết quả mô phỏng kiểm thử' : ''}{pair.careerContext ? ` · Bối cảnh: ${careerContextLabels[pair.careerContext] ?? pair.careerContext}` : ''}</p>
     <p className="hint">Điểm cho cặp CV–JD này, không phải xác suất trúng tuyển hoặc kết luận năng lực. {required} yêu cầu bắt buộc chưa được chứng minh đầy đủ.</p>
     <p className="hint">Địa điểm: {pair.location ?? 'chưa nêu'} · hình thức: {pair.workMode} · lương: {pair.salaryMin == null && pair.salaryMax == null ? 'chưa công bố' : `${pair.salaryMin ?? '?'}–${pair.salaryMax ?? '?'} ${pair.salaryCurrency ?? ''} ${pair.salaryPeriod ?? ''}`}. Chưa đánh giá sự phù hợp các điều kiện này vì chưa có mong muốn được xác nhận của ứng viên.{manual > 0 && ` ${manual} tiêu chí cần đối chiếu thủ công, không tính vào điểm.`}</p>
+    {!!pair.criterionGroups?.length && <section className="criterion-groups" aria-label="Tổng hợp 6 nhóm tiêu chí"><h4>Tổng hợp 6 nhóm tiêu chí</h4><div className="form-columns">{pair.criterionGroups.map(g => <article className="card" key={g.key}><header className="row"><strong>{g.label}</strong><span className="badge">{groupStatusLabels[g.status] ?? g.status}</span></header><p className="hint">{g.summary}</p></article>)}</div></section>}
+    {pair.context === 'self' && <WeeklyRoadmap key={pair.id} pairId={pair.id}/>}
     <details><summary>Xem tiêu chí và bằng chứng</summary><ul>{pair.criteria?.map(c => <li key={c.requirementKey}>
       <strong>{c.requirement}</strong> · {c.importance === 'required' ? 'Bắt buộc' : c.importance === 'optional' ? 'Ưu tiên' : 'Chưa phân loại'} · {c.status === 'not_assessed' ? 'Chưa đánh giá điều kiện' : c.status === 'met' ? 'Có bằng chứng đối chiếu' : c.status === 'partial' ? 'Có thông tin một phần' : 'Chưa có bằng chứng'}
       <p>{c.explanation}{c.needsReview ? ' Yêu cầu này cần người dùng đánh giá thêm.' : ''}</p>
@@ -51,6 +57,7 @@ export function PairAnalysisButton(props: PairSelection) {
 
 function PairAnalysis({ resumeVersionId, jobVersionId, applicationId, context = 'self' }: PairSelection) {
   const [id, setId] = useState<string>(); const [pair, setPair] = useState<Pair>();
+  const [careerContext, setCareerContext] = useState('');
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   useEffect(() => {
@@ -69,7 +76,7 @@ function PairAnalysis({ resumeVersionId, jobVersionId, applicationId, context = 
   async function start() {
     setBusy(true); setError(''); setNotice(''); setPair(undefined); setId(undefined);
     try {
-      const value = await api<{ id: string }>('/api/matching/pairs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId, jobVersionId, applicationId, context, idempotencyKey: crypto.randomUUID() }) });
+      const value = await api<{ id: string }>('/api/matching/pairs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId, jobVersionId, applicationId, context, careerContext: careerContext || null, idempotencyKey: crypto.randomUUID() }) });
       setId(value.id);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
@@ -85,8 +92,9 @@ function PairAnalysis({ resumeVersionId, jobVersionId, applicationId, context = 
       } else setNotice('Chưa có kết quả đã lưu có thể xem cho cặp CV–JD này.');
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
-  return <div><button className="secondary" disabled={busy || pair?.status === 'queued' || pair?.status === 'running'} onClick={() => void start()}>{busy ? 'Đang gửi…' : applicationId ? 'Phân tích theo hồ sơ lúc nộp' : 'Phân tích cặp CV–JD'}</button>
-    <button className="secondary" disabled={busy} onClick={() => void readLatest()}>Xem kết quả đã lưu</button>
+  return <div>{context === 'self' && <label>Bối cảnh nghề nghiệp<select value={careerContext} disabled={busy} onChange={e => setCareerContext(e.target.value)}><option value="">Mặc định</option>{Object.entries(careerContextLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>}
+    <div className="row"><button className="secondary" disabled={busy || pair?.status === 'queued' || pair?.status === 'running'} onClick={() => void start()}>{busy ? 'Đang gửi…' : applicationId ? 'Phân tích theo hồ sơ lúc nộp' : 'Phân tích cặp CV–JD'}</button>
+    <button className="secondary" disabled={busy} onClick={() => void readLatest()}>Xem kết quả đã lưu</button></div>
     {notice && <p className="hint" role="status">{notice}</p>}
     {error && <p role="alert">{error}</p>}{pair && <PairDetails pair={pair}/>}</div>;
 }

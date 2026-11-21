@@ -1,7 +1,9 @@
+import { AnalysisHistory } from './analysisHistory';
+import { Community } from './community';
 import { Dialog, ValidatedForm } from './ui';
 import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { api, refreshCsrf } from './api';
+import { api, ApiError, refreshCsrf } from './api';
 import { PublicJobBrowser, RecruiterJobManager } from './jobs';
 import { CandidatePublicResumeManager, PublicResumeBrowser } from './publicResumes';
 import '@fontsource/geist/400.css';
@@ -10,9 +12,11 @@ import '@fontsource/geist/600.css';
 import './style.css';
 import { FullCvReview } from './fullCvReview';
 import { AdminPanel } from './administration';
+import { PublicHome } from './publicHome';
 import { StaticLoading, Workspace, WorkspaceIntro } from './workspace';
 import { recruiterViews, useWorkspaceNavigation } from './navigation';
 import { PersistentView } from './persistentView';
+import { jobReturnAfterSignIn } from './jobLinks';
 
 const ResumeBuilderPanel = lazy(() => import('./resumeBuilder').then(module => ({ default: module.ResumeBuilderPanel })));
 
@@ -36,12 +40,16 @@ function AccountAccess({ onAuthenticated }: { onAuthenticated: (next: Session) =
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [invalidReset, setInvalidReset] = useState(false);
   const [mailLinks, setMailLinks] = useState<{ link: string }[]>([]);
   const [localMailbox,setLocalMailbox]=useState(false);
   useEffect(()=>{let disposed=false;void api<{localMailboxAvailable:boolean}>('/api/auth/recovery-options').then(x=>{if(!disposed)setLocalMailbox(x.localMailboxAvailable)}).catch(()=>{});return()=>{disposed=true}},[]);
   async function action(fn: () => Promise<void>) {
-    setBusy(true); setError(''); setMessage('');
-    try { await fn(); } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+    setBusy(true); setError(''); setMessage(''); setInvalidReset(false);
+    try { await fn(); } catch (e) {
+      setError((e as Error).message);
+      setInvalidReset(e instanceof ApiError && e.status === 400 && e.code === 'invalid_or_expired_reset');
+    } finally { setBusy(false); }
   }
   async function signIn(email: string, password: string) {
     const result = await api<{ deletionPending?: boolean; purgeAfter?: string } | undefined>('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
@@ -59,7 +67,7 @@ function AccountAccess({ onAuthenticated }: { onAuthenticated: (next: Session) =
       <label>Mật khẩu<input name="password" type="password" autoComplete="current-password" required maxLength={256}/></label>
       <button disabled={busy}>{busy ? 'Đang đăng nhập…' : 'Đăng nhập'}</button>
     </ValidatedForm><div className="auth-links"><button className="link-button" onClick={() => setMode('register')}>Tạo tài khoản</button><button className="link-button" onClick={() => setMode('forgot')}>Quên mật khẩu?</button></div></>}
-    {mode === 'register' && <><h1>Tạo tài khoản</h1><p>Chọn Candidate hoặc Recruiter. Vai trò Admin do người phụ trách cấp riêng.</p><ValidatedForm onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const email = String(data.get('email')); const password = String(data.get('password')); void action(async () => {
+    {mode === 'register' && <><h1>Tạo tài khoản</h1><p>Chọn Candidate hoặc Recruiter. Vai trò Admin do người phụ trách cấp riêng. Nhà tuyển dụng cần email tên miền doanh nghiệp; email, mã số thuế và pháp nhân phải được xác minh trước khi đăng tin.</p><ValidatedForm onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const email = String(data.get('email')); const password = String(data.get('password')); void action(async () => {
       await api('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, role: data.get('role'), displayName: data.get('displayName') }) });
       await signIn(email, password);
     }); }}>
@@ -78,8 +86,14 @@ function AccountAccess({ onAuthenticated }: { onAuthenticated: (next: Session) =
       window.history.replaceState({}, '', window.location.pathname); setMessage('Mật khẩu đã được đặt lại. Hãy đăng nhập.'); setMode('login');
     }); }}>
       <label>Mật khẩu mới<input name="password" type="password" autoComplete="new-password" required minLength={12} maxLength={256}/></label><button disabled={busy}>{busy ? 'Đang lưu…' : 'Đặt lại mật khẩu'}</button>
-    </ValidatedForm><div className="auth-links"><button className="link-button" onClick={() => setMode('login')}>Quay lại đăng nhập</button></div></>}
-    {error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
+    </ValidatedForm><div className="auth-links"><button className="link-button" onClick={() => setMode('login')}>Quay lại đăng nhập</button>
+      {invalidReset && <button className="link-button" disabled={busy} onClick={() => {
+        window.history.replaceState({}, '', window.location.pathname + window.location.hash);
+        setError(''); setMessage(''); setInvalidReset(false); setMode('forgot');
+      }}>Yêu cầu gửi lại liên kết mới</button>}
+    </div></>}
+    {error && <p role="alert" className="error">{error}</p>}
+{message && <p role="status">{message}</p>}
   </section>;
 }
 
@@ -247,12 +261,19 @@ function App() {
   }
   const output = job?.outputJson ? JSON.parse(job.outputJson) as { skills: { name: string; quote: string; evidenceRef: string }[] } : undefined;
   const latestRevision = revisions[0];
-  const setAuthenticated = (next: Session) => { setSession(next); setError(''); };
+  const setAuthenticated = (next: Session) => {
+    setSession(next); setError('');
+    const destination = jobReturnAfterSignIn(window.location.hash);
+    if (destination && next.authenticated && !next.deletionPending) window.location.hash = destination;
+  };
   return <Workspace key={session?.deletionPending ? 'deletion-pending' : session?.authenticated ? session.userId ?? 'authenticated' : 'guest'} session={session} activeView={activeView} busy={busy} onLogout={() => void action(async () => { sessionStorage.removeItem(`careergap:builder-recovery:${session?.userId}`); await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); setSession({ authenticated: false, roles: [] }); setResumes([]); setSelectedResumeId(''); setSelectedResumeVersionId(''); setJob(undefined); setRevisions([]); pending.current = undefined; window.location.hash = 'access'; })}>
     {error && <p role="alert" className="error">{error}</p>}
+    {!loading && !session?.deletionPending && <PersistentView active={activeView === 'home'} name="home"><PublicHome active={activeView === 'home'}/></PersistentView>}
+    {!loading && !session?.deletionPending && <PersistentView active={activeView === 'community'} name="community"><Community session={session} active={activeView === 'community'}/></PersistentView>}
     {!loading && !session?.deletionPending && <PublicJobBrowser session={session} activeView={activeView} intro={<WorkspaceIntro recruiter={session?.roles.includes('Recruiter')}/>}/>}
     {!loading && !session?.deletionPending && <PersistentView active={activeView === 'public-resumes'} name="public-resumes"><PublicResumeBrowser session={session}/></PersistentView>}
     {loading ? <StaticLoading label="Đang kết nối…"/> : !session?.authenticated ? <PersistentView active={activeView === 'access'} name="access"><AccountAccess onAuthenticated={setAuthenticated}/></PersistentView> : session.deletionPending ? <PersistentView active name="account"><AccountDeletionPendingPanel session={session} onAuthenticated={setAuthenticated}/></PersistentView> : <>
+      {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <PersistentView active={activeView === 'analysis-history'} name="analysis-history"><AnalysisHistory active={activeView === 'analysis-history'}/></PersistentView>}
       {session.roles.includes('Candidate') ? <><PersistentView active={activeView === 'profile'} name="profile"><CandidateProfilePanel/></PersistentView><PersistentView active={activeView === 'cv-builder'} name="cv-builder"><Suspense fallback={<section className="card"><StaticLoading label="Đang mở trình tạo CV…"/></section>}><ResumeBuilderPanel ownerId={session.userId ?? ''} resumes={resumes} onResumesUpdated={setResumes} pdfProbe={<section className="card probe"><div><h2>Kiểm tra PDF tiếng Việt</h2><p>Xuất tài liệu giả để kiểm tra dấu, phân trang và khả năng chọn/copy văn bản.</p></div><button disabled={busy} className="secondary" onClick={() => void action(async () => { const { downloadProbe } = await import('./pdfProbe'); await downloadProbe(); })}>Xuất PDF mẫu giả</button></section>}/></Suspense></PersistentView><PersistentView active={activeView === 'private-resumes'} name="private-resumes"><div className="resume-workspace-grid"><section className="card" id="private-resumes"><h2>CV riêng của bạn</h2><p>PDF có văn bản hoặc DOCX, tối đa 4 MB. Mỗi CV có thể giữ nhiều phiên bản; file cũ không bị ghi đè và chỉ chính bạn được tải.</p>
         <ValidatedForm onSubmit={e => { e.preventDefault(); const form = e.currentTarget; const data = new FormData(form); void action(async () => {
           const path = selectedResumeId ? `/api/resumes/${selectedResumeId}/versions` : '/api/resumes';

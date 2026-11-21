@@ -1,11 +1,54 @@
 let csrf: string | undefined;
+export class ApiError extends Error {
+  readonly code: string;
+  readonly status: number;
+  constructor(code: string, status: number) {
+    super(errorMessage(code, status));
+    this.name = 'ApiError'; this.code = code; this.status = status;
+  }
+}
+async function fetchResponse(path: string, init: RequestInit): Promise<Response> {
+  try { return await fetch(path, init); }
+  catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') throw error;
+    throw new ApiError('', 0);
+  }
+}
 export async function refreshCsrf() {
-  const response = await fetch('/api/auth/csrf', { credentials: 'same-origin', cache: 'no-store' });
-  if (!response.ok) throw new Error('Không thể kết nối máy chủ.');
+  const response = await fetchResponse('/api/auth/csrf', { credentials: 'same-origin', cache: 'no-store' });
+  if (!response.ok) throw new ApiError('', response.status);
   csrf = (await response.json()).token;
 }
 export function errorMessage(code: string, status: number): string {
+  if ((status >= 500 && code !== 'ai_disabled') || status === 0)
+    return 'Máy chủ gặp sự cố hoặc kết nối bị gián đoạn. Vui lòng thử lại sau.';
   const messages: Record<string,string> = {
+    invalid_cover_letter:'Thư ứng tuyển tối đa 5.000 ký tự và không chứa ký tự không hợp lệ.',
+    invalid_community_report_query: 'Bộ lọc báo cáo cộng đồng không hợp lệ.',
+  community_content_unavailable: 'Nội dung không còn khả dụng để gỡ. Hãy tải lại chi tiết trước khi xử lý.',
+  community_conflict:'Nội dung đã thay đổi ở nơi khác. Hãy tải lại trước khi sửa hoặc kiểm duyệt.',
+    community_not_found:'Nội dung không còn công khai hoặc bạn không có quyền xem.',
+    community_profile_required:'Hãy tạo hồ sơ cộng đồng để tương tác.',
+    community_handle_taken:'Handle này đã được sử dụng. Hãy chọn tên khác.',
+    community_handle_immutable:'Handle không đổi sau khi đã tạo hồ sơ.',
+    invalid_community_profile:'Kiểm tra tên, handle và độ dài giới thiệu.',
+    invalid_community_post:'Bài viết cần tiêu đề 5–200 ký tự, nội dung 20–30.000 ký tự và tối đa 8 tag.',
+    invalid_community_tags:'Mỗi tag tối đa 40 ký tự, chỉ dùng chữ, số và ký hiệu công nghệ thông dụng.',
+    community_image_invalid:'Dùng ảnh PNG/JPEG hợp lệ, tối đa 2 MB và 8 triệu điểm ảnh.',
+    community_image_in_use:'Ảnh đang được dùng. Hãy bỏ ảnh khỏi hồ sơ và bài viết trước khi xóa.',
+    community_image_limit:'Bạn đã có 30 ảnh. Hãy xóa ảnh chưa dùng trước khi tải thêm.',
+    community_image_not_owned:'Chỉ được chọn ảnh do chính bạn tải lên.',
+    community_report_exists:'Bạn đã có báo cáo đang được xử lý cho nội dung này.',
+    community_reason_required:'Hãy ghi lý do kiểm duyệt từ 3 ký tự.',
+    community_invalid_transition:'Trạng thái bài đã thay đổi. Hãy tải lại danh sách.',
+    community_mention_limit:'Mỗi nội dung chỉ được nhắc tối đa 10 người.',
+    community_reply_invalid:'Chỉ trả lời bình luận gốc còn hiển thị trong cùng bài.',
+    community_self_follow:'Bạn không thể theo dõi chính mình.',
+    invalid_community_comment:'Bình luận cần từ 1 đến 4.000 ký tự.',
+    invalid_community_report:'Lý do báo cáo cần từ 3 đến 1.000 ký tự.',
+
+    invalid_or_expired_reset:'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
+    password_policy:'Mật khẩu mới phải có độ dài từ 12 đến 256 ký tự.',
     ai_disabled:'AI đang tắt trong môi trường này. Yêu cầu mới chưa được tạo; bạn vẫn có thể xem, tải CV và thao tác thủ công.',
     writing_output_budget_required:'Chưa cấu hình hạn mức đầu ra cho đề xuất viết CV.', writing_output_invalid:'Đề xuất chưa đạt kiểm tra dữ kiện nguồn; CV giữ nguyên.',
     writing_input_limit:'Dữ kiện CV vượt giới hạn soạn thử nghiệm.', writing_facts_required:'CV chưa có đủ dữ kiện nghề nghiệp đã xác nhận trong giới hạn soạn thử nghiệm.', invalid_writing_language:'Chọn tiếng Việt hoặc tiếng Anh cho đề xuất.',
@@ -13,7 +56,8 @@ export function errorMessage(code: string, status: number): string {
     search_not_configured:'Search thật chưa được cấu hình và xác nhận hạn mức. Kết quả đối chiếu vẫn xem được.', search_quota_exhausted:'Đã hết hạn mức search; kết quả đối chiếu vẫn xem được.',
     search_provider_quota:'Provider báo hết hạn mức search; yêu cầu này cần đối soát credit.', search_unavailable:'Search chưa phản hồi; credit đang được giữ để đối soát.', search_usage_unknown:'Chưa xác định được credit đã dùng; hệ thống giữ phần dự trù.',
     search_period_conflict:'Kỳ search chồng với sổ đã có. Cần đối soát cấu hình trước khi tiếp tục.', learning_gap_required:'Nguồn học chỉ tìm cho tiêu chí chưa có bằng chứng đầy đủ.', learning_topic_unavailable:'Danh mục hiện tại chưa hỗ trợ chủ đề này.',
-    invalid_admin_action:'Chọn thao tác và ghi lý do hợp lệ.', admin_account_protected:'Không thể khóa tài khoản quản trị bằng thao tác này.', account_state_conflict:'Trạng thái tài khoản đã thay đổi. Hãy tải lại danh sách.', report_conflict:'Báo cáo đã được xử lý hoặc vừa thay đổi.', report_limit:'Đã đạt giới hạn báo cáo trong ngày.', invalid_report:'Hãy ghi lý do báo cáo từ 3 đến 1.000 ký tự.'
+    invalid_admin_action:'Chọn thao tác và ghi lý do hợp lệ.', admin_account_protected:'Không thể khóa tài khoản quản trị bằng thao tác này.', account_state_conflict:'Trạng thái tài khoản đã thay đổi. Hãy tải lại danh sách.', report_conflict:'Báo cáo đã được xử lý hoặc vừa thay đổi.', report_limit:'Đã đạt giới hạn báo cáo trong ngày.', report_exists:'Bạn đã gửi báo cáo cho nội dung này và đang chờ xử lý.', roadmap_conflict:'Lộ trình đã thay đổi ở phiên khác. Hãy tải lại lộ trình đã lưu trước khi tiếp tục.', roadmap_no_gaps:'Không có mục tiêu cần học để lưu.', invalid_job_tags:'Chọn tối đa 10 tag hợp lệ từ danh mục CareerGap.', recruiter_company_already_bound:'Tài khoản recruiter đã gắn với một doanh nghiệp. Hãy cập nhật hồ sơ doanh nghiệp hiện có.', business_primary_required:'Hãy chọn công ty chính trong màn hình Công ty trước khi tiếp tục.', business_already_bound:'Tài khoản đã gắn với một công ty chính và không thể tự chuyển pháp nhân.', business_email_required:'Nhà tuyển dụng cần email tên miền doanh nghiệp, không dùng email cá nhân.', business_domain_unverified:'Hãy xác minh email và kiểm tra website HTTPS cùng tên miền doanh nghiệp.', business_verification_required:'Doanh nghiệp cần được admin xác minh trước khi công khai tin hoặc nhận hồ sơ mới.', business_conflict:'Hồ sơ đã thay đổi hoặc không còn ở trạng thái cho phép. Hãy tải lại trang.', business_legal_entity_locked: 'Tài khoản đã gắn với pháp nhân được duyệt; không thể tự đổi mã số thuế.',
+  business_tax_exists:'Mã số thuế này đã được gắn với một tài khoản khác.', business_input_invalid:'Tên pháp nhân từ 3–200 ký tự; mã số thuế gồm 10 hoặc 13 chữ số.', invalid_history_filter:'Bộ lọc lịch sử không hợp lệ. Hãy mở lại Lịch sử phân tích từ thanh điều hướng.', invalid_report_filter:'Bộ lọc báo cáo không hợp lệ.', reported_job_unavailable:'Tin không còn tồn tại. Hãy tải lại chi tiết.', invalid_report:'Hãy ghi lý do báo cáo từ 3 đến 1.000 ký tự.'
   };
   if(messages[code])return messages[code];
   if (status === 401) return 'Phiên đăng nhập đã hết hạn hoặc thông tin đăng nhập chưa đúng.';
@@ -61,10 +105,10 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     if (!csrf) await refreshCsrf();
     headers.set('X-CSRF-TOKEN', csrf!);
   }
-  const response = await fetch(path, { ...init, headers, credentials: 'same-origin', cache: 'no-store' });
+  const response = await fetchResponse(path, { ...init, headers, credentials: 'same-origin', cache: 'no-store' });
   if (!response.ok) {
     const problem = await response.json().catch(() => ({}));
-    throw new Error(errorMessage(problem.title ?? '', response.status));
+    throw new ApiError(typeof problem?.title === 'string' ? problem.title : '', response.status);
   }
   return response.status === 204 ? undefined as T : response.json();
 }

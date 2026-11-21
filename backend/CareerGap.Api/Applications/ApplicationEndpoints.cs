@@ -8,15 +8,15 @@ using Npgsql;
 
 namespace CareerGap.Api.Applications;
 
-public sealed record ApplyRequest(Guid ResumeVersionId, Guid SubmissionKey);
+public sealed record ApplyRequest(Guid ResumeVersionId, Guid SubmissionKey, string? CoverLetter = null);
 public sealed record ApplicationDto(Guid Id, Guid JobId, string JobTitle, string CompanyName, string Status,
     DateTimeOffset SubmittedAt, DateTimeOffset StatusChangedAt, int ResumeVersionNo, long RowVersion,
-    Guid CandidateId, bool CandidateBlocked);
+    Guid CandidateId, bool CandidateBlocked, string? CoverLetter);
 public sealed record ApplicationPage(IReadOnlyList<ApplicationDto> Items, int Page, int PageSize, int Total);
 public sealed record ApplicationHistoryDto(string? FromStatus, string ToStatus, DateTimeOffset ChangedAt);
 public sealed record ApplicationNoteDto(Guid Id, string Body, DateTimeOffset CreatedAt);
 public sealed record NotificationDto(Guid Id, string NotificationType, Guid? ApplicationId, string Title, string Body,
-    DateTimeOffset CreatedAt, DateTimeOffset? ReadAt, string DeduplicationKey);
+    DateTimeOffset CreatedAt, DateTimeOffset? ReadAt, string DeduplicationKey, string? Href);
 
 public static partial class ApplicationEndpoints
 {
@@ -37,6 +37,8 @@ public static partial class ApplicationEndpoints
         app.MapPut("/api/jobs/{jobId:guid}/candidates/{candidateId:guid}/block", BlockCandidateAsync).RequireAuthorization();
         app.MapDelete("/api/jobs/{jobId:guid}/candidates/{candidateId:guid}/block", UnblockCandidateAsync).RequireAuthorization();
         app.MapGet("/api/notifications", GetNotificationsAsync).RequireAuthorization();
+        app.MapGet("/api/notifications/inbox", GetNotificationInboxAsync).RequireAuthorization();
+        app.MapPut("/api/notifications/read-all", MarkAllNotificationsReadAsync).RequireAuthorization();
         app.MapPut("/api/notifications/{id:guid}/read", MarkReadAsync).RequireAuthorization();
     }
 
@@ -47,8 +49,11 @@ public static partial class ApplicationEndpoints
         if (!user.IsInRole("Candidate")) return Results.Forbid();
         if (input.ResumeVersionId == Guid.Empty || input.SubmissionKey == Guid.Empty)
             return Results.Problem(statusCode: 400, title: "invalid_application");
+        if (input.CoverLetter is { } rawLetter && (rawLetter.Length > 5000 || rawLetter.Contains('\0')))
+            return Results.Problem(statusCode: 400, title: "invalid_cover_letter");
+        var coverLetter = string.IsNullOrWhiteSpace(input.CoverLetter) ? null : input.CoverLetter.ReplaceLineEndings("\n").Trim();
 
-        var inputHash = HashRequest(candidateId, jobId, input.ResumeVersionId);
+        var inputHash = HashRequest(candidateId, jobId, input.ResumeVersionId, coverLetter);
         var existing = await db.Applications.AsNoTracking()
             .SingleOrDefaultAsync(x => x.CandidateId == candidateId && x.SubmissionKey == input.SubmissionKey, ct);
         if (existing is not null)
@@ -71,9 +76,16 @@ public static partial class ApplicationEndpoints
         }
 
         var now = DateTimeOffset.UtcNow;
+        if (!await CareerGap.Api.Recruitment.BusinessIdentityEndpoints.Verified(db,job.Company!.OwnerUserId,job.CompanyId,ct)) return Results.Problem(statusCode:409,title:"business_verification_required");
         if (job.Status != "published" || job.CurrentVersionId is null || job.CurrentVersion is null ||
             (job.ApplicationDeadline is { } deadline && deadline <= now))
             return Results.Conflict(new { title = "job_not_accepting_applications" });
+        if (job.MaxApplications is { } maxApplications)
+        {
+            var activeCount = await db.Applications.CountAsync(x => x.JobId == jobId && ActiveStatuses.Contains(x.Status), ct);
+            if (activeCount >= maxApplications)
+                return Results.Conflict(new { title = "job_capacity_reached" });
+        }
         if (await db.JobCandidateBlocks.AsNoTracking().AnyAsync(x => x.JobId == jobId && x.CandidateId == candidateId, ct))
             return Results.Conflict(new { title = "candidate_blocked" });
         var resumeVersion = await db.ResumeVersions.AsNoTracking()
@@ -95,7 +107,8 @@ public static partial class ApplicationEndpoints
             SubmittedAt = now,
             StatusChangedAt = now,
             SubmissionKey = input.SubmissionKey,
-            SubmissionHash = inputHash
+            SubmissionHash = inputHash,
+            CoverLetter = coverLetter
         };
         db.Applications.Add(application);
         db.ApplicationStatusHistory.Add(new ApplicationStatusHistory
@@ -140,7 +153,7 @@ public static partial class ApplicationEndpoints
         return Results.Created($"/api/applications/{application.Id}", result);
     }
 
-    private static async Task<IResult> GetMineAsync(ClaimsPrincipal user, int? page, int? pageSize, AppDb db, CancellationToken ct)
+    private static async Task<IResult> GetMineAsync(ClaimsPrincipal user, int? page, int? pageSize, Guid? jobId, AppDb db, CancellationToken ct)
     {
         if (!TryUserId(user, out var candidateId)) return Results.Unauthorized();
         if (!user.IsInRole("Candidate")) return Results.Forbid();
@@ -148,10 +161,11 @@ public static partial class ApplicationEndpoints
         var retentionCutoff = DateTimeOffset.UtcNow.AddDays(-90);
         var query = db.Applications.AsNoTracking().Where(x => x.CandidateId == candidateId &&
             (ActiveStatuses.Contains(x.Status) || ((x.Status == "rejected" || x.Status == "withdrawn") && x.StatusChangedAt > retentionCutoff)));
+        if (jobId is not null) query = query.Where(x => x.JobId == jobId);
         return Results.Ok(await PageApplicationsAsync(db, query, currentPage, size, ct));
     }
 
-    private static async Task<IResult> GetForJobAsync(Guid jobId, ClaimsPrincipal user, int? page, int? pageSize,
+    private static async Task<IResult> GetForJobAsync(Guid jobId, ClaimsPrincipal user, int? page, int? pageSize, string? status,
         AppDb db, CancellationToken ct)
     {
         if (!TryUserId(user, out var recruiterId)) return Results.Unauthorized();
@@ -159,11 +173,14 @@ public static partial class ApplicationEndpoints
         if (!ValidPage(page, pageSize, out var currentPage, out var size)) return Results.BadRequest();
         var ownsJob = await db.Jobs.AsNoTracking().AnyAsync(x => x.Id == jobId && x.Company!.OwnerUserId == recruiterId, ct);
         if (!ownsJob) return Results.NotFound();
+        if (status is not null && status is not ("submitted" or "reviewing" or "shortlisted" or "rejected" or "withdrawn"))
+            return Results.Problem(statusCode: 400, title: "invalid_application_status_filter");
         var retentionCutoff = DateTimeOffset.UtcNow.AddDays(-90);
         var query = db.Applications.AsNoTracking().Where(x => x.JobId == jobId &&
             db.Users.Any(account => account.Id == x.CandidateId && account.AccountStatus == "active") &&
             (ActiveStatuses.Contains(x.Status) ||
              ((x.Status == "rejected" || x.Status == "withdrawn") && x.StatusChangedAt > retentionCutoff)));
+        if (status is not null) query = query.Where(x => x.Status == status);
         return Results.Ok(await PageApplicationsAsync(db, query, currentPage, size, ct, includeBlockState: true));
     }
 
@@ -208,38 +225,6 @@ public static partial class ApplicationEndpoints
         return await FileEndpoints.ServeFileAsync(file, storage, ct);
     }
 
-    private static async Task<IResult> GetNotificationsAsync(ClaimsPrincipal user, int? page, AppDb db, CancellationToken ct)
-    {
-        if (!TryUserId(user, out var userId)) return Results.Unauthorized();
-        var currentPage = page ?? 1;
-        if (currentPage is < 1 or > 10000) return Results.BadRequest();
-        var retentionCutoff = DateTimeOffset.UtcNow.AddDays(-90);
-        var notifications = await db.Notifications.AsNoTracking().Where(x => x.RecipientUserId == userId &&
-                (x.ApplicationId == null || db.Applications.Any(application => application.Id == x.ApplicationId &&
-                    (ActiveStatuses.Contains(application.Status) ||
-                     ((application.Status == "rejected" || application.Status == "withdrawn") && application.StatusChangedAt > retentionCutoff)))))
-            .OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id)
-            .Skip((currentPage - 1) * 20).Take(20)
-            .Select(x => new NotificationDto(x.Id, x.NotificationType, x.ApplicationId, x.Title, x.Body,
-                x.CreatedAt, x.ReadAt, x.DeduplicationKey)).ToListAsync(ct);
-        return Results.Ok(notifications);
-    }
-
-    private static async Task<IResult> MarkReadAsync(Guid id, ClaimsPrincipal user, AppDb db, CancellationToken ct)
-    {
-        if (!TryUserId(user, out var userId)) return Results.Unauthorized();
-        var notification = await db.Notifications.SingleOrDefaultAsync(x => x.Id == id && x.RecipientUserId == userId, ct);
-        if (notification is null) return Results.NotFound();
-        var retentionCutoff = DateTimeOffset.UtcNow.AddDays(-90);
-        if (notification.ApplicationId is { } applicationId && !await db.Applications.AnyAsync(application => application.Id == applicationId &&
-                (ActiveStatuses.Contains(application.Status) ||
-                 ((application.Status == "rejected" || application.Status == "withdrawn") && application.StatusChangedAt > retentionCutoff)), ct))
-            return Results.NotFound();
-        notification.ReadAt ??= DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(ct);
-        return Results.NoContent();
-    }
-
     private static async Task<ApplicationPage> PageApplicationsAsync(AppDb db, IQueryable<ApplicationRecord> query,
         int page, int pageSize, CancellationToken ct, bool includeBlockState = false)
     {
@@ -265,11 +250,14 @@ public static partial class ApplicationEndpoints
                select new ApplicationDto(application.Id, application.JobId, jobVersion.Title, company.Name, application.Status,
                    application.SubmittedAt, application.StatusChangedAt, resumeVersion.VersionNo, application.RowVersion,
                    application.CandidateId, includeBlockState && db.JobCandidateBlocks.Any(block =>
-                       block.JobId == application.JobId && block.CandidateId == application.CandidateId));
+                       block.JobId == application.JobId && block.CandidateId == application.CandidateId), application.CoverLetter);
     }
 
-    private static string HashRequest(Guid candidateId, Guid jobId, Guid resumeVersionId) =>
-        Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new { candidateId, jobId, resumeVersionId })));
+    private static string HashRequest(Guid candidateId, Guid jobId, Guid resumeVersionId, string? coverLetter) =>
+        // Keep hashes of historical submissions without a letter compatible with retries.
+        Convert.ToHexStringLower(SHA256.HashData(coverLetter is null
+            ? JsonSerializer.SerializeToUtf8Bytes(new { candidateId, jobId, resumeVersionId })
+            : JsonSerializer.SerializeToUtf8Bytes(new { candidateId, jobId, resumeVersionId, coverLetter })));
 
     private static bool ValidPage(int? page, int? pageSize, out int currentPage, out int size)
     {

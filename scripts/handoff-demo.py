@@ -1,5 +1,5 @@
 """Windows localhost handoff demo: isolated persistent synthetic DB, all providers Fake.
-Usage: python scripts/handoff-demo.py start|fault|stop [--release 20261029|20261030]
+Usage: python scripts/handoff-demo.py start|fault|stop [--release 20261029|20261030|20261031]
 Requires Docker Desktop, .NET SDK, Node and npm ci in frontend. Never loads .env.
 """
 from pathlib import Path
@@ -12,10 +12,11 @@ OWNER='careergap.handoff=20261029'
 URL='http://127.0.0.1:5190/'
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('mode',choices=['start','fault','stop'],nargs='?',default='start')
-parser.add_argument('--release',choices=['20261029','20261030'],default='20261030')
+parser.add_argument('--release',choices=['20261029','20261030','20261031'],default='20261031')
 args=parser.parse_args();MODE=args.mode;RELEASE=args.release
-if MODE!='stop' and RELEASE=='20261029' and not (OUT/'runtime/CareerGap.Api.dll').is_file():
- raise SystemExit('Historical runtime 20261029 is absent; restore the original runtime/source in a separate workspace. Do not build current source under a historical release.')
+historical=OUT/'runtime' if RELEASE=='20261029' else OUT/'releases'/RELEASE/'runtime'
+if MODE!='stop' and RELEASE in ('20261029','20261030') and not (historical/'CareerGap.Api.dll').is_file():
+ raise SystemExit(f'Historical runtime {RELEASE} is absent; restore the original runtime/source in a separate workspace. Do not build current source under a historical release.')
 OUT.mkdir(parents=True,exist_ok=True)
 flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
 env={k:v for k,v in os.environ.items() if k.upper() in {'PATH','SYSTEMROOT','WINDIR','TEMP','TMP','USERPROFILE','APPDATA','LOCALAPPDATA','PROGRAMFILES','PROGRAMFILES(X86)','PROGRAMW6432','COMSPEC','PATHEXT','DOTNET_ROOT'}}

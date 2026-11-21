@@ -32,13 +32,14 @@ public static class AccountEndpoints
         }));
         app.MapPost("/api/auth/register", RegisterAsync).RequireRateLimiting("register");
         app.MapPost("/api/auth/login", async (LoginRequest input, UserManager<AppUser> users, SignInManager<AppUser> signin,
-            AccountDeletionService deletions, CancellationToken ct) =>
+            AccountDeletionService deletions, AppDb db, TimeProvider clock, CancellationToken ct) =>
         {
             if (string.IsNullOrWhiteSpace(input.Email) || input.Email.Length > 254 || string.IsNullOrEmpty(input.Password) || input.Password.Length > 256) return Results.Problem(statusCode: 400, title: "invalid_credentials");
             var user = await users.FindByEmailAsync(input.Email);
             if (user is null || user.AccountStatus is not ("active" or "deletion_pending")) return Results.Problem(statusCode: 401, title: "invalid_credentials");
             var result = await signin.PasswordSignInAsync(user, input.Password, false, lockoutOnFailure: true);
             if (!result.Succeeded) return Results.Problem(statusCode: 401, title: "invalid_credentials");
+            await db.Users.Where(x => x.Id == user.Id).ExecuteUpdateAsync(s => s.SetProperty(u => u.LastLoginAt, clock.GetUtcNow()), ct);
             if (user.AccountStatus == "deletion_pending")
             {
                 var state = await deletions.GetStateAsync(user.Id, ct);
@@ -96,6 +97,7 @@ public static class AccountEndpoints
             return Results.Problem(statusCode: 400, title: "invalid_email");
         if (roleName is not ("Candidate" or "Recruiter")) return Results.Problem(statusCode: 400, title: "invalid_role");
         if (input.Password is null || input.Password.Length < 12 || input.Password.Length > 256) return Results.Problem(statusCode: 400, title: "password_policy");
+        if (roleName == "Recruiter" && !CareerGap.Api.Recruitment.BusinessIdentityEndpoints.CorporateEmail(email)) return Results.Problem(statusCode:400,title:"business_email_required");
         if (await users.FindByEmailAsync(email) is not null) return Results.Problem(statusCode: 409, title: "email_exists");
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
@@ -164,7 +166,9 @@ public static class AccountEndpoints
 
     private static async Task<IResult> ResetPasswordAsync(ResetPasswordRequest input, UserManager<AppUser> users)
     {
-        if (string.IsNullOrWhiteSpace(input.Email) || string.IsNullOrWhiteSpace(input.Token) || input.NewPassword is null || input.NewPassword.Length is < 12 or > 256)
+        if (input.NewPassword is null || input.NewPassword.Length is < 12 or > 256)
+            return Results.Problem(statusCode: 400, title: "password_policy");
+        if (string.IsNullOrWhiteSpace(input.Email) || string.IsNullOrWhiteSpace(input.Token))
             return Results.Problem(statusCode: 400, title: "invalid_or_expired_reset");
         var account = await users.FindByEmailAsync(input.Email.Trim());
         if (account is null || account.AccountStatus != "active") return Results.Problem(statusCode: 400, title: "invalid_or_expired_reset");

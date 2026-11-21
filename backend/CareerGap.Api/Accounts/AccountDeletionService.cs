@@ -276,11 +276,13 @@ public sealed class AccountDeletionService(
         await db.Database.ExecuteSqlRawAsync("SET LOCAL careergap.account_purge = 'on'", ct);
         var ownVersions = db.ResumeVersions.Where(x => x.CandidateId == account.Id).Select(x => x.Id);
         var affectedReports = await db.ContentReports.Where(x => x.ReporterId == account.Id || x.TargetType == "public_resume" && x.TargetId != null && ownVersions.Contains(x.TargetId.Value)).Select(x => x.Id).ToArrayAsync(ct);
+        var ownCompanies = db.Companies.Where(x=>x.OwnerUserId==account.Id).Select(x=>x.Id);
         var ownJobs = db.Jobs.Where(x => x.Company!.OwnerUserId == account.Id).Select(x => x.Id);
         await db.ContentReports.Where(x => x.ReporterId == account.Id || x.TargetType == "public_resume" && x.TargetId != null && ownVersions.Contains(x.TargetId.Value))
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]").SetProperty(x => x.TargetId, (Guid?)null), ct);
-        await db.AdminAudits.Where(x => x.ActorId == account.Id || x.TargetId == account.Id || x.TargetId != null && (affectedReports.Contains(x.TargetId.Value) || ownJobs.Contains(x.TargetId.Value)))
+        await db.AdminAudits.Where(x => x.ActorId == account.Id || x.TargetId == account.Id || x.TargetId != null && (affectedReports.Contains(x.TargetId.Value) || ownJobs.Contains(x.TargetId.Value) || ownCompanies.Contains(x.TargetId.Value)))
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]"), ct);
+        await db.BusinessIdentities.Where(x=>x.UserId==account.Id).ExecuteDeleteAsync(ct);
         await db.LearningRequests.Where(x => x.OwnerId == account.Id).ExecuteUpdateAsync(s => s
             .SetProperty(x => x.PairJobId, (Guid?)null).SetProperty(x => x.RequirementKey, "").SetProperty(x => x.LinksJson, (string?)null).SetProperty(x => x.ExpiresAt, (DateTimeOffset?)null), ct);
 
@@ -346,6 +348,28 @@ public sealed class AccountDeletionService(
                 company.RowVersion++;
             }
         }
+
+        var communityPosts = db.CommunityPosts.Where(x => x.AuthorId == account.Id).Select(x => x.Id);
+        var communityComments = db.CommunityComments.Where(x => x.AuthorId == account.Id).Select(x => x.Id);
+        var communityReportIds = await db.CommunityReports.Where(x => x.ReporterId == account.Id || communityPosts.Contains(x.PostId) || x.CommentId != null && communityComments.Contains(x.CommentId.Value)).Select(x => x.Id).ToArrayAsync(ct);
+        await db.CommunityReports.Where(x => communityReportIds.Contains(x.Id)).ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]").SetProperty(x => x.Resolution, "[erased]"), ct);
+        await db.AdminAudits.Where(x => x.TargetId != null && (communityPosts.Contains(x.TargetId.Value) || communityComments.Contains(x.TargetId.Value) || communityReportIds.Contains(x.TargetId.Value)))
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]"), ct);
+        var communityViewer = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(account.Id.ToString())));
+        await db.CommunityViews.Where(x => x.Viewer == communityViewer).ExecuteDeleteAsync(ct);
+        await db.CommunityPostTags.Where(x => communityPosts.Contains(x.PostId)).ExecuteDeleteAsync(ct);
+        await db.CommunityTags.Where(x => !db.CommunityPostTags.Any(t => t.Tag == x.Name)).ExecuteDeleteAsync(ct);
+        foreach (var image in await db.CommunityImages.Where(x => x.OwnerId == account.Id).ToArrayAsync(ct))
+            db.AccountDeletionObjects.Add(new() { RequestId = request.Id, Provider = image.Provider, ObjectKey = image.ObjectKey, CreatedAt = clock.GetUtcNow() });
+        await db.CommunityComments.Where(x => x.AuthorId == account.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.Body, "").SetProperty(x => x.IsDeleted, true), ct);
+        await db.CommunityPosts.Where(x => x.AuthorId == account.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.Body, "").SetProperty(x => x.Title, "Nội dung đã xóa").SetProperty(x => x.Slug, x => "deleted-" + x.Id.ToString()).SetProperty(x => x.Summary, "").SetProperty(x => x.ThumbnailId, (Guid?)null).SetProperty(x => x.Status, "deleted"), ct);
+        await db.CommunityProfiles.Where(x => x.UserId == account.Id).ExecuteDeleteAsync(ct);
+        await db.CommunityImages.Where(x => x.OwnerId == account.Id).ExecuteDeleteAsync(ct);
+        await db.CommunityFollows.Where(x => x.FollowerId == account.Id || x.FollowingId == account.Id).ExecuteDeleteAsync(ct);
+        await db.CommunityBookmarks.Where(x => x.UserId == account.Id).ExecuteDeleteAsync(ct);
+        await db.CommunityReactions.Where(x => x.UserId == account.Id).ExecuteDeleteAsync(ct);
+        await db.CommunityNotices.Where(x => x.RecipientId == account.Id || x.ActorId == account.Id).ExecuteDeleteAsync(ct);
+        await db.CommunityReports.Where(x => x.ReporterId == account.Id).ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]"), ct);
 
         await DeleteFilesToObjectLedgerAsync(request.Id, account.Id, ct);
 

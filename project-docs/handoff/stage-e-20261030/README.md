@@ -1,5 +1,7 @@
 # Bản bàn giao localhost — 30/10/2026
 
+**Cập nhật tài liệu 31/10, không thay runtime/ZIP:** [Cẩm nang thuyết trình và phản biện](thuyet-trinh.md) đã đồng bộ quyết định chấp nhận pilot, rà318nhãn, ma trận35mục và A12/A13. M6 vẫn chờ đánh giá ngoài đang hoãn. A12 đã đạt backend160/unit15/E2E22 ở source mới, **chưa có trong demo5190/ZIP30/10**; test của release30 vẫn backend160/unit11/E2E21. A13 đã đối soát5tiêu chí, không phát hiện bug chức năng trong phạm vi rà; nguồn tiếng Việt chưa được chứng minh. Xem [biên bản đồng bộ tài liệu](../../report/defense-docs-sync-2026-10-31.md).
+
 Bản này bổ sung **Xem kết quả đã lưu** cho cặp CV–JD, không tạo yêu cầu AI mới khi xem lại. Provider của demo luôn Fake. M6 chưa nghiệm thu; phần đánh giá giảng viên/người đánh giá thật đang được chủ dự án tạm hoãn.
 
 - [Chạy và dùng thử bản mới](huong-dan-dung-thu.md).

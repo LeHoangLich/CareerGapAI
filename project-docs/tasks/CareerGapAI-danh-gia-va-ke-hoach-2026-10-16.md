@@ -1,5 +1,8 @@
 # CareerGapAI — Đánh giá hiện trạng và kế hoạch tiếp theo
 
+**01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN BỞI LÊ HOÀNG LỊCH.** Trạng thái cuối **final_defense_ready**; release20261031 là **Defense Baseline**. Giai đoạn E/GĐ6 và phạm vi dự án nội bộ hoàn thành; mã nguồn đã đóng băng. Chủ dự án chính thức khép lại thủ tục dùng thử ngoài trước bảo vệ; đó không còn là điều kiện chờ của M6. Kết quả Hội đồng tại buổi bảo vệ được ghi riêng theo thực tế. [Biên bản](../report/m6-internal-acceptance-2026-11-01.md) · [Manifest](../evaluation/m6-internal-acceptance-2026-11-01.json) · [Source freeze](../evaluation/source-freeze-2026-11-01.json). Các trạng thái M6 chờ/đánh giá ngoài hoãn trong ghi nhận cũ phía dưới chỉ là lịch sử đã được quyết định này thay thế. Metric, human direct review0, backup và archive lịch sử giữ nguyên.
+
+
 > 30/10 — Sau diễn tập đã sửa pair-history và đồng bộ demo5190/release20261030, giữ data/accounts và rollback29; fresh backend160/160, FE11/11/lint/typecheck/build, E2E21/21 và proof production/Docker/backup mới. [Bộ bàn giao](../handoff/stage-e-20261030/README.md) · [Biên bản](../report/handoff-sync-2026-10-30.md). Giảng viên/người đánh giá thật tạm hoãn theo owner đến khi mở lại; E/M6 không tự chuyển đạt, không đổi phương pháp/corpus hoặc gọi provider thật.
 
 > 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](../report/handoff-sync-2026-10-29.md).
@@ -136,7 +139,7 @@ Chưa có bằng chứng chất lượng AI trên corpus đại diện có quy�
 | M3 — extraction/builder | Đang thực hiện | Full CV/JD có provenance, xác nhận; template cuối được chọn; PDF tạo ra ứng tuyển được; đo extraction trước sửa |
 | M4 — matching AI | Đạt phạm vi chức năng local và so sánh synthetic P10–P15 ngày 22/10; [biên bản C](../report/stage-c-2026-10-22.md) | Chất lượng đại diện/rubric người rà độc lập còn chờ; không dùng pilot synthetic làm đánh giá cuối |
 | M5 — đủ chức năng | Đạt phạm vi localhost — 27/10/2026 | AI viết CV có duyệt, nguồn học thật, quản trị/report/usage, tích hợp provider và luồng xuyên suốt |
-| M6 — bàn giao | Chưa đạt | Đánh giá cuối, dùng thử, hồi quy, restore, tài liệu/báo cáo/slide/demo |
+| M6 — bàn giao | ĐẠT nội bộ01/11/2026 | Release31/source freeze; owner chấp nhận pilot và quyết định final_defense_ready; Hội đồng đánh giá tại bảo vệ |
 
 ## 7. Kế hoạch thực hiện tuần tự
 
@@ -198,7 +201,7 @@ Các mã P dưới đây là kế hoạch đề xuất mới, không phải task
 
 **Đóng M5 khi:** đủ chức năng cốt lõi; DeepSeek/search/email cần thiết được kiểm chứng thật trong hạn mức; không có lỗi quyền/snapshot chặn sản phẩm; chốt method và final evaluation split.
 
-### Giai đoạn E — GĐ6: đánh giá và bàn giao localhost
+### Giai đoạn E — GĐ6: đánh giá và bàn giao localhost — HOÀN THÀNH NỘI BỘ01/11
 
 **P20. Đánh giá cuối bằng phiên bản cố định.** Chạy baseline và phương pháp AI cùng tập cuối chưa dùng tinh chỉnh; đo extraction trước sửa, hai chiều retrieval/ranking, điểm/bằng chứng, nguồn học, độ trễ và usage. Ghi coverage nhãn và giới hạn. Chủ dự án tổ chức dùng thử với giảng viên; không ghi lịch hẹn thành kết quả dùng thử.
 

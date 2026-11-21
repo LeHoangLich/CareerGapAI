@@ -75,10 +75,32 @@ public static class PairMatchingContract
 
     public static PairPayload Build(ResumeDataRevision cv, JobDataRevision jd, JobVersion version, bool publicScope)
     {
-        if (cv.ConfirmedBy != cv.CandidateId || cv.ConfirmedAt is null ||
-            cv.Origin is not ("user_confirmed" or "user_entered")) throw new JobError("confirmed_resume_required", 409);
         if (!ConfirmedRevisionMatcher.TryReadJob(jd, out var requirements) || requirements.Count == 0)
             throw new JobError("confirmed_job_required", 409);
+        var facts = ExtractCvFacts(cv, publicScope);
+        if (requirements.All(x => IsPreference(x.Text))) throw new JobError("no_assessable_requirements", 409);
+        // Explicit bounds make admission/token reservations predictable; never silently truncate requirements.
+        if (facts.Count > 180 || requirements.Count > 30) throw new JobError("matching_input_limit", 422);
+        return new(Rubric, facts, requirements.Select(x => new MatchRequirement(x.RequirementId, x.Text, x.Importance,
+            x.MinimumYears, x.Relation, x.Alternatives ?? [], x.NeedsReview, x.SourceType)).ToArray(), version.Location,
+            version.WorkMode, version.SalaryMin, version.SalaryMax, version.SalaryCurrency, version.SalaryPeriod);
+    }
+
+    public static PairPayload BuildQuick(ResumeDataRevision cv, IReadOnlyList<JobStructuredRequirement> requirements)
+    {
+        if (requirements.Count == 0) throw new JobError("confirmed_job_required", 409);
+        var facts = ExtractCvFacts(cv, publicScope: false);
+        if (requirements.All(x => IsPreference(x.Text))) throw new JobError("no_assessable_requirements", 409);
+        if (facts.Count > 180 || requirements.Count > 30) throw new JobError("matching_input_limit", 422);
+        return new(Rubric, facts, requirements.Select(x => new MatchRequirement(x.RequirementId, x.Text, x.Importance,
+            x.MinimumYears, x.Relation, x.Alternatives ?? [], x.NeedsReview, x.SourceType)).ToArray(), null,
+            "unspecified", null, null, null, null);
+    }
+
+    private static List<MatchFact> ExtractCvFacts(ResumeDataRevision cv, bool publicScope)
+    {
+        if (cv.ConfirmedBy != cv.CandidateId || cv.ConfirmedAt is null ||
+            cv.Origin is not ("user_confirmed" or "user_entered")) throw new JobError("confirmed_resume_required", 409);
         var facts = new List<MatchFact>();
         if (cv.SchemaVersion == 3)
         {
@@ -107,12 +129,7 @@ public static class PairMatchingContract
         }
         else throw new JobError("revision_data_unavailable", 409);
         if (facts.Count == 0) throw new JobError("no_eligible_cv_facts", 409);
-        if (requirements.All(x => IsPreference(x.Text))) throw new JobError("no_assessable_requirements", 409);
-        // Explicit bounds make admission/token reservations predictable; never silently truncate requirements.
-        if (facts.Count > 180 || requirements.Count > 30) throw new JobError("matching_input_limit", 422);
-        return new(Rubric, facts, requirements.Select(x => new MatchRequirement(x.RequirementId, x.Text, x.Importance,
-            x.MinimumYears, x.Relation, x.Alternatives ?? [], x.NeedsReview, x.SourceType)).ToArray(), version.Location,
-            version.WorkMode, version.SalaryMin, version.SalaryMax, version.SalaryCurrency, version.SalaryPeriod);
+        return facts;
     }
 
     private static bool AllowedPath(string path) => path is "headline" or "summary" ||

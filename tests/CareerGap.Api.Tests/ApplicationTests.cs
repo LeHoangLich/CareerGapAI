@@ -373,11 +373,16 @@ public sealed class ApplicationTests(FoundationFixture fixture) : IClassFixture<
         Assert.Equal(submitStatus == HttpStatusCode.Created ? 1 : 0, applications!.GetProperty("total").GetInt32());
     }
 
-    private static async Task<(Guid JobId, Guid JobVersionId, long RowVersion)> CreatePublishedJob(HttpClient recruiter, string title)
+    private async Task<(Guid JobId, Guid JobVersionId, long RowVersion)> CreatePublishedJob(HttpClient recruiter, string title)
     {
-        using var companyResponse = await recruiter.PostAsJsonAsync("/api/companies", new { name = $"Synthetic {Guid.NewGuid():N}"[..20], websiteUrl = "", location = "Hà Nội" });
-        Assert.Equal(HttpStatusCode.Created, companyResponse.StatusCode);
-        var company = await companyResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var existingCompanies = await recruiter.GetFromJsonAsync<JsonElement[]>("/api/companies/mine");
+        JsonElement company;
+        if (existingCompanies!.Length > 0) company = existingCompanies[0];
+        else {
+            using var companyResponse = await recruiter.PostAsJsonAsync("/api/companies", new { name = $"Synthetic {Guid.NewGuid():N}"[..20], websiteUrl = "", location = "Hà Nội" });
+            Assert.Equal(HttpStatusCode.Created, companyResponse.StatusCode);
+            company = await companyResponse.Content.ReadFromJsonAsync<JsonElement>();
+        }
         var content = Content(title);
         using var created = await recruiter.PostAsJsonAsync("/api/jobs", new
         {
@@ -389,7 +394,7 @@ public sealed class ApplicationTests(FoundationFixture fixture) : IClassFixture<
         var draft = await created.Content.ReadFromJsonAsync<JsonElement>();
         var jobId = draft!.GetProperty("id").GetGuid();
         var versionId = draft.GetProperty("version").GetProperty("id").GetGuid();
-        using var publish = await recruiter.PostAsJsonAsync($"/api/jobs/{jobId}/publish", new { rowVersion = draft.GetProperty("rowVersion").GetInt64() });
+        using var publish = await fixture.PublishWithVerifiedBusinessFixture(recruiter, jobId, new { rowVersion = draft.GetProperty("rowVersion").GetInt64() });
         Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
         var published = await publish.Content.ReadFromJsonAsync<JsonElement>();
         return (jobId, versionId, published!.GetProperty("rowVersion").GetInt64());
@@ -403,7 +408,7 @@ public sealed class ApplicationTests(FoundationFixture fixture) : IClassFixture<
         salaryCurrency = (string?)null, salaryPeriod = (string?)null, language = "vi"
     };
 
-    private static async Task<string> ReadDocxText(HttpResponseMessage response)
+    private async Task<string> ReadDocxText(HttpResponseMessage response)
     {
         var bytes = await response.Content.ReadAsByteArrayAsync();
         using var stream = new MemoryStream(bytes);

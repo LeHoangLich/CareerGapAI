@@ -1,0 +1,167 @@
+{
+  "release": "20261031",
+  "status": "verified",
+  "releaser": "Codex (Authorized by Project Owner)",
+  "approved_by": "Lê Hoàng Lịch (Project Owner)",
+  "approval_basis": "explicit owner authorization",
+  "rollback_verified": true,
+  "m6_status": "pending_external_review",
+  "human_authorized": true,
+  "source_archive": {
+    "files": 396,
+    "sha256": "0d966516f3b032f99708c079243be67619852004657f11779b55caed03665175",
+    "bytes": 15365244,
+    "allMembersVerified": true,
+    "configuredSecretsScanPassed": true,
+    "ownerFormAndPrivateCorpusExcluded": true
+  },
+  "clean_extraction_build": {
+    "status": "passed",
+    "scope": "fresh extraction on same Windows host with dependency cache; not a new OS",
+    "archiveSha256": "0d966516f3b032f99708c079243be67619852004657f11779b55caed03665175",
+    "fileHashesVerified": 396,
+    "commands": [
+      {
+        "name": "restore",
+        "exitCode": 0,
+        "seconds": 1.91
+      },
+      {
+        "name": "backend-build",
+        "exitCode": 0,
+        "seconds": 7.94
+      },
+      {
+        "name": "npm-ci",
+        "exitCode": 0,
+        "seconds": 25.83
+      },
+      {
+        "name": "frontend-unit",
+        "exitCode": 0,
+        "seconds": 1.94
+      },
+      {
+        "name": "frontend-build",
+        "exitCode": 0,
+        "seconds": 13.59
+      },
+      {
+        "name": "launcher-help",
+        "exitCode": 0,
+        "seconds": 0.26
+      }
+    ],
+    "noDotenvOrOldBuildOutputsCopied": true,
+    "frontendUnitPassed": 15,
+    "realProviderCalls": 0
+  },
+  "final_state": {
+    "status": "passed",
+    "protected_hashes_unchanged": 357,
+    "source_file_hashes_match_zip": 396,
+    "handoff_links_checked": 23,
+    "missing_links": [],
+    "listener_pid_matches_process_json": true,
+    "release": "20261031",
+    "pid": 34876,
+    "assembly_sha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+    "health": 200,
+    "all_providers": "Fake"
+  },
+  "launcher_guards": {
+    "status": "passed",
+    "checks": [
+      {
+        "release": "20261029",
+        "refused_missing_historical_runtime": true,
+        "no_state_created": true
+      },
+      {
+        "release": "20261030",
+        "refused_missing_historical_runtime": true,
+        "no_state_created": true
+      }
+    ]
+  },
+  "backup_restore": {
+    "status": "passed",
+    "database": "careergap_restore_handoff_20261031122528",
+    "tables": 43,
+    "objects": 7,
+    "data_protection_keys_match": true,
+    "synthetic_only": true,
+    "API_started_on_restored_data": false,
+    "deletion_ledger_in_snapshot_preserved": true,
+    "separate_post_backup_ledger_replay": "existing product CLI/previous E proof applies; no post-backup mutations in this isolated snapshot test",
+    "real_provider_calls": 0
+  },
+  "clone_cleanup": {
+    "clone_database": "careergap_restore_handoff_20261031122528",
+    "dropped": true,
+    "demo_database_unchanged": true
+  },
+  "runtime_modes": {
+    "status": "passed",
+    "checks": [
+      {
+        "mode": "start",
+        "release": "20261030",
+        "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+        "health": 200
+      },
+      {
+        "mode": "start",
+        "release": "20261031",
+        "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+        "health": 200
+      },
+      {
+        "mode": "fault",
+        "release": "20261031",
+        "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+        "health": 200
+      },
+      {
+        "mode": "start",
+        "release": "20261031",
+        "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+        "health": 200
+      }
+    ],
+    "cookieRetainedInThisRoundTrip": true,
+    "historicalReadInFaultMode": true,
+    "newWritingBlocked503": true,
+    "manualBuilderContentAvailable": true,
+    "downloadHashMatchedInFault": true,
+    "finalMode": "start",
+    "finalRelease": "20261031",
+    "realProviderCalls": 0
+  },
+  "new_provider_calls": 0,
+  "new_credits": 0,
+  "cost_usd": 0,
+  "source_manifest_inside_zip": "SOURCE-MANIFEST.json",
+  "working_tree_source_not_new_commit": true,
+  "companion_receipt_not_inside_own_archive": true,
+  "nonblocking_warnings": [
+    "Vite bundle exceeds 500 kB",
+    "Cached npm ci reports deprecated eslint 9.39.2; dependencies unchanged"
+  ],
+  "evidence_sha256": {
+    ".local/handoff-sync-20261031/clean-logs-final/receipt.json": "96a6fb0c7751a52207b7753009b7859e73150576bdff9d3afde0b6a686eba499",
+    ".local/handoff-sync-20261031/launcher-guards.json": "1e3078aae144b008bb5a835600410604948f0fbeb3fc7991752acd9c30437b64",
+    ".local/handoff-sync-20261031/final-state.json": "553b2e203ace1ba0f03663208ae96c3e4f5ed09a474f8ef340a8aa2dd5da3aeb",
+    ".local/handoff-sync-20261031/protected-before.json": "95a6deb2ef49c2a2be1b207b3558ad5e3f469e48976bde894cd787c17b8d2c7b",
+    ".local/handoff-sync-20261031/restore-cleanup.json": "39402fb9942b00209b2a4f444764357883e1f27ae879fbc253084b7c52e30140",
+    ".local/handoff-sync-20261031/clean-logs-final/backend-build.log": "eb901d78f06c470e2e36c049790e90c26056c82ce0fc4d3fe51e10d9c07ea271",
+    ".local/handoff-sync-20261031/clean-logs-final/frontend-build.log": "9d4d0b630f0c059868e96fd78824a32246d6e0265c9d746861778eef1ac4549e",
+    ".local/handoff-sync-20261031/clean-logs-final/frontend-unit.log": "77eb0d0d004822d1f453827d4d829bd66802d53810d86724a800da74d2f37d68",
+    ".local/handoff-sync-20261031/clean-logs-final/launcher-help.log": "632b91317e2b9ec1f6b2782f779938234336b68941086869366bd14cd2b20154",
+    ".local/handoff-sync-20261031/clean-logs-final/npm-ci.log": "fb1a817956afb14047d25caba279c7f1d72fc10564cc262e93b6f6995a41133a",
+    ".local/handoff-sync-20261031/clean-logs-final/restore.log": "ee49a53060c2c2157dbb869eb7f4c0e0a19310c5b5669a1275150629acadf07f",
+    ".local/handoff-demo-20261029/backups/20261031T122502Z/manifest.json": "165fbd4d1448889cad37a14789f7022216b047cbd4d8153360659bf915946b38",
+    ".local/handoff-demo-20261029/backups/20261031T122502Z/restore-verification.json": "279774fd2ddc772f5d8a42ef2f25f389f0abc2c10020bd448766389366158f86"
+  },
+  "sync_manifest_sha256": "e813d4ac202fb075b33b8996fb6c9849e00b276081176cd69b794bf658552cc3"
+}

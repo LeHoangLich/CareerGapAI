@@ -16,3 +16,9 @@ test-results/
 .playwright-cli/
 **/__pycache__/
 frontend/%SystemDrive%/
+design-ref/
+output/
+frontend/topcv-design/
+.agents/
+docs/reviews/
+frontend/logo_careergapai.jpg

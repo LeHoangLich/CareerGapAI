@@ -22,3 +22,19 @@ public sealed class WritingDecision
     public string Sections { get; set; } = "[]";
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
+public sealed class JobRewriteInput
+{
+    public Guid AiJobId { get; set; }
+    public Guid RecruiterId { get; set; }
+    public Guid JobId { get; set; }
+    public Guid JobVersionId { get; set; }
+    public Guid JobRevisionId { get; set; }
+    public string Fingerprint { get; set; } = "";
+    public string Payload { get; set; } = "{}";
+}
+public sealed class JobRewriteResult
+{
+    public Guid AiJobId { get; set; }
+    public string Sections { get; set; } = "{}";
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+}

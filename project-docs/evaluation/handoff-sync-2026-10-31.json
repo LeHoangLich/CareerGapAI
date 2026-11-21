@@ -1,0 +1,250 @@
+{
+  "date": "2026-10-31",
+  "release": "20261031",
+  "status": "verified",
+  "releaser": "Codex (Authorized by Project Owner)",
+  "approved_by": "Lê Hoàng Lịch (Project Owner)",
+  "approval_basis": "explicit owner instruction to release",
+  "rollback_verified": true,
+  "m6_status": "pending_external_review",
+  "externalReview": "deferred",
+  "regression": {
+    "run": "20261031-192425-d924",
+    "backend": 160,
+    "unit": 15,
+    "e2e": 22,
+    "result": {
+      "run": "20261031-192425-d924",
+      "directory": "D:\\CareerGapAI\\.local\\frontend-step3-20261031-192425-d924",
+      "providers": "Fake",
+      "dotenvLoaded": false,
+      "checks": {
+        "runner-tests": 0,
+        "playwright-install": 0,
+        "playwright-browser": 0,
+        "postgres-image": 0,
+        "postgres-create": 0,
+        "postgres-ready": 0,
+        "postgres-version": 0,
+        "frontend-lint": 0,
+        "frontend-typecheck": 0,
+        "frontend-test": 0,
+        "frontend-build": 0,
+        "backend-build": 0,
+        "backend-tests": 0,
+        "migration-build": 0,
+        "migration": 0,
+        "seed": 0,
+        "e2e": 0
+      },
+      "completed": true,
+      "cleanup": true,
+      "postgresReadyAttempts": 4,
+      "apiAssemblySha256": "a5c9dafaa923790121892d2e0fcc91d4e498b99105c818979b2002e536cc2ddd",
+      "uiUrl": "http://127.0.0.1:51693",
+      "uiDatabaseAudit": {
+        "non_fake_methods": 0,
+        "usd_budgets": 0,
+        "jobs": [
+          {
+            "job_type": "match_pair",
+            "status": "succeeded",
+            "count": 1
+          },
+          {
+            "job_type": "extract_cv",
+            "status": "succeeded",
+            "count": 3
+          },
+          {
+            "job_type": "suggest_cv",
+            "status": "succeeded",
+            "count": 1
+          }
+        ],
+        "budgets": [
+          {
+            "service": "Fake",
+            "unit": "test_credit",
+            "spent_amount": 5.0,
+            "reserved_amount": 0.0
+          }
+        ]
+      }
+    }
+  },
+  "demo": {
+    "release": "20261031",
+    "assembly_sha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+    "allProviders": "Fake"
+  },
+  "upgrade": {
+    "status": "passed",
+    "release": "20261031",
+    "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+    "tablesCompared": 43,
+    "objectsCompared": 7,
+    "backup": ".local/handoff-demo-20261029/backups/20261031T122502Z",
+    "allTableContentsUnchanged": true,
+    "allObjectBytesUnchanged": true,
+    "realProviderCalls": 0
+  },
+  "modes": {
+    "status": "passed",
+    "checks": [
+      {
+        "mode": "start",
+        "release": "20261030",
+        "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+        "health": 200
+      },
+      {
+        "mode": "start",
+        "release": "20261031",
+        "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+        "health": 200
+      },
+      {
+        "mode": "fault",
+        "release": "20261031",
+        "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+        "health": 200
+      },
+      {
+        "mode": "start",
+        "release": "20261031",
+        "assemblySha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+        "health": 200
+      }
+    ],
+    "cookieRetainedInThisRoundTrip": true,
+    "historicalReadInFaultMode": true,
+    "newWritingBlocked503": true,
+    "manualBuilderContentAvailable": true,
+    "downloadHashMatchedInFault": true,
+    "finalMode": "start",
+    "finalRelease": "20261031",
+    "realProviderCalls": 0
+  },
+  "history": {
+    "status": "passed",
+    "release": "20261031",
+    "actor": "automated synthetic/Fake",
+    "ordinaryUiNoInterception": true,
+    "fullReload": true,
+    "reopenedOriginalJob": true,
+    "learningTopic": "docker",
+    "matchingPostRequests": 0,
+    "resumeVersions": 3,
+    "privateSelection": null,
+    "applicationStatus": "reviewing",
+    "applicationResumeVersion": 1,
+    "realProviderCalls": 0
+  },
+  "reset_ui": {
+    "release": "20261031",
+    "status": "passed",
+    "realLocalBackend": true,
+    "interceptedResponses": false,
+    "invalidTokenStatus": 400,
+    "errorCode": "invalid_or_expired_reset",
+    "specificAlert": true,
+    "forgotNavigation": true,
+    "tokenQueryCleared": true,
+    "automaticForgotRequests": 0,
+    "realProviderCalls": 0
+  },
+  "new_provider_calls": 0,
+  "new_credits": 0,
+  "cost_usd": 0,
+  "old_protected_files": 357,
+  "evidence_sha256": {
+    ".local/frontend-step3-20261031-192425-d924/result.json": "42a1c71a1a9eb5186b5073178534f21762e146815e1a06e2ba2ad63d4b530373",
+    ".local/frontend-step3-20261031-192425-d924/results/backend.trx": "f510e452938d5fe75fa81e32cae4e4b9c9b4daa173b95da45cdfe4501aa17b62",
+    ".local/frontend-step3-20261031-192425-d924/source-sha256.json": "fd5031858a20580a20accba9d2f1fcf68f780d5fa4b430187710ea26eb8418e9",
+    ".local/frontend-step3-20261031-192425-d924/api.log": "f79de322d437b8b83c982250e1a2726995c6687265b9528923f7338c14d52a8b",
+    ".local/frontend-step3-20261031-192425-d924/backend-build.log": "e4f23b9f829cbd72cebd81512ef8620e389dcc0187aeb3b9eaea6894549573e4",
+    ".local/frontend-step3-20261031-192425-d924/backend-tests.log": "cd9c720faa1c87d624468b5c201df533e4130c56e41a3399c68c903a4e9918bd",
+    ".local/frontend-step3-20261031-192425-d924/e2e.log": "374f4017d9421c241a62f39615e4f7bfe9d7f3a5fac3aaf109d3c9b54c965183",
+    ".local/frontend-step3-20261031-192425-d924/frontend-build.log": "7b5d2185a0e4e5879af535b782ac7f1eead3201fd97dca076e59cc2025404e4c",
+    ".local/frontend-step3-20261031-192425-d924/frontend-lint.log": "10d4e7f6e49377b303e4e01c61668338b9e89e59446244aecc9a4ac3d83b4907",
+    ".local/frontend-step3-20261031-192425-d924/frontend-test.log": "8856e167044568bd378e7541b8bd009929c793a3b0351901c67c5b6d37b60037",
+    ".local/frontend-step3-20261031-192425-d924/frontend-typecheck.log": "b16c94767c8f942c6816c734fd37c185a619e9912f4bdfc90e22ff0ab3bce175",
+    ".local/frontend-step3-20261031-192425-d924/migration-build.log": "d5ee9350024ad3d60f8978a23bd4c9060575fd4de5922e56ac75b9adbcfdd0e7",
+    ".local/frontend-step3-20261031-192425-d924/migration.log": "f01741388ad2d069de9b43dfe52206bd8abf20979319ab8341dc7f922eb3a2c7",
+    ".local/frontend-step3-20261031-192425-d924/playwright-browser.log": "f582cbd664a62fafb2d73a9b46bd03ad25825eba9dfe689834d43c4cf846cdee",
+    ".local/frontend-step3-20261031-192425-d924/playwright-install.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".local/frontend-step3-20261031-192425-d924/postgres-create.log": "d73054fbf476c51b22dc3ca0a3c506041e9347582de9720e666d831b4244e9a4",
+    ".local/frontend-step3-20261031-192425-d924/postgres-image.log": "4bd67aae37f8e2cd44d6484362cf1dd03f30af726eb706928fd585cc65930426",
+    ".local/frontend-step3-20261031-192425-d924/postgres-ready.log": "e3183cdd90bb0215a22bd03ff69d4ffb31c40707ec08c816bccfd8c114b74778",
+    ".local/frontend-step3-20261031-192425-d924/postgres-version.log": "b3b4ad8903743803a6c5f4e5c6bf8aaa6b8c659f16c95d26667aa1316959a6af",
+    ".local/frontend-step3-20261031-192425-d924/provider-audit.log": "74f4f553574f4d5f58e81901a1b3ef74fce3b5b8e09583b487829da191b8cdce",
+    ".local/frontend-step3-20261031-192425-d924/runner-tests.log": "deba66a310fc6633d3d8451f5b84c8008f6c759cbddb73525fd789df08b79f68",
+    ".local/frontend-step3-20261031-192425-d924/seed.log": "580ff7bb21384d1b743d9da8babab11dd78086a68ed2fb56cb1a93110951941b",
+    ".local/frontend-step3-20261031-192425-d924/vite.log": "d07690d9070bb4191064a5c75996bd4826ab363765bd3727fd721cf74bd9a0cb",
+    ".local/handoff-sync-20261031/upgrade-audit.json": "5fb51e89f76d195eefb0b21cb7311ddf61a5157c35802f6858ee645d3f18437a",
+    ".local/handoff-sync-20261031/modes.json": "8f0f3d2d1155b2e3984ba72bf5d470b1838b536c29d49878b447eeb9db6d45e9",
+    ".local/handoff-sync-20261031/history-rehearsal.json": "5537abed0f01fd2da1d2cbc455d4c727a4a31b4beade524f4127335030d0c56d",
+    ".local/handoff-sync-20261031/reset-ui.json": "20cee0889529d1dc17cd008440308245727c2756f702db4946c46d64f2a51e08",
+    ".local/handoff-sync-20261031/restore-cleanup.json": "39402fb9942b00209b2a4f444764357883e1f27ae879fbc253084b7c52e30140"
+  },
+  "package_verification": "project-docs/handoff/stage-e-20261031/verification.json",
+  "artifacts": [
+    {
+      "path": "project-docs/handoff/stage-e-20261031/CV-synthetic-dung-thu.docx",
+      "sha256": "f7739309a707788f57292746efdbcbab4a67dd4d90ec5c190d3b43124995bca2"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/demo.html",
+      "sha256": "fad6517d75f5ef30516db4dfc39fcc710f491fe5eb31614b971b9752a42a745c"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/huong-dan-dung-thu.md",
+      "sha256": "2807d0955a5563c833782f623ebd1fb8efb896254f34efbd5c7a33b76633f284"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/JD-synthetic-dung-thu.txt",
+      "sha256": "25dd77dfaf8a78fe82c2b9d23c2482417ae8cdae748772d3825618ccd0563920"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/nghiem-thu-M6.md",
+      "sha256": "cdeb76e8fecc8e05aa2e88c45823877e5c767b3cb322d9262b3e1880955662aa"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/Phieu-dung-thu-CareerGapAI.docx",
+      "sha256": "ff83082221955afc7f6c486033f99b76e93c7b28dcd9d84402be4772b69d71c4"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/README.md",
+      "sha256": "8fd68335292116d345bb1b20852685fd31a9928224d990a7dbc72bb81ae404c6"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/thuyet-trinh.md",
+      "sha256": "585bfc939b1c620addbd0207d91cd596e89eff6d352692efc12e45d6e6f0246b"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/van-hanh-local.md",
+      "sha256": "601d6502b1a300713b2500a9976ccbeba92b482a33e97a9191c97a01be312581"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/demo-videos/01-pair-history-20261031.webm",
+      "sha256": "f06ab9bd7fb4843cdc17b418a4bac5efeee327dc400e60051b3d9b3aa1da2c42"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/images/pair-history-learning.png",
+      "sha256": "b76cc93acdf688fbe3e10b3a887b9f20b56c065adb5074232c9a99b9bc4d66ef"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/images/pair-history.png",
+      "sha256": "d4b4bd25a5e28e47dcc1c34080483c2fad3900537223d892f7b740657037309e"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/images/reset-forgot.png",
+      "sha256": "dcaf07a6d1e614be39ad3f7fd6e141d67a177258e7928689550e6394bc0a8296"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261031/images/reset-invalid.png",
+      "sha256": "f5a1bab51cb094ddaf3cbf1fe721f2f8672791eecbd1a4523616828273f4af30"
+    }
+  ]
+}

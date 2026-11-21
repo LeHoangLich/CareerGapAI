@@ -1,13 +1,15 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 
-export type WorkspaceView = 'jobs' | 'applications' | 'private-resumes' | 'cv-builder' | 'profile'
+export type WorkspaceView = 'home' | 'analysis-history' | 'community' | 'jobs' | 'job' | 'applications' | 'application' | 'notifications' | 'private-resumes' | 'cv-builder' | 'profile'
   | 'recruiter-company' | 'recruiter-applicants' | 'public-resumes' | 'account' | 'access' | 'recruiter-jobs' | 'shared-profile' | 'administration';
 
 type NavigationSession = { authenticated: boolean; roles: string[]; deletionPending?: boolean };
 export const recruiterViews: WorkspaceView[] = ['recruiter-company', 'recruiter-jobs', 'recruiter-applicants'];
 export const resumeViews: WorkspaceView[] = ['private-resumes', 'cv-builder', 'profile'];
 export const viewLabels: Record<WorkspaceView, string> = {
-  jobs: 'Khám phá việc làm', applications: 'Đơn ứng tuyển & Thông báo',
+  home: 'Trang chủ tổng hợp',
+  'analysis-history': 'Lịch sử phân tích',
+  community: 'Cộng đồng nghề nghiệp', jobs: 'Khám phá việc làm', job: 'Chi tiết việc làm', applications: 'Đơn ứng tuyển & Thông báo', application: 'Chi tiết hồ sơ ứng tuyển', notifications: 'Thông báo tuyển dụng',
   'private-resumes': 'Quản lý CV riêng', 'cv-builder': 'Soạn & Cải thiện CV',
   profile: 'Hồ sơ & Quyền chia sẻ', 'public-resumes': 'Kho CV công khai',
   account: 'Tài khoản', access: 'Đăng nhập', 'recruiter-jobs': 'Tin & hồ sơ ứng tuyển',
@@ -17,12 +19,16 @@ export const viewLabels: Record<WorkspaceView, string> = {
 
 export function resolveWorkspaceView(hash: string, session?: NavigationSession): WorkspaceView {
   if (session?.deletionPending) return 'account';
-  const requested = hash.replace(/^#/, '');
+  const requested = hash.replace(/^#/, '').split('?')[0];
+  if (requested === 'home') return 'home';
+  if (requested === 'community') return 'community';
+  if (requested === 'job') return 'job';
   if (requested === 'access') return session?.authenticated ? 'jobs' : 'access';
   if (requested === 'account') return session?.authenticated ? 'account' : 'access';
   if (resumeViews.includes(requested as WorkspaceView))
     return !session?.authenticated ? 'access' : session.roles.includes('Candidate') ? requested as WorkspaceView : 'jobs';
-  if (requested === 'applications') return !session?.authenticated ? 'access' : 'applications';
+  if (requested === 'applications' || requested === 'application' || requested === 'notifications') return !session?.authenticated ? 'access' : requested;
+  if (requested === 'analysis-history') return !session?.authenticated ? 'access' : session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? 'analysis-history' : 'jobs';
   if (requested === 'public-resumes') return !session?.authenticated ? 'access'
     : session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? 'public-resumes' : 'jobs';
   if (recruiterViews.includes(requested as WorkspaceView) || requested === 'shared-profile') return !session?.authenticated ? 'access'

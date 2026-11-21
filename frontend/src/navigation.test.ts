@@ -7,6 +7,33 @@ const admin = { authenticated: true, roles: ['Admin'] };
 const guest = { authenticated: false, roles: [] };
 
 describe('workspace route resolution', () => {
+  it('guards analysis history and its deep links',()=>{
+    expect(resolveWorkspaceView('#analysis-history?id=example',candidate)).toBe('analysis-history');
+    expect(resolveWorkspaceView('#analysis-history',recruiter)).toBe('analysis-history');
+    expect(resolveWorkspaceView('#analysis-history',guest)).toBe('access');
+    expect(resolveWorkspaceView('#analysis-history',admin)).toBe('jobs');
+  });
+  it('requires authentication for application notification targets',()=>{
+    expect(resolveWorkspaceView('#notifications',guest)).toBe('access');
+    expect(resolveWorkspaceView('#notifications',candidate)).toBe('notifications');
+    expect(resolveWorkspaceView('#notifications',recruiter)).toBe('notifications');
+    expect(resolveWorkspaceView('#application?id=example',guest)).toBe('access');
+    for(const session of [candidate,recruiter,admin])expect(resolveWorkspaceView('#application?id=example',session)).toBe('application');
+    expect(resolveWorkspaceView('#application?id=example',{...candidate,deletionPending:true})).toBe('account');
+  });
+  it('allows public job detail links and keeps deletion-pending accounts isolated', () => {
+    for (const session of [undefined, guest, candidate, recruiter, admin])
+      expect(resolveWorkspaceView('#job?id=example', session)).toBe('job');
+    expect(resolveWorkspaceView('#job?id=example', { ...candidate, deletionPending: true })).toBe('account');
+  });
+  it('allows public home and community deep links and keeps deletion-pending accounts isolated', () => {
+    for (const session of [guest, candidate, recruiter, admin]) {
+      expect(resolveWorkspaceView('#home', session)).toBe('home');
+      expect(resolveWorkspaceView('#community?post=example', session)).toBe('community');
+    }
+    expect(resolveWorkspaceView('#home', { ...candidate, deletionPending: true })).toBe('account');
+    expect(resolveWorkspaceView('#community', { ...candidate, deletionPending: true })).toBe('account');
+  });
   it('keeps all existing candidate deep links and CV tabs', () => {
     for (const view of ['jobs', 'applications', ...resumeViews, 'public-resumes', 'account'])
       expect(resolveWorkspaceView(`#${view}`, candidate)).toBe(view);

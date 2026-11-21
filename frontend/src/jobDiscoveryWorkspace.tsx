@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react';
 import { CandidateKeywordRecommendations } from './matching';
+import { QuickMatchPanel } from './quickMatch';
 import { useStickyFit } from './useStickyFit';
 
 type Resume = { id: string; title: string; versions: { id: string; versionNo: number; createdAt?: string }[] };
@@ -15,6 +16,7 @@ export function JobDiscoveryWorkspace({ resumes, onSearchTitle, children }: {
       <CandidateKeywordRecommendations resumes={resumes} onSearchTitle={onSearchTitle} resultTargets={{ keyword: keywordTarget, ai: aiTarget }}/>
     </aside>
     <div className="job-discovery-results min-w-0">
+      <QuickMatchPanel resumes={resumes}/>
       <div ref={setAiTarget} className="matching-output-slot"/>
       <div ref={setKeywordTarget} className="matching-output-slot"/>
       {children}

@@ -87,7 +87,7 @@ public static class JobRevisionEndpoints
             db.Jobs.Any(j => j.Id == v.JobId && j.Company!.OwnerUserId == ownerId), ct);
 
     private static Task<bool> OwnsJobAsync(AppDb db, Guid jobId, Guid ownerId, CancellationToken ct) =>
-        db.Jobs.AsNoTracking().AnyAsync(x => x.Id == jobId && x.Company!.OwnerUserId == ownerId, ct);
+        db.Jobs.AsNoTracking().AnyAsync(x => x.Id == jobId && x.Company!.OwnerUserId == ownerId && db.BusinessIdentities.Any(b => b.UserId == ownerId && b.CompanyId == x.CompanyId), ct);
 
     private static JobDataRevisionDto ToDto(JobDataRevision revision) => new(revision.Id, revision.JobVersionId,
         revision.RevisionNo, revision.ParentRevisionId, revision.Origin, revision.SchemaVersion,

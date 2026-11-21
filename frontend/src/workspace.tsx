@@ -1,3 +1,4 @@
+import { CommunityBadge } from './community';
 import { useEffect, useState, type ReactNode } from "react";
 import { Dialog } from './ui';
 import { recruiterViews, resumeViews, viewLabels, type WorkspaceView } from './navigation';
@@ -5,11 +6,13 @@ import { ViewOutlet } from './persistentView';
 import { OnboardingBanner } from './onboarding';
 import {
   ArrowUpRight,
+  Bell,
   Briefcase,
   Buildings,
   FileText,
   GearSix,
   GlobeHemisphereWest,
+  House,
   IconContext,
   List,
   LockKey,
@@ -22,6 +25,7 @@ import {
 } from "@phosphor-icons/react";
 
 type Session = {
+  userId?: string;
   authenticated: boolean;
   email?: string;
   roles: string[];
@@ -88,7 +92,11 @@ export function Workspace({
   const items: NavigationItem[] = session?.deletionPending
     ? []
     : [
+        { id: "home", label: "Trang chủ tổng hợp", icon: House },
         { id: "jobs", label: "Khám phá việc làm", icon: Briefcase },
+        { id: "community", label: "Cộng đồng nghề nghiệp", icon: GlobeHemisphereWest },
+        ...(authenticated ? [{ id: "notifications", label: "Thông báo tuyển dụng", icon: Bell }] : []),
+        ...(candidate || recruiter ? [{ id: "analysis-history", label: "Lịch sử phân tích", icon: FileText }] : []),
         ...(candidate
           ? [
               {
@@ -111,7 +119,6 @@ export function Workspace({
                 label: "Hồ sơ được chia sẻ",
                 icon: UserCircle,
               },
-              { id: "applications", label: "Thông báo", icon: SquaresFour },
             ]
           : []),
         ...(candidate || recruiter
@@ -140,7 +147,7 @@ export function Workspace({
                 <a
                   key={id}
                   href={`#${id}`}
-                  aria-current={(activeView === id || id === 'private-resumes' && resumeViews.includes(activeView)
+                  aria-current={(activeView === id || id === 'notifications' && activeView === 'application' || id === 'jobs' && activeView === 'job' || id === 'private-resumes' && resumeViews.includes(activeView)
                     || id === 'recruiter-jobs' && recruiterViews.includes(activeView)) ? "location" : undefined}
                   onClick={() => {
                     setMenuOpen(false);
@@ -246,7 +253,7 @@ export function Workspace({
               </span>
             </div>
             {authenticated ? (
-              <div className="flex shrink-0 items-center gap-3">
+              <div className="flex shrink-0 items-center gap-3"><CommunityBadge key={session?.userId??'guest'} session={session}/>
                 <a href="#account" className="badge account-settings inline-flex items-center gap-2" aria-label="Cài đặt tài khoản" aria-current={activeView === 'account' ? 'page' : undefined}>
                   <GearSix size={16} aria-hidden="true"/>
                   {recruiter

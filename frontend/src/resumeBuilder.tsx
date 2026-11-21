@@ -1,3 +1,4 @@
+import { SkillPicker } from './skillPicker';
 import { FieldError, ValidatedForm } from './ui';
 import { renderBuilderPdf } from './pdfGeneration';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
@@ -71,7 +72,8 @@ function validate(content: ResumeBuilderContent): string | undefined {
   return undefined;
 }
 
-function parseLines(text: string) { return [...new Set(text.split(/\r?\n/).map(item => item.trim()).filter(Boolean))]; }
+// Preserve the editable buffer; normalized() trims/deduplicates only for validation and output.
+function parseLines(text: string) { return text.split(/\r?\n/); }
 function safeFileName(title: string) {
   const stem = title.trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '-').replace(/\s+/g, '-').slice(0, 100) || 'cv-cua-toi';
   return `${stem}.pdf`;
@@ -115,8 +117,8 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
   }, [recoveryKey]);
   const generation = useRef(0);
   const contentKey = JSON.stringify({ ...normalized(content), pdfLanguage });
-  const skillsError = content.skills.length > 20 ? 'Chỉ nhập tối đa 20 kỹ năng, mỗi dòng một mục.' : '';
-  const certificatesError = content.certifications.length > 20 ? 'Chỉ nhập tối đa 20 chứng chỉ, mỗi dòng một mục.' : '';
+  const skillsError = normalized(content).skills.length > 20 ? 'Chỉ nhập tối đa 20 kỹ năng, mỗi dòng một mục.' : '';
+  const certificatesError = normalized(content).certifications.length > 20 ? 'Chỉ nhập tối đa 20 chứng chỉ, mỗi dòng một mục.' : '';
   const latestContentKey = useRef(contentKey);
   latestContentKey.current = contentKey;
   const targetResume = resumes.find(item => item.id === targetResumeId);
@@ -278,6 +280,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
 
       <div className="builder-section-heading"><h3>Kỹ năng</h3><small>Tối đa 20 dòng; đây là thông tin bạn tự khai báo.</small></div>
       <label>Kỹ năng, mỗi dòng một mục<textarea aria-invalid={skillsError ? true : undefined} aria-describedby={skillsError ? skillsErrorId : undefined} value={content.skills.join('\n')} maxLength={2200} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, skills: parseLines(value) })); }}/></label>
+      <SkillPicker label="Chọn kỹ năng chuẩn cho CV" values={normalized(content).skills} disabled={busy} onAdd={name=>edit(current=>({...current,skills:[...current.skills,name]}))}/>
       <FieldError id={skillsErrorId} message={skillsError}/>
 
       <div className="builder-section-heading"><h3>Kinh nghiệm</h3><button type="button" className="secondary" disabled={busy || content.experience.length >= 10} onClick={() => edit(current => ({ ...current, experience: addItem(current.experience, emptyExperience, 10) }))}>Thêm kinh nghiệm</button></div>

@@ -231,7 +231,7 @@ public static partial class ApplicationEndpoints
         db.Users.AsNoTracking().AnyAsync(x => x.Id == candidateId && x.AccountStatus == "active", ct);
 
     private static async Task<bool> OwnsJobAsync(AppDb db, Guid jobId, Guid recruiterId, CancellationToken ct) =>
-        await db.Jobs.AsNoTracking().AnyAsync(x => x.Id == jobId && x.Company!.OwnerUserId == recruiterId, ct);
+        await db.Jobs.AsNoTracking().AnyAsync(x => x.Id == jobId && x.Company!.OwnerUserId == recruiterId && db.BusinessIdentities.Any(b=>b.UserId==recruiterId&&b.CompanyId==x.CompanyId), ct);
 
     private static bool RecruiterCanRead(ApplicationRecord application, DateTimeOffset now) =>
         ActiveStatuses.Contains(application.Status) ||

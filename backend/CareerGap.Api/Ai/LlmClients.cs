@@ -88,6 +88,8 @@ public class FakeLlmClient : ILlmClient
 {
     public virtual Task<LlmReply> WriteAsync(WritingPayload payload, MethodParameters parameters, CancellationToken ct)
     { ct.ThrowIfCancellationRequested(); return Task.FromResult(new LlmReply(PairMatchingContract.Serialize(WritingContract.Fake(payload)), 100, 100)); }
+    public virtual Task<LlmReply> RewriteJobAsync(CareerGap.Api.Writing.JobRewritePayload payload, MethodParameters parameters, CancellationToken ct)
+    { ct.ThrowIfCancellationRequested(); return Task.FromResult(new LlmReply(PairMatchingContract.Serialize(CareerGap.Api.Writing.JobRewriteContract.Fake(payload)), 100, 100)); }
     public virtual Task<LlmReply> MatchAsync(PairPayload payload, MethodParameters parameters, CancellationToken ct)
     { ct.ThrowIfCancellationRequested(); return Task.FromResult(new LlmReply(PairMatchingContract.Serialize(PairMatchingContract.Fake(payload)), 0, 0)); }
     public virtual Task<LlmReply> ExtractAsync(ParsedDocument doc, MethodParameters parameters, CancellationToken ct)

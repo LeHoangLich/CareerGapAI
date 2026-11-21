@@ -7,17 +7,27 @@ using Microsoft.EntityFrameworkCore;
 namespace CareerGap.Api.Matching;
 
 public sealed record CreatePairRequest(Guid ResumeVersionId, Guid JobVersionId, Guid IdempotencyKey,
-    string Context = "self", Guid? ApplicationId = null);
+    string Context = "self", Guid? ApplicationId = null, string? CareerContext = null);
 public sealed record LatestPairRequest(Guid ResumeVersionId, Guid JobVersionId,
     string Context = "self", Guid? ApplicationId = null);
 public sealed record PairJobView(Guid Id, string Status, string? ErrorCode, string Provider, string Method,
-    string Rubric, string Context, Guid ResumeVersionId, Guid ResumeRevisionId, Guid JobVersionId,
-    Guid JobRevisionId, Guid? ApplicationId, decimal? Score, IReadOnlyList<ScoredCriterion>? Criteria,
+    string Rubric, string Context, Guid ResumeVersionId, Guid ResumeRevisionId, Guid? JobVersionId,
+    Guid? JobRevisionId, Guid? ApplicationId, decimal? Score, IReadOnlyList<ScoredCriterion>? Criteria,
     string? Location, string WorkMode, decimal? SalaryMin, decimal? SalaryMax, string? SalaryCurrency,
-    string? SalaryPeriod, string ConditionsStatus = "not_assessed_no_confirmed_preferences");
+    string? SalaryPeriod, string ConditionsStatus = "not_assessed_no_confirmed_preferences",
+    string? CareerContext = null, IReadOnlyList<CriterionGroupSummary>? CriterionGroups = null);
 
 public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider clock)
 {
+    public static string? ValidateCareerContext(string? careerContext)
+    {
+        if (string.IsNullOrWhiteSpace(careerContext)) return null;
+        var clean = careerContext.Trim();
+        return clean is "career_start" or "career_switch" or "promotion"
+            ? clean
+            : throw new JobError("invalid_career_context", 400);
+    }
+
     public async Task<PairJobView?> ReadLatest(Guid uid, LatestPairRequest request, CancellationToken ct)
     {
         if (request.Context is not ("self" or "public_pool" or "application") ||
@@ -27,7 +37,7 @@ public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider 
         // discovery never admits a job, reserves budget or calls a provider.
         var id = await (from job in db.AiJobs.AsNoTracking()
             join input in db.MatchInputs.AsNoTracking() on job.Id equals input.AiJobId
-            where job.RequestedBy == uid && job.JobType == "match_pair" &&
+            where job.RequestedBy == uid && job.JobType == "match_pair" && !db.AnalysisHistoryHides.Any(h => h.AiJobId == job.Id) &&
                 input.ResumeVersionId == request.ResumeVersionId && input.JobVersionId == request.JobVersionId &&
                 input.Context == request.Context && input.ApplicationId == request.ApplicationId
             orderby job.CreatedAt descending, job.Id descending
@@ -37,12 +47,13 @@ public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider 
 
     public async Task<AiJob> Enqueue(Guid uid, CreatePairRequest request, CancellationToken ct)
     {
+        var careerContext = ValidateCareerContext(request.CareerContext);
         if (request.Context is not ("self" or "public_pool" or "application") ||
             (request.Context == "application") != request.ApplicationId.HasValue) throw new JobError("invalid_match_context", 400);
         var cv = await db.ResumeVersions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == request.ResumeVersionId, ct) ?? throw new JobError("not_found", 404);
         var version = await db.JobVersions.AsNoTracking().SingleOrDefaultAsync(x => x.Id == request.JobVersionId, ct) ?? throw new JobError("not_found", 404);
         var input = new MatchInput { CandidateId = cv.CandidateId, ResumeVersionId = cv.Id, JobVersionId = version.Id,
-            Context = request.Context, ApplicationId = request.ApplicationId };
+            Context = request.Context, CareerContext = careerContext, ApplicationId = request.ApplicationId };
         // Check authorization before reading revisions or reporting their state.
         if (!await CanAccess(db, uid, input, clock.GetUtcNow(), ct, checkRevisions: false)) throw new JobError("not_found", 404);
         var previous = await db.AiJobs.AsNoTracking().SingleOrDefaultAsync(x => x.RequestedBy == uid && x.IdempotencyKey == request.IdempotencyKey, ct);
@@ -77,15 +88,18 @@ public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider 
     {
         var job = await db.AiJobs.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id && x.RequestedBy == uid && x.JobType == "match_pair", ct);
         var input = await db.MatchInputs.AsNoTracking().SingleOrDefaultAsync(x => x.AiJobId == id, ct);
-        if (job is null || input is null || !await CanAccess(db, uid, input, clock.GetUtcNow(), ct)) return null;
+        if (job is null || input is null || await db.AnalysisHistoryHides.AnyAsync(h => h.AiJobId == id, ct) || !await CanAccess(db, uid, input, clock.GetUtcNow(), ct)) return null;
         var method = await db.AiMethods.AsNoTracking().SingleAsync(x => x.Id == job.MethodVersionId, ct);
         var result = await db.MatchResults.AsNoTracking().SingleOrDefaultAsync(x => x.AiJobId == id, ct);
         var payload = JsonSerializer.Deserialize<PairPayload>(input.Payload, OutputValidator.Json)!;
         if (!await CanAccess(db, uid, input, clock.GetUtcNow(), ct)) return null;
+        var criteria = result is null ? null : JsonSerializer.Deserialize<ScoredCriterion[]>(result.Criteria, OutputValidator.Json);
+        var groups = job.Status == "succeeded" && criteria is not null ? PairCriterionGroups.Summarize(criteria) : null;
         return new(job.Id, job.Status, job.ErrorCode, method.Provider, method.ConfigHash, payload.Rubric, input.Context,
             input.ResumeVersionId, input.ResumeRevisionId, input.JobVersionId, input.JobRevisionId, input.ApplicationId,
-            result?.Score, result is null ? null : JsonSerializer.Deserialize<ScoredCriterion[]>(result.Criteria, OutputValidator.Json),
-            payload.Location, payload.WorkMode, payload.SalaryMin, payload.SalaryMax, payload.SalaryCurrency, payload.SalaryPeriod);
+            result?.Score, criteria,
+            payload.Location, payload.WorkMode, payload.SalaryMin, payload.SalaryMax, payload.SalaryCurrency, payload.SalaryPeriod,
+            CareerContext: input.CareerContext, CriterionGroups: groups);
     }
 
     public static async Task<bool> CanAccess(AppDb db, Guid uid, MatchInput input, DateTimeOffset now, CancellationToken ct, bool checkRevisions = true)
@@ -95,11 +109,23 @@ public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider 
         var version = await (from v in db.ResumeVersions.AsNoTracking() join f in db.StoredFiles.AsNoTracking() on v.FileId equals f.Id
             where v.Id == input.ResumeVersionId && v.CandidateId == input.CandidateId && f.OwnerUserId == input.CandidateId &&
                 f.Status == "ready" && f.Sha256 == v.DocumentHash select v).SingleOrDefaultAsync(ct);
+        if (version is null) return false;
+        if (input.QuickMatchJdId is { } quickId)
+        {
+            if (input.Context != "self" || input.CandidateId != uid || input.ApplicationId is not null) return false;
+            var isCandidate = await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id
+                where ur.UserId == uid && r.Name == "Candidate" select ur.UserId).AnyAsync(ct);
+            if (!isCandidate || !await db.QuickMatchJds.AnyAsync(x => x.Id == quickId && x.CandidateId == uid, ct)) return false;
+            if (!checkRevisions) return true;
+            return await db.ResumeDataRevisions.AnyAsync(x => x.Id == input.ResumeRevisionId && x.ResumeVersionId == input.ResumeVersionId &&
+                x.CandidateId == input.CandidateId && x.ConfirmedBy == input.CandidateId && x.ConfirmedAt != null &&
+                (x.Origin == "user_confirmed" || x.Origin == "user_entered" && x.SchemaVersion == 2), ct);
+        }
         var job = await (from v in db.JobVersions.AsNoTracking() join j in db.Jobs.AsNoTracking() on v.JobId equals j.Id
             join c in db.Companies.AsNoTracking() on j.CompanyId equals c.Id
             where v.Id == input.JobVersionId && c.ArchivedAt == null && db.Users.Any(x => x.Id == c.OwnerUserId && x.AccountStatus == "active")
             select new { Version = v, Job = j, Owner = c.OwnerUserId }).SingleOrDefaultAsync(ct);
-        if (version is null || job is null) return false;
+        if (job is null) return false;
         var role = input.Context == "self" ? "Candidate" : "Recruiter";
         if (!await (from ur in db.UserRoles join r in db.Roles on ur.RoleId equals r.Id
             where ur.UserId == uid && r.Name == role select ur.UserId).AnyAsync(ct)) return false;
@@ -114,6 +140,7 @@ public sealed class PairMatchingService(AppDb db, JobService jobs, TimeProvider 
         }
         else
         {
+            if (!await CareerGap.Api.Recruitment.BusinessIdentityEndpoints.Verified(db,job.Owner,job.Job.CompanyId,ct)) return false;
             if (job.Job.CurrentVersionId != input.JobVersionId || job.Job.Status != "published" || job.Job.ApplicationDeadline <= now) return false;
             if (input.Context == "self" && input.CandidateId != uid) return false;
             if (input.Context == "public_pool" && (job.Owner != uid || !await db.CandidatePublicResumes.AnyAsync(x =>
@@ -135,6 +162,7 @@ public static class PairMatchingEndpoints
 {
     public static void MapPairMatching(this WebApplication app)
     {
+        app.MapAnalysisHistory();
         app.MapGet("/api/matching/pairs/latest", async (Guid resumeVersionId, Guid jobVersionId,
             string? context, Guid? applicationId, ClaimsPrincipal user, PairMatchingService service, CancellationToken ct) =>
         {

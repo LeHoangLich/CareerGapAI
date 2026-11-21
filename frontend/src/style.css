@@ -205,6 +205,22 @@
   .job-status.closed { background: var(--color-status-closed-bg); color: var(--color-status-closed-text); }
   .job-card details { margin: 14px 0; }
   .job-card .row { justify-content: flex-start; margin-top: 12px; }
+  .job-detail { max-width: 1050px; min-width: 0; margin-inline: auto; }
+  .job-detail-back { display: inline-block; margin-bottom: 20px; padding-block: 8px; }
+  .job-detail > .job-card { background: white; }
+  .job-detail .job-title-row { flex-wrap: wrap; }
+  .job-detail .job-identity { min-width: 0; }
+  .job-detail h1 { margin: 0; font-size: var(--font-size-xl); }
+  .job-detail-body > section { padding-block: 24px; border-bottom: 1px solid var(--line); }
+  .job-detail-body h2 { font-size: var(--font-size-lg); }
+  .job-detail-body p { white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 0; }
+  .job-company-facts { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,180px),1fr)); gap: 16px; margin: 18px 0; }
+  .job-company-facts dt { color: var(--muted); font-size: var(--font-size-sm); }
+  .job-company-facts dd { margin: 6px 0 0; overflow-wrap: anywhere; }
+  .job-share { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .job-share input { font-size: var(--font-size-sm); }
+  .job-share p { min-height: 1.8em; margin-bottom: 0; }
+  .job-detail-signin { margin-top: 20px; }
   .save-job { margin: 10px 8px 0 0; font-size: var(--font-size-sm); }
   .job-pages, .public-resume-pages { justify-content: center; margin-top: 24px; font-size: var(--font-size-sm); }
   .saved-jobs { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 20px; }
@@ -234,6 +250,16 @@
   .resume-rename button { flex-shrink: 0; }
   .apply-row { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
   .apply-row label { min-width: min(100%,280px); margin: 0; }
+  .apply-row .cover-letter-input { flex: 1 1 100%; min-width: 0; }
+  .application-cover-letter { min-width: 0; max-width: 100%; }
+  .application-cover-letter p { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 12px; }
+  .notification-center .row { justify-content: flex-start; flex-wrap: wrap; }
+  .notification-filters { align-items: end; gap: 16px; }
+  .notification-filters label { flex: 1 1 180px; }
+  .notification-list p, .submitted-letter-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .notification-list .notification-unread { border-left: 3px solid var(--accent); padding-left: 12px; }
+  .notification-application .row { flex-wrap: wrap; justify-content: flex-start; }
+  .notification-application h1 { overflow-wrap: anywhere; }
   .application-center { border-top: 1px solid var(--line); margin-top: 28px; padding-top: 24px; }
   .application-center h3 { margin: 0; }
   .application-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; }
@@ -541,3 +567,32 @@
     .viewport-sticky[data-sticky-active='true'] > * { box-shadow: none; }
   }
 }
+
+/* F26: moderation content remains readable at narrow widths. */
+.report-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.report-detail { margin-top: 24px; min-width: 0; }
+.report-filters { align-items: end; flex-wrap: wrap; }
+.report-detail .row { flex-wrap: wrap; }
+.report-detail ol { padding-left: 24px; overflow-wrap: anywhere; }
+
+.history-filters { flex-wrap: wrap; align-items: end; }
+.analysis-history h3, .analysis-history p { overflow-wrap: anywhere; }
+.analysis-history .application-list > li { display: block; }
+
+.weekly-roadmap { margin-block: 24px; padding: 20px; border: 1px solid var(--border, #dce3dc); border-radius: 12px; }
+.roadmap-options { flex-wrap: wrap; margin-block: 16px; }
+.roadmap-weeks { padding-left: 24px; }
+.roadmap-weeks article { margin-block: 16px; overflow-wrap: anywhere; }
+
+.company-logo { width: 52px; height: 52px; flex-shrink: 0; object-fit: contain; border: 1px solid #dce3dc; border-radius: 10px; background: white; padding: 4px; }
+.company-logo-fallback { display: inline-flex; align-items: center; justify-content: center; color: #285b48; font-weight: 600; }
+.company-logo-editor { border: 1px solid #dce3dc; border-radius: 12px; padding: 16px; margin-block: 12px; min-width: 0; }
+.company-logo-editor input { max-width: 100%; }
+
+.skill-picker { margin-block: 12px; padding: 16px; border: 1px solid #dce3dc; border-radius: 12px; min-width:0; }
+.skill-picker .row,.skill-options { display:flex; flex-wrap:wrap; gap:8px; }
+.skill-options { max-height:300px; overflow:auto; margin-block:12px; }
+.skill-picker input,.skill-picker select { max-width:100%; }
+
+.job-tags { justify-content:flex-start; flex-wrap:wrap; gap:8px; margin-block:8px; }
+.advanced-filter-grid > section { min-width:0; grid-column:1 / -1; }

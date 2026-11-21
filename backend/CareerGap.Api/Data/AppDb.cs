@@ -6,8 +6,9 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace CareerGap.Api.Data;
 
-public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
+public sealed partial class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
 {
+    public DbSet<CareerGap.Api.Recruitment.BusinessIdentity> BusinessIdentities => Set<CareerGap.Api.Recruitment.BusinessIdentity>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<AccountDeletionRequestRecord> AccountDeletionRequests => Set<AccountDeletionRequestRecord>();
     public DbSet<AccountDeletionObjectRecord> AccountDeletionObjects => Set<AccountDeletionObjectRecord>();
@@ -17,6 +18,7 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
     public DbSet<JobPosting> Jobs => Set<JobPosting>();
     public DbSet<JobVersion> JobVersions => Set<JobVersion>();
     public DbSet<SavedJob> SavedJobs => Set<SavedJob>();
+    public DbSet<JobView> JobViews => Set<JobView>();
     public DbSet<ApplicationRecord> Applications => Set<ApplicationRecord>();
     public DbSet<ApplicationStatusHistory> ApplicationStatusHistory => Set<ApplicationStatusHistory>();
     public DbSet<ApplicationNoteRecord> ApplicationNotes => Set<ApplicationNoteRecord>();
@@ -30,11 +32,16 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
     public DbSet<CandidatePublicResume> CandidatePublicResumes => Set<CandidatePublicResume>();
     public DbSet<AiMethod> AiMethods => Set<AiMethod>();
     public DbSet<AiJob> AiJobs => Set<AiJob>();
+    public DbSet<QuickMatchJd> QuickMatchJds => Set<QuickMatchJd>();
+    public DbSet<AnalysisHistoryHide> AnalysisHistoryHides => Set<AnalysisHistoryHide>();
     public DbSet<MatchInput> MatchInputs => Set<MatchInput>();
     public DbSet<MatchResult> MatchResults => Set<MatchResult>();
     public DbSet<WritingInput> WritingInputs => Set<WritingInput>();
     public DbSet<WritingResult> WritingResults => Set<WritingResult>();
     public DbSet<WritingDecision> WritingDecisions => Set<WritingDecision>();
+    public DbSet<JobRewriteInput> JobRewriteInputs => Set<JobRewriteInput>();
+    public DbSet<JobRewriteResult> JobRewriteResults => Set<JobRewriteResult>();
+    public DbSet<CareerGap.Api.Learning.SavedRoadmap> SavedRoadmaps => Set<CareerGap.Api.Learning.SavedRoadmap>();
     public DbSet<LearningRequest> LearningRequests => Set<LearningRequest>();
     public DbSet<ContentReport> ContentReports => Set<ContentReport>();
     public DbSet<AdminAudit> AdminAudits => Set<AdminAudit>();
@@ -47,6 +54,23 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
     protected override void OnModelCreating(ModelBuilder b)
     {
         base.OnModelCreating(b);
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().ToTable("business_identities");
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().HasKey(x=>x.UserId);
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().HasIndex(x=>x.CompanyId).IsUnique();
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().HasIndex(x=>x.TaxCode).IsUnique().HasFilter("tax_code IS NOT NULL");
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().HasOne<AppUser>().WithOne().HasForeignKey<CareerGap.Api.Recruitment.BusinessIdentity>(x=>x.UserId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().HasOne<Company>().WithMany().HasForeignKey(x=>x.CompanyId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().Property(x=>x.RowVersion).IsConcurrencyToken();
+        foreach(var property in b.Entity<CareerGap.Api.Recruitment.BusinessIdentity>().Metadata.GetProperties()) property.SetColumnName(Snake(property.Name));
+        b.Entity<JobPosting>().Property(x=>x.Tags).HasColumnType("text[]").HasDefaultValueSql("ARRAY[]::text[]");
+        b.Entity<JobPosting>().HasIndex(x=>x.Tags).HasMethod("gin");
+        b.Entity<Company>().HasOne<CommunityImage>().WithMany().HasForeignKey(x=>x.LogoImageId).OnDelete(DeleteBehavior.SetNull);
+        b.Entity<CareerGap.Api.Learning.SavedRoadmap>().ToTable("saved_roadmaps");
+        b.Entity<CareerGap.Api.Learning.SavedRoadmap>().HasKey(x=>x.PairId);
+        b.Entity<CareerGap.Api.Learning.SavedRoadmap>().HasOne<MatchInput>().WithOne().HasForeignKey<CareerGap.Api.Learning.SavedRoadmap>(x=>x.PairId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.Plan).HasColumnType("jsonb");
+        b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.Completed).HasColumnType("jsonb");
+        b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.RowVersion).IsConcurrencyToken();
         b.Entity<AppUser>().Property(x => x.AccountStatus).HasMaxLength(24);
         b.Entity<AppUser>().HasIndex(x => x.NormalizedEmail).IsUnique().HasFilter("\"NormalizedEmail\" IS NOT NULL");
         b.Entity<CandidateProfile>().HasKey(x => x.UserId);
@@ -86,10 +110,12 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
         b.Entity<JobPosting>().HasOne(x => x.Company).WithMany().HasForeignKey(x => x.CompanyId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<JobPosting>().HasOne(x => x.CurrentVersion).WithMany().HasForeignKey(x => new { x.CurrentVersionId, x.Id }).HasPrincipalKey(x => new { x.Id, x.JobId }).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
         b.Entity<JobPosting>().Property(x => x.Status).HasMaxLength(24);
+        b.Entity<JobPosting>().Property(x => x.ArchivedByRole).HasMaxLength(24);
+        b.Entity<JobPosting>().Property(x => x.PreviousStatus).HasMaxLength(24);
         b.Entity<JobPosting>().Property(x => x.RowVersion).IsConcurrencyToken();
         b.Entity<JobPosting>().HasIndex(x => new { x.Status, x.CreatedAt });
         b.Entity<JobPosting>().HasIndex(x => new { x.CompanyId, x.Status, x.CreatedAt });
-        b.Entity<JobPosting>().ToTable(t => t.HasCheckConstraint("ck_job_listing_state", "row_version >= 0 AND status IN ('draft','published','closed','archived') AND ((status = 'draft' AND closed_at IS NULL) OR (status = 'published' AND current_version_id IS NOT NULL AND published_at IS NOT NULL AND closed_at IS NULL) OR (status IN ('closed','archived') AND current_version_id IS NOT NULL AND published_at IS NOT NULL AND closed_at IS NOT NULL))"));
+        b.Entity<JobPosting>().ToTable(t => t.HasCheckConstraint("ck_job_listing_state", "row_version >= 0 AND (max_applications IS NULL OR max_applications BETWEEN 1 AND 10000) AND (archived_by_role IS NULL OR archived_by_role IN ('recruiter','admin')) AND (previous_status IS NULL OR previous_status IN ('draft','published','closed')) AND status IN ('draft','published','closed','archived') AND ((status = 'draft' AND closed_at IS NULL) OR (status = 'published' AND current_version_id IS NOT NULL AND published_at IS NOT NULL AND closed_at IS NULL) OR (status = 'closed' AND current_version_id IS NOT NULL AND published_at IS NOT NULL AND closed_at IS NOT NULL) OR (status = 'archived' AND current_version_id IS NOT NULL AND closed_at IS NOT NULL))"));
         b.Entity<JobVersion>().HasKey(x => x.Id);
         b.Entity<JobVersion>().HasAlternateKey(x => new { x.Id, x.JobId });
         b.Entity<JobVersion>().HasOne(x => x.Job).WithMany().HasForeignKey(x => x.JobId).OnDelete(DeleteBehavior.Restrict);
@@ -113,6 +139,9 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
         b.Entity<SavedJob>().HasOne<CandidateProfile>().WithMany().HasForeignKey(x => x.CandidateId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<SavedJob>().HasOne<JobPosting>().WithMany().HasForeignKey(x => x.JobId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<SavedJob>().HasIndex(x => new { x.JobId, x.CreatedAt });
+        b.Entity<JobView>().HasKey(x => new { x.JobId, x.Viewer, x.Day });
+        b.Entity<JobView>().Property(x => x.Viewer).HasMaxLength(64);
+        b.Entity<JobView>().HasOne<JobPosting>().WithMany().HasForeignKey(x => x.JobId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<ApplicationRecord>().HasKey(x => x.Id);
         b.Entity<ApplicationRecord>().HasAlternateKey(x => new { x.Id, x.CandidateId });
         b.Entity<ApplicationRecord>().HasAlternateKey(x => new { x.Id, x.JobId });
@@ -124,6 +153,8 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
             .HasForeignKey(x => new { x.SubmittedJobVersionId, x.JobId }).HasPrincipalKey(x => new { x.Id, x.JobId }).OnDelete(DeleteBehavior.Restrict);
         b.Entity<ApplicationRecord>().Property(x => x.Status).HasMaxLength(24);
         b.Entity<ApplicationRecord>().Property(x => x.SubmissionHash).HasColumnType("char(64)");
+        b.Entity<ApplicationRecord>().Property(x => x.CoverLetter).HasMaxLength(5000);
+        b.Entity<ApplicationRecord>().ToTable(t => t.HasCheckConstraint("ck_application_cover_letter", "cover_letter IS NULL OR length(cover_letter) BETWEEN 1 AND 5000"));
         b.Entity<ApplicationRecord>().Property(x => x.RowVersion).IsConcurrencyToken();
         b.Entity<ApplicationRecord>().HasIndex(x => new { x.CandidateId, x.SubmissionKey }).IsUnique();
         b.Entity<ApplicationRecord>().HasIndex(x => new { x.JobId, x.Status, x.SubmittedAt });
@@ -253,7 +284,7 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
         b.Entity<AiJob>().HasIndex(x => x.LeaseUntil).HasFilter("status = 'running'");
         b.Entity<AiJob>().Property(x => x.OutputJson).HasColumnType("jsonb");
         b.Entity<AiJob>().Property(x => x.JobType).HasMaxLength(32).HasDefaultValue("extract_cv");
-        b.Entity<AiJob>().ToTable(t => t.HasCheckConstraint("ck_job_type", "job_type IN ('extract_cv','match_pair','suggest_cv') AND (job_type <> 'match_pair' OR resume_version_id IS NULL)"));
+        b.Entity<AiJob>().ToTable(t => t.HasCheckConstraint("ck_job_type", "job_type IN ('extract_cv','match_pair','suggest_cv','rewrite_jd') AND (job_type NOT IN ('match_pair','rewrite_jd') OR resume_version_id IS NULL)"));
         b.Entity<WritingInput>().HasKey(x => x.AiJobId);
         b.Entity<WritingInput>().HasOne<AiJob>().WithOne().HasForeignKey<WritingInput>(x => x.AiJobId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<WritingInput>().HasOne<ResumeVersion>().WithMany().HasForeignKey(x => new { x.ResumeVersionId, x.CandidateId }).HasPrincipalKey(x => new { x.Id, x.CandidateId }).OnDelete(DeleteBehavior.Restrict);
@@ -279,23 +310,46 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
         b.Entity<ContentReport>().Property(x => x.Reason).HasMaxLength(1000);
         b.Entity<ContentReport>().Property(x => x.RowVersion).IsConcurrencyToken();
         b.Entity<ContentReport>().HasIndex(x => new { x.Status, x.CreatedAt });
-        b.Entity<ContentReport>().ToTable(t => t.HasCheckConstraint("ck_content_report", "status IN ('open','resolved','dismissed') AND target_type IN ('job','public_resume') AND row_version >= 0"));
+        b.Entity<ContentReport>().ToTable(t => t.HasCheckConstraint("ck_content_report", "status IN ('open','reviewed','resolved','dismissed') AND target_type IN ('job','public_resume') AND row_version >= 0"));
         b.Entity<AdminAudit>().HasKey(x => x.Id);
         b.Entity<AdminAudit>().Property(x => x.Reason).HasMaxLength(500);
         b.Entity<AdminAudit>().HasIndex(x => x.CreatedAt);
         b.Entity<EmailDelivery>().HasKey(x => x.Id);
         b.Entity<EmailDelivery>().HasIndex(x => new { x.Provider, x.PeriodStart });
         b.Entity<EmailDelivery>().ToTable(t => t.HasCheckConstraint("ck_email_delivery", "status IN ('sent','accepted','outcome_unknown') AND period_start < period_end"));
+        b.Entity<QuickMatchJd>().HasKey(x => x.Id);
+        b.Entity<QuickMatchJd>().HasOne<AppUser>().WithMany().HasForeignKey(x => x.CandidateId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<QuickMatchJd>().Property(x => x.SourceType).HasMaxLength(16);
+        b.Entity<QuickMatchJd>().Property(x => x.SourceUrl).HasMaxLength(2048);
+        b.Entity<QuickMatchJd>().Property(x => x.Title).HasMaxLength(200);
+        b.Entity<QuickMatchJd>().Property(x => x.RequirementsJson).HasColumnType("jsonb");
+        b.Entity<QuickMatchJd>().ToTable(t => t.HasCheckConstraint("ck_quick_match_jd_source", "source_type IN ('paste','url')"));
+        b.Entity<JobRewriteInput>().HasKey(x => x.AiJobId);
+        b.Entity<JobRewriteInput>().HasOne<AiJob>().WithOne().HasForeignKey<JobRewriteInput>(x => x.AiJobId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<JobRewriteInput>().HasOne<JobPosting>().WithMany().HasForeignKey(x => x.JobId).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<JobRewriteInput>().HasOne<JobVersion>().WithMany().HasForeignKey(x => new { x.JobVersionId, x.JobId }).HasPrincipalKey(x => new { x.Id, x.JobId }).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<JobRewriteInput>().HasOne<JobDataRevision>().WithMany().HasForeignKey(x => new { x.JobRevisionId, x.JobVersionId }).HasPrincipalKey(x => new { x.Id, x.JobVersionId }).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<JobRewriteInput>().Property(x => x.Payload).HasColumnType("jsonb");
+        b.Entity<JobRewriteInput>().Property(x => x.Fingerprint).HasColumnType("char(64)");
+        b.Entity<JobRewriteResult>().HasKey(x => x.AiJobId);
+        b.Entity<JobRewriteResult>().HasOne<JobRewriteInput>().WithOne().HasForeignKey<JobRewriteResult>(x => x.AiJobId).OnDelete(DeleteBehavior.Cascade);
+        b.Entity<JobRewriteResult>().Property(x => x.Sections).HasColumnType("jsonb");
+        b.Entity<AnalysisHistoryHide>().HasKey(x => x.AiJobId);
+        b.Entity<AnalysisHistoryHide>().HasOne<AiJob>().WithOne().HasForeignKey<AnalysisHistoryHide>(x => x.AiJobId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MatchInput>().HasKey(x => x.AiJobId);
         b.Entity<MatchInput>().HasOne<AiJob>().WithOne().HasForeignKey<MatchInput>(x => x.AiJobId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MatchInput>().HasOne<ResumeVersion>().WithMany().HasForeignKey(x => new { x.ResumeVersionId, x.CandidateId }).HasPrincipalKey(x => new { x.Id, x.CandidateId }).OnDelete(DeleteBehavior.Restrict);
         b.Entity<MatchInput>().HasOne<ResumeDataRevision>().WithMany().HasForeignKey(x => new { x.ResumeRevisionId, x.ResumeVersionId }).HasPrincipalKey(x => new { x.Id, x.ResumeVersionId }).OnDelete(DeleteBehavior.Restrict);
-        b.Entity<MatchInput>().HasOne<JobDataRevision>().WithMany().HasForeignKey(x => new { x.JobRevisionId, x.JobVersionId }).HasPrincipalKey(x => new { x.Id, x.JobVersionId }).OnDelete(DeleteBehavior.Restrict);
+        b.Entity<MatchInput>().HasOne<JobDataRevision>().WithMany().HasForeignKey(x => new { x.JobRevisionId, x.JobVersionId }).HasPrincipalKey(x => new { x.Id, x.JobVersionId }).OnDelete(DeleteBehavior.Restrict).IsRequired(false);
+        b.Entity<MatchInput>().HasOne<QuickMatchJd>().WithMany().HasForeignKey(x => x.QuickMatchJdId).OnDelete(DeleteBehavior.Cascade).IsRequired(false);
         b.Entity<MatchInput>().HasOne<ApplicationRecord>().WithMany().HasForeignKey(x => x.ApplicationId).OnDelete(DeleteBehavior.Restrict);
         b.Entity<MatchInput>().HasIndex(x => new { x.Fingerprint, x.AiJobId });
         b.Entity<MatchInput>().Property(x => x.Payload).HasColumnType("jsonb");
         b.Entity<MatchInput>().Property(x => x.Fingerprint).HasColumnType("char(64)");
+        b.Entity<MatchInput>().Property(x => x.CareerContext).HasMaxLength(24);
         b.Entity<MatchInput>().ToTable(t => t.HasCheckConstraint("ck_match_context", "context IN ('self','public_pool','application') AND ((context = 'application') = (application_id IS NOT NULL))"));
+        b.Entity<MatchInput>().ToTable(t => t.HasCheckConstraint("ck_match_source", "((job_version_id IS NOT NULL AND job_revision_id IS NOT NULL AND quick_match_jd_id IS NULL) OR (job_version_id IS NULL AND job_revision_id IS NULL AND quick_match_jd_id IS NOT NULL AND context = 'self'))"));
+        b.Entity<MatchInput>().ToTable(t => t.HasCheckConstraint("ck_match_career_context", "career_context IS NULL OR career_context IN ('career_start','career_switch','promotion')"));
         b.Entity<MatchResult>().HasKey(x => x.AiJobId);
         b.Entity<MatchResult>().HasOne<MatchInput>().WithOne().HasForeignKey<MatchResult>(x => x.AiJobId).OnDelete(DeleteBehavior.Cascade);
         b.Entity<MatchResult>().Property(x => x.Criteria).HasColumnType("jsonb");
@@ -343,6 +397,8 @@ public sealed class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<A
         b.Entity<AccountDeletionObjectRecord>().HasIndex(x => new { x.RequestId, x.Status, x.CreatedAt });
         b.Entity<AccountDeletionObjectRecord>().ToTable(t => t.HasCheckConstraint("ck_account_deletion_object_state",
             "status IN ('pending','deleted') AND attempt_count >= 0 AND ((status = 'deleted' AND deleted_at IS NOT NULL) OR (status = 'pending' AND deleted_at IS NULL))"));
+
+        ConfigureCommunity(b);
 
         // Keep framework Identity/DP names; use snake_case only for our feature tables.
         foreach (var type in b.Model.GetEntityTypes().Where(t => t.ClrType.Namespace == typeof(AppDb).Namespace && t.ClrType != typeof(AppUser)))

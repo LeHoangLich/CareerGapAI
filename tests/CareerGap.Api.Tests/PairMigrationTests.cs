@@ -37,7 +37,16 @@ public sealed class PairMigrationTests
             Assert.Equal(15, (await db.Database.GetAppliedMigrationsAsync()).Count());
             await migrator.MigrateAsync();
             Assert.Equal("legacy-input", (await db.AiJobs.AsNoTracking().SingleAsync(x => x.Id == job)).InputHash);
-            Assert.Equal(19, (await db.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(31, (await db.Database.GetAppliedMigrationsAsync()).Count());
+            var report = new ContentReport { ReporterId = user, TargetId = Guid.NewGuid(), Status = "reviewed", Reason = "F26 migration safety" };
+            db.ContentReports.Add(report); await db.SaveChangesAsync();
+            await Assert.ThrowsAsync<PostgresException>(() => migrator.MigrateAsync("20261103052341_ApplicationCoverLetter"));
+            Assert.Equal("reviewed", (await db.ContentReports.AsNoTracking().SingleAsync(x => x.Id == report.Id)).Status);
+            report.Status = "resolved"; await db.SaveChangesAsync();
+            await migrator.MigrateAsync("20261103052341_ApplicationCoverLetter");
+            Assert.Equal(21, (await db.Database.GetAppliedMigrationsAsync()).Count());
+            await migrator.MigrateAsync();
+            Assert.Equal("resolved", (await db.ContentReports.AsNoTracking().SingleAsync(x => x.Id == report.Id)).Status);
             await migrator.MigrateAsync("20261021084251_PairMatching");
             Assert.Equal(16, (await db.Database.GetAppliedMigrationsAsync()).Count());
             await migrator.MigrateAsync();

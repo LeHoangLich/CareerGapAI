@@ -114,7 +114,7 @@ public sealed partial class PairMatchingTests(FoundationFixture fixture) : IClas
             title = "React Developer", description = "Synthetic frontend role", requirementsText = "Required: React\nOptional: Docker", location = "Hà Nội", employmentType = "full_time", workMode = "remote", language = "en" } });
         Assert.Equal(HttpStatusCode.Created, create.StatusCode);
         var created = await create.Content.ReadFromJsonAsync<JsonElement>(); var job = created.GetProperty("id").GetGuid();
-        Assert.Equal(HttpStatusCode.OK, (await recruiter.PostAsJsonAsync($"/api/jobs/{job}/publish", new { rowVersion = created.GetProperty("rowVersion").GetInt64() })).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await fixture.PublishWithVerifiedBusinessFixture(recruiter, job, new { rowVersion = created.GetProperty("rowVersion").GetInt64() })).StatusCode);
         var jd = (await db.Jobs.AsNoTracking().SingleAsync(x => x.Id == job)).CurrentVersionId!.Value;
         Assert.True(JobRevisionFactory.TryExtract(jd, null, 1, "Required: React\nOptional: Docker", DateTimeOffset.UtcNow, out var parsed, out _));
         var requirements = JsonSerializer.Deserialize<JobStructuredRequirements>(parsed!.StructuredData, OutputValidator.Json)!;
@@ -133,7 +133,7 @@ public sealed partial class PairMatchingTests(FoundationFixture fixture) : IClas
         }
         throw new InvalidOperationException("test_queue_not_drained");
     }
-    private static async Task<Guid> Enqueue(HttpClient client, Setup data, string context = "self", Guid? application = null, Guid? key = null)
+    private async Task<Guid> Enqueue(HttpClient client, Setup data, string context = "self", Guid? application = null, Guid? key = null)
     {
         var response = await client.PostAsJsonAsync("/api/matching/pairs", new CreatePairRequest(data.Cv, data.Jd, key ?? Guid.NewGuid(), context, application));
         Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);

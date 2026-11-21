@@ -1,0 +1,129 @@
+{
+  "date": "2026-10-30",
+  "status": "owner_authorized_technical_source_review_complete",
+  "authorization": {
+    "reviewer_name": "Lê Hoàng Lịch",
+    "reviewer_role": "Project Owner",
+    "technical_auditor": "Codex (Authorized by Owner)",
+    "reviewer": "Lê Hoàng Lịch (Ủy quyền kỹ thuật: Codex)",
+    "human_authorized": true,
+    "review_status": "verified",
+    "verification_scope": "owner_authorized_AI_source_audit",
+    "actual_comparison_actor": "Codex",
+    "human_direct_label_review_observed": false,
+    "owner_approval_basis": "advance_process_authorization_not_observed_row_by_row_review",
+    "date": "2026-10-30"
+  },
+  "documents": 14,
+  "independent_groups": 11,
+  "field_labels": 318,
+  "status_counts": {
+    "present": 299,
+    "absent": 18,
+    "ambiguous": 1
+  },
+  "adjusted_label_records": 300,
+  "semantic_annotation_changes": [
+    {
+      "document_id": "jd-vi-05",
+      "field_path": "requirements[1]"
+    },
+    {
+      "document_id": "jd-en-01",
+      "field_path": "requirements[11]"
+    },
+    {
+      "document_id": "jd-en-01",
+      "field_path": "requirements[12]"
+    }
+  ],
+  "human_direct_reviewed_labels": 0,
+  "owner_authorized_technical_reviewed_labels": 318,
+  "historical_pair_references": "schema/group/hash validated; not a new independent semantic pair review",
+  "final_experiment_results_recomputed": false,
+  "M6_accepted": false,
+  "external_review": "deferred_until_owner_reopens",
+  "provider_calls": 0,
+  "private_receipt": {
+    "path": ".local/label-review-20261030/label-review-receipt.json",
+    "sha256": "92a9660911bd3f3d60feb6f6f1d43102d7c677a4128c4735d100c6169a95ac64"
+  },
+  "subsets": [
+    {
+      "scope": "final",
+      "labels": 131,
+      "manifest_sha256": "aef75d0e40014c3584745bb1abe44135b6eb8e48dac116b6c04562bade767483",
+      "validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "documents": 6,
+        "groups": 6,
+        "splits": {
+          "demo": 0,
+          "final": 6,
+          "smoke": 0,
+          "tuning": 0
+        },
+        "synthetic_documents": 0,
+        "field_labels": 131,
+        "pair_labels": 8,
+        "file_hashes_verified": true,
+        "provider_rights_checked": false,
+        "provider_called": false,
+        "rights_evidence_human_review_required": true
+      }
+    },
+    {
+      "scope": "tuning",
+      "labels": 164,
+      "manifest_sha256": "c41a12617a914d394cd56cf073ee0c30554bee3da1c26f06dbf0582559b850b4",
+      "validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "documents": 7,
+        "groups": 4,
+        "splits": {
+          "demo": 0,
+          "final": 0,
+          "smoke": 0,
+          "tuning": 7
+        },
+        "synthetic_documents": 0,
+        "field_labels": 164,
+        "pair_labels": 4,
+        "file_hashes_verified": true,
+        "provider_rights_checked": false,
+        "provider_called": false,
+        "rights_evidence_human_review_required": true
+      }
+    },
+    {
+      "scope": "docx",
+      "labels": 23,
+      "manifest_sha256": "0fcb9c790f7809569ed822417a1ee98a1da5602c32fd01802a0fe3ca8c0dbb6f",
+      "validation": {
+        "valid": true,
+        "errors": [],
+        "warnings": [],
+        "documents": 1,
+        "groups": 1,
+        "splits": {
+          "demo": 0,
+          "final": 0,
+          "smoke": 0,
+          "tuning": 1
+        },
+        "synthetic_documents": 0,
+        "field_labels": 23,
+        "pair_labels": 0,
+        "file_hashes_verified": true,
+        "provider_rights_checked": false,
+        "provider_called": false,
+        "rights_evidence_human_review_required": true
+      }
+    }
+  ],
+  "report": "project-docs/report/label-review-2026-10-30.md"
+}

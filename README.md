@@ -1,5 +1,14 @@
 # CareerGap AI
 
+**01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN — SẴN SÀNG BẢO VỆ.** Lê Hoàng Lịch (Project Owner) quyết định đóng phạm vi dự án nội bộ; trạng thái `final_defense_ready`, acceptance_type=`internal_owner_acceptance`. **Release20261031 là Defense Baseline**, mã nguồn222file đã đóng băng. Thủ tục dùng thử ngoài trước bảo vệ đã khép lại; các ghi nhận M6chờ phía dưới là lịch sử trước quyết định này.
+
+[Bộ bàn giao cuối](project-docs/handoff/stage-e-20261031/README.md) · [Biên bản nghiệm thu](project-docs/report/m6-internal-acceptance-2026-11-01.md) · [Manifest](project-docs/evaluation/m6-internal-acceptance-2026-11-01.json) · [Source Freeze](project-docs/evaluation/source-freeze-2026-11-01.json).
+
+Regression31/10:160backend/15unit/22E2E; restore43bảng/7objects/DPkeys và rollback đã kiểm. SourceZIP/runtime giữ nguyên hash; metricpilot và giới hạn khoa học không đổi. Quyết định nghiệm thu nội bộ không tạo điểm/chữ ký Hội đồng; kết quả buổi bảo vệ ghi theo thực tế.
+
+## Nhật ký phát triển trước quyết định nghiệm thu cuối
+
+
 > 30/10 — Bản demo/bàn giao hiện hành có Xem kết quả đã lưu CV–JD, runtime20261030 tại5190 và rollback29/10 đã thử; dữ liệu/tài khoản synthetic giữ nguyên. Backend160/160, FE11/11 + lint/typecheck/build, E2E21/21 mới đạt; backup/restore43bảng/7objects, production UI và Docker lookup đã kiểm. Gói29/10 giữ lịch sử. Đánh giá giảng viên đang hoãn theo owner, M6 chưa nghiệm thu. [Bộ mới](project-docs/handoff/stage-e-20261030/README.md) · [Biên bản](project-docs/report/handoff-sync-2026-10-30.md).
 
 > 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](project-docs/report/handoff-sync-2026-10-29.md).
