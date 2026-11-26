@@ -1,0 +1,122 @@
+{
+  "date": "2026-10-29",
+  "M6_accepted": false,
+  "scope": "companion verification created after building the exact source archive; intentionally outside that archive",
+  "archive": {
+    "files": 338,
+    "sha256": "8853d793564afc361a17bb699130273020fca13e7c6bd63baf389b0fc18e3749",
+    "bytes": 10663366,
+    "all_members_verified": true,
+    "configured_secrets_scan_passed": true,
+    "owner_edited_form_and_private_data_excluded": true
+  },
+  "clean_install": {
+    "scope": "fresh extraction of final 340-file handoff archive on same Windows host, dependency cache available; not new OS",
+    "archive_sha256": "91724a2a7c7c813b72c29abed37f601d114e4d3f5da991bfe9da50fc1d28c860",
+    "file_hashes_verified": 340,
+    "commands": [
+      {
+        "name": "restore",
+        "exit_code": 0,
+        "seconds": 1.75,
+        "provider_calls": 0
+      },
+      {
+        "name": "backend-build",
+        "exit_code": 0,
+        "seconds": 5.7,
+        "provider_calls": 0
+      },
+      {
+        "name": "npm-ci",
+        "exit_code": 0,
+        "seconds": 40.73,
+        "provider_calls": 0
+      },
+      {
+        "name": "frontend-unit",
+        "exit_code": 0,
+        "seconds": 2.28,
+        "provider_calls": 0
+      },
+      {
+        "name": "frontend-build",
+        "exit_code": 0,
+        "seconds": 16.89,
+        "provider_calls": 0
+      }
+    ],
+    "no_real_env_keys_or_old_build_outputs_copied": true,
+    "frontend_unit_passed": 11,
+    "original_built_archive_sha256": "91724a2a7c7c813b72c29abed37f601d114e4d3f5da991bfe9da50fc1d28c860",
+    "final_archive_sha256": "8853d793564afc361a17bb699130273020fca13e7c6bd63baf389b0fc18e3749",
+    "final_archive_members_hash_verified": 338,
+    "runtime_sources_and_build_config_byte_identical": true,
+    "packaging_correction_after_build": "removed two ignored Playwright YAML captures and refreshed public evidence metadata; no runtime/build input changed"
+  },
+  "Docker": {
+    "status": "passed",
+    "image": "sha256:a19a3bf89d9d9169ccdc7f326812fec4651c4c3ff191b8226b5ae6feac228842",
+    "checks": [
+      {
+        "path": "/api/health",
+        "status": 200,
+        "bytes": 15
+      },
+      {
+        "path": "/api/jobs",
+        "status": 200,
+        "bytes": 2696
+      },
+      {
+        "path": "/",
+        "status": 200,
+        "bytes": 601
+      },
+      {
+        "path": "/assets/index-Ch50BNEB.js",
+        "status": 200,
+        "bytes": 407337
+      }
+    ],
+    "worker_js_packaged": true,
+    "all_providers_Fake_AI_off": true,
+    "provider_calls": 0,
+    "Linux_binary_separate_from_Windows_evaluation": true
+  },
+  "slide_QA": {
+    "slide_count": 10,
+    "unchanged_slides_viewed_in_prior_revision": [
+      1,
+      3,
+      4,
+      5
+    ],
+    "final_slides_viewed": [
+      2,
+      6,
+      7,
+      8,
+      9,
+      10
+    ],
+    "slide_2_7_images_embedded": true,
+    "all_slides_reviewed": true,
+    "rehearsal_PDF_render_viewed": true,
+    "public_screenshots_source": "automated synthetic/Fake rehearsal"
+  },
+  "PDF": {
+    "pages": 1,
+    "text_copy": true,
+    "React_present": true,
+    "no_replacement_character": true,
+    "all_characters_in_page": true,
+    "source": "actual PDF from new production browser rehearsal, synthetic/Fake"
+  },
+  "new_provider_calls": 0,
+  "private_ledgers_and_owner_documents_preserved": true,
+  "remaining_external_evidence": [
+    "actual instructor trial/feedback",
+    "scope/rubric/quality assessment"
+  ]
+}

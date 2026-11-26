@@ -9,6 +9,12 @@
 > **Đã xác nhận:** React + TypeScript + Vite, .NET 10 Monolith, PostgreSQL 16+, DeepSeek Cloud. **Đề xuất kỹ thuật trong tài liệu:** thư viện, cách xác thực, dịch vụ phụ trợ và cấu hình triển khai để hiện thực phạm vi đó. Các đề xuất cần được kiểm chứng bằng một bản tích hợp nhỏ trước khi áp dụng rộng; tài liệu này không có nghĩa hệ thống đã được cài đặt hoặc triển khai.
 >
 > Giá và giới hạn dịch vụ được đối chiếu tài liệu chính thức ngày **14/10/2026**. Kiểm tra lại khi tạo dịch vụ hoặc đổi gói; không coi hạn mức miễn phí là cam kết vận hành lâu dài.
+>
+> **Đồng bộ hiện trạng triển khai thực tế (`feat/post-freeze-p1-p3-20261121`, cập nhật 21/11/2026):**
+> - **Điều hướng & dữ liệu phía Frontend:** Thực tế sử dụng bộ điều hướng hash multi-view tự viết ([navigation.ts](../frontend/src/navigation.ts)), `fetch` thuần ([api.ts](../frontend/src/api.ts)) và `ValidatedForm` ([ui.tsx](../frontend/src/ui.tsx)) thay vì `react-router-dom`, TanStack Query, React Hook Form + Zod như đề xuất bảng 2.1 bên dưới.
+> - **Cập nhật thông báo thời gian thực:** Ngoài bảng `notifications` và đọc qua API như bản gốc, nhánh mở rộng đã bổ sung kênh **Server-Sent Events (SSE)** tại `/api/community/events` ([recruitmentLive.ts](../frontend/src/recruitmentLive.ts)) phục vụ cập nhật trực tiếp thông báo cộng đồng và tuyển dụng.
+> - **Tạo PDF CV:** Sử dụng `@react-pdf/renderer` trong Web Worker riêng với font tĩnh `/fonts/NotoSans-Regular.ttf` ([resumeBuilderPdf.tsx](../frontend/src/resumeBuilderPdf.tsx)); bản hiện tại mới nhúng Regular (chưa có file Bold riêng, ghi nhận tinh chỉnh tại [taskboard_v2.md](../taskboard_v2.md)).
+> - **Quy mô codebase hiện tại:** Backend .NET 10 với **31 EF Core migrations** (`231/231` backend PostgreSQL tests đạt với provider `Fake`) và Frontend React 19 + Tailwind CSS 4 (`42/42` unit tests đạt; E2E cho nhánh mới cần chạy lại đầy đủ). Gói Defense Baseline `release20261031` (19 migrations) được giữ nguyên riêng.
 
 ## 1. Kiến trúc tổng thể
 
@@ -102,7 +108,7 @@ Lưu file gốc, văn bản trích xuất, dữ liệu được người dùng x
 | S3 client | `AWSSDK.S3` với endpoint Neon | Dùng API S3-compatible; không phụ thuộc AWS hosting |
 | LLM | DeepSeek API qua typed `HttpClient` | Kiểm soát request, timeout, JSON và thống kê token |
 | Tìm nguồn học | Tavily Search qua typed `HttpClient` | Một công cụ tìm kiếm web có hạn mức; khởi đầu bằng Basic Search |
-| Thông báo | Bảng thông báo trong PostgreSQL, đọc qua API | Đáp ứng thông báo trạng thái; chưa cần SignalR |
+| Thông báo | Bảng thông báo trong PostgreSQL, đọc qua API + SSE `/api/community/events` (bổ sung ở nhánh mở rộng) | Bản gốc đọc qua API; nhánh mở rộng `v2026.11.21-p1-p3` bổ sung SSE real-time cho thông báo tuyển dụng & cộng đồng |
 | Email khôi phục tài khoản | Resend HTTPS API, đề xuất có điều kiện | Chỉ bật gửi thật khi đã xác minh tên miền gửi và thử thành công |
 | Logging | `ILogger`, log có cấu trúc ra stdout | Xem trên nền tảng triển khai, không phụ thuộc file log cục bộ |
 
@@ -195,7 +201,7 @@ Trọng số, ngưỡng và cách xử lý yêu cầu bắt buộc là quyết �
 
 ### 2.8. Thông báo và email
 
-Thông báo trạng thái ứng tuyển lưu trong database, frontend đọc khi mở trang và polling có giới hạn khi cần. Bản đầu không cần hệ thống chat hoặc kết nối thời gian thực.
+Thông báo trạng thái ứng tuyển lưu trong database, frontend đọc khi mở trang và polling có giới hạn khi cần; bản gốc chưa dùng kết nối thời gian thực, sau đó nhánh mở rộng `v2026.11.21-p1-p3` đã bổ sung kênh SSE `/api/community/events` cho cập nhật trực tiếp thông báo cộng đồng và tuyển dụng. Chưa có hệ thống chat thời gian thực.
 
 Email chỉ phục vụ các luồng tài khoản cần thiết. Đề xuất Resend qua HTTPS API, sau khi xác minh domain gửi; khi phát triển local/CI dùng email giả lập. Chưa có domain đã xác minh thì chưa coi luồng khôi phục qua email thật là hoàn tất. [Resend Verified Domains](https://resend.com/docs/dashboard/domains/introduction), [Resend Pricing](https://resend.com/pricing)
 

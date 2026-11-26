@@ -1,3 +1,4 @@
+import { openView } from './helpers';
 import { expect, test } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 
@@ -10,13 +11,14 @@ test('candidate reviews, saves, reopens, and versions a Vietnamese template CV P
   const initialSummary = Array.from({ length: 75 }, () => 'Ứng viên tự nhập nội dung tiếng Việt.').join(' ');
   expect(initialSummary.length).toBeLessThanOrEqual(3000);
 
-  await page.goto('/');
+  await page.goto('/#access');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(password);
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
 
+  await openView(page, 'cv-builder');
   const builder = page.locator('.resume-builder');
   await expect(builder.getByRole('heading', { name: 'Tạo CV từ thông tin bạn cung cấp' })).toBeVisible();
   await builder.getByLabel('Tên CV').fill(title);
@@ -51,7 +53,7 @@ test('candidate reviews, saves, reopens, and versions a Vietnamese template CV P
 
   const resumes = await page.request.get('/api/resumes?page=1');
   expect(resumes.ok()).toBeTruthy();
-  const listed = await resumes.json() as { id: string; title: string; versions: { id: string; fileId: string; documentHash: string; versionNo: number }[] }[];
+  const listed = (await resumes.json() as { items: { id: string; title: string; versions: { id: string; fileId: string; documentHash: string; versionNo: number }[] }[] }).items;
   const savedResume = listed.find(item => item.versions.some(version => version.versionNo === 1 && item.title.endsWith('.pdf')));
   expect(savedResume).toBeTruthy();
   const savedVersion = savedResume!.versions[0];
@@ -80,5 +82,6 @@ test('candidate reviews, saves, reopens, and versions a Vietnamese template CV P
   await expect(reopenedBuilder.getByTitle('Xem trước CV PDF')).toBeVisible({ timeout: 20000 });
   await reopenedBuilder.getByRole('button', { name: 'Lưu thành phiên bản CV' }).click();
   await expect(reopenedBuilder.getByRole('status').filter({ hasText: 'Đã lưu CV riêng tư, phiên bản mới và revision 1.' })).toBeVisible({ timeout: 20000 });
+  await openView(page, 'private-resumes');
   await expect(page.locator('.resumes > li').filter({ hasText: savedResume!.title })).toContainText('2 phiên bản');
 });

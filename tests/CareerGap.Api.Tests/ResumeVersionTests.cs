@@ -32,8 +32,8 @@ public sealed class ResumeVersionTests(FoundationFixture fixture) : IClassFixtur
         Assert.Equal(new[] { 2, 3 }, uploaded.Select(x => x.GetProperty("versionNo").GetInt32()).Order().ToArray());
         Assert.All(uploaded, result => Assert.Equal(resumeId, result.GetProperty("id").GetGuid()));
 
-        var resumes = await owner.GetFromJsonAsync<JsonElement[]>("/api/resumes?page=1");
-        var listed = Assert.Single(resumes!);
+        var resumes = await owner.GetFromJsonAsync<JsonElement>("/api/resumes?page=1");
+        var listed = Assert.Single(resumes.GetProperty("items").EnumerateArray());
         Assert.Equal(resumeId, listed.GetProperty("id").GetGuid());
         Assert.Equal(3, listed.GetProperty("versions").GetArrayLength());
         var rowVersion = listed.GetProperty("rowVersion").GetInt64();

@@ -1,0 +1,225 @@
+{
+  "date": "2026-10-29",
+  "sourceGuideSha256": "21ed07e294f3e076a098799198e0a423656e1d89e38c17077e4b78cb1b1f64cf",
+  "sourceGuideCopiedWithoutChanges": true,
+  "phasesCompleted": [
+    "accessibility",
+    "elevation-ai-state",
+    "recruiter-subnav-mobile-drawer"
+  ],
+  "frontendChanges": [
+    {
+      "path": "frontend/src/administration.tsx",
+      "beforeSha256": "12510c1a8e89228b392b3adae898e0da54c42f00f18ce15a32310eaf3fddc513",
+      "afterSha256": "8d3aa274bcc3cabfbc1e4ca725d9c3dc90d619f292cd0d86049350ecae8c4e54"
+    },
+    {
+      "path": "frontend/src/fullCvReview.tsx",
+      "beforeSha256": "93286ed71afecb8bb359f54429308d085fd2f3cf823d404fc5aed4530ca7e7fc",
+      "afterSha256": "2338f42bdea1df3f3f9df6ef2efe779558933e5f6e072dc28879f0a6d66863bf"
+    },
+    {
+      "path": "frontend/src/jobs.tsx",
+      "beforeSha256": "3445193de3307f41edfd3dff9246cd6891a78d6d77708ea40a4d978d3db8a07a",
+      "afterSha256": "952bcd252a1c4f91527c5b766e245240d6852252d0c9a08d19c1b6e8d5f7ddfb"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "beforeSha256": "9e947ff426cef2fea04bd6af72416230a76ade4d5245daf67618c8d436c39c09",
+      "afterSha256": "965cbcc5efb425b02e12e60714bcea2782c9cc97a4604fafd07b8f6b67a9bd9b"
+    },
+    {
+      "path": "frontend/src/navigation.test.ts",
+      "beforeSha256": "10c451261d3d11a42ce248c510f44098a92725f6a5b6857465ea5c5c3e3a83bf",
+      "afterSha256": "c0d8f5a95d789b79f9b0ba01cc7ddb49ea3ca08b0cddea5a6f36b9a2e1991385"
+    },
+    {
+      "path": "frontend/src/navigation.ts",
+      "beforeSha256": "5daebee3232247b4dec69f2134674dc0159f01c4f5db2e13fd57a1c3507b818b",
+      "afterSha256": "3d60c54c26fd3aa6fac3cb6988c662a7b29601275725dc3be42dc6d79d6dd767"
+    },
+    {
+      "path": "frontend/src/onboarding.tsx",
+      "beforeSha256": "0d98e1c1340ea8e4e790f11cf46e35ba7f1394da32713c738b49cc5b83e46b45",
+      "afterSha256": "aa5fa99f431e0010927bb5e32b421d9f3adb7ebb6405cf073cfbf3ca62e494e1"
+    },
+    {
+      "path": "frontend/src/pairMatching.tsx",
+      "beforeSha256": "07d4b032858b8bc6eb9d79d664ba512d8131be3962487643b794253281402a8d",
+      "afterSha256": "2d6184d8c814d3d2be66f6387979ba74949b326eb098dd4b6380068894e2eaa5"
+    },
+    {
+      "path": "frontend/src/pdfGeneration.ts",
+      "beforeSha256": null,
+      "afterSha256": "c38930bf35366a9e3c794c607a8ceb0a414bd58782bf1fbef08af9f39a5b96a4"
+    },
+    {
+      "path": "frontend/src/persistentView.tsx",
+      "beforeSha256": "e9199df6ba74df9ad67ab93fefb67ab1be403e98cfb5cfe4495e8b4603154d8b",
+      "afterSha256": "12c45219e273804d13848ce34d07af0c79c180aa64a919bd74cb43671fd2cc2c"
+    },
+    {
+      "path": "frontend/src/publicResumes.tsx",
+      "beforeSha256": "5a5d6c8b2a31de1961c2d506a5f8d6800e17ba03c89204c9539b6aeaca08bc17",
+      "afterSha256": "ac6d2b1a69ead66d1a78b11850eba52f535fa4b67c9920fb7d258374d1e24cf7"
+    },
+    {
+      "path": "frontend/src/resumeBuilder.tsx",
+      "beforeSha256": "83a1e1398fad1e5695094c0c5d1490271481ab5d2a724891f6a6581302842cba",
+      "afterSha256": "162ed615aeef07c3f3a4fcdaae1b7828f87a048b24ae93c7faa8a23db1491ff1"
+    },
+    {
+      "path": "frontend/src/resumeBuilderPdf.tsx",
+      "beforeSha256": "22a29573354062b60ee0f6c78edfeac73a86439a45f562b1fe0cee7b232d140b",
+      "afterSha256": "e74a1afc70fd317c76925beace5b626a1dffe5bd09b8441d0c119a9636dd11f2"
+    },
+    {
+      "path": "frontend/src/resumePdf.worker.tsx",
+      "beforeSha256": null,
+      "afterSha256": "18a7efac93840e7c6a1bec87ecc25fffdb66dbc00d466c0d62d9c7005b7d5312"
+    },
+    {
+      "path": "frontend/src/style.css",
+      "beforeSha256": "ba9b9dabd362d144e9affe0157a60a190889b95dd961c2eb563503593df0a27b",
+      "afterSha256": "494f73a5025361e39ac8c22a93e08d41fe81fd6b8344144654b190ef853fd1b4"
+    },
+    {
+      "path": "frontend/src/ui.tsx",
+      "beforeSha256": null,
+      "afterSha256": "a580de0919321015c47f90d4b63e8d90c91f509bade7b35dc0e9bacbd4f42cda"
+    },
+    {
+      "path": "frontend/src/useStickyFit.ts",
+      "beforeSha256": "f0accc6ee9deb0a0f215dd2fccd16a102843202214492ecc3300b28c9ec3c1dc",
+      "afterSha256": "7f6b75635d2aa26a0030a1b9ff9416d76cca12cdd351ce282e8e2ba73fa3c75e"
+    },
+    {
+      "path": "frontend/src/workspace.tsx",
+      "beforeSha256": "a43e4fb8149646fe75b65dc7b946a08fe2197cf7271dcff6afeb5f6dbdd6bde5",
+      "afterSha256": "6ea82fb598b70521a9b6a1849cb683ffcf4cfd167e08f4b805578327ec16a514"
+    },
+    {
+      "path": "frontend/src/writing.tsx",
+      "beforeSha256": "2d9033fdd79987206aeefa0fbcb8272b2260dcc0ad8b061de82d0e6483c0dffe",
+      "afterSha256": "216c8970797536957cb1660430b80cd715959d896c9e9c6629447a23c395750a"
+    },
+    {
+      "path": "frontend/e2e/account-deletion.spec.ts",
+      "beforeSha256": "4fedac08de50b2bd9eb850e254b2e3a3bceba060936b28a8f8e01177c76155b1",
+      "afterSha256": "2535160c16744dfbc2cce8dabd38e5828c66bdda9e3d55ecc4f1a6528d3a4f74"
+    },
+    {
+      "path": "frontend/e2e/applications.spec.ts",
+      "beforeSha256": "402621d83e0cd43fc8c3ca44b0e419abe5b5d468872baf78c4dd29e100c3cbcb",
+      "afterSha256": "1f9b995f9e391e3e9c97763a97e04e4f7013ff84165ea585223318fdadd8822c"
+    },
+    {
+      "path": "frontend/e2e/design-guide.spec.ts",
+      "beforeSha256": null,
+      "afterSha256": "94c27fe30cb84e13a37a731361eaa409f9df6c29455b2018ec988f84c5fe9c27"
+    },
+    {
+      "path": "frontend/e2e/helpers.ts",
+      "beforeSha256": "f5ff92f2413cc38fdf8b960c6d5ba516ea184d6a39e0216f91a797f5657baebb",
+      "afterSha256": "0ea9f2a2505c33aa218e04650ec6cebce32fd7949f98c787dfd307500975e01b"
+    },
+    {
+      "path": "frontend/e2e/jobs.spec.ts",
+      "beforeSha256": "becee7e8e7308c91a740382dcadfa8a14f8f0c64b4d22a441aa722b1fbf35d39",
+      "afterSha256": "aeaaba538a00548b03ec9b82bfe1e06c0db39f026f568cb68ea65575cac9e3b1"
+    },
+    {
+      "path": "frontend/e2e/stage-b.spec.ts",
+      "beforeSha256": "659ca130d16f7bf4916e47e2b4515a48d4df543d438107a56fd7ee773bc7a37c",
+      "afterSha256": "56248d186ad8cfe6d3edfea4d37deac9dcda19c2b268246bc8ed4b9f5aade3d8"
+    },
+    {
+      "path": "frontend/e2e/writing-matching.spec.ts",
+      "beforeSha256": "5378e1d32733e4753f323ac9f1c40e307ad895f0cdf3abf6716aa7f040197da4",
+      "afterSha256": "b2bcdf0c7c4494b73f84292d6a79966ea754ebabaa576b312f7bb1955aa272c1"
+    }
+  ],
+  "checks": {
+    "lint": "passed",
+    "typecheck": "passed",
+    "unitTests": {
+      "passed": 11,
+      "failed": 0
+    },
+    "build": "passed; PDF/worker large-chunk warning remains",
+    "isolatedIntegrationE2E": {
+      "passed": 21,
+      "failed": 0,
+      "run": ".local/frontend-step3-20261029-053123-c4ec",
+      "providers": "Fake",
+      "cleanup": true,
+      "note": "Last color-only AA refinements verified in subsequent production run"
+    },
+    "finalProductionUI": {
+      "passed": 7,
+      "failed": 0,
+      "path": ".local/design-guide-20261029-production/e2e.json",
+      "api": "mocked"
+    },
+    "pdf": [
+      {
+        "file": "design-guide-0-vi.pdf",
+        "pages": 1,
+        "language": "vi",
+        "headings": [
+          "GIỚI THIỆU",
+          "KỸ NĂNG",
+          "KINH NGHIỆM",
+          "DỰ ÁN",
+          "HỌC VẤN",
+          "CHỨNG CHỈ"
+        ],
+        "sha256": "248ad9020c5a42cdc4ae0fb92d5040941f13ddf3f21ff1efbad5516a97573c2f",
+        "textChecks": "pdfplumber+pypdf passed",
+        "geometry": "inside A4 page"
+      },
+      {
+        "file": "design-guide-1-en.pdf",
+        "pages": 1,
+        "language": "en",
+        "headings": [
+          "PROFILE",
+          "SKILLS",
+          "EXPERIENCE",
+          "PROJECTS",
+          "EDUCATION",
+          "CERTIFICATIONS"
+        ],
+        "sha256": "e7b5b694afe6329a8b29fa4c3cd05524f5212c6d965f3be020954b65c1d8ffc6",
+        "textChecks": "pdfplumber+pypdf passed",
+        "geometry": "inside A4 page"
+      },
+      {
+        "file": "design-guide-2-vi.pdf",
+        "pages": 1,
+        "language": "vi",
+        "headings": [
+          "GIỚI THIỆU",
+          "KỸ NĂNG",
+          "KINH NGHIỆM",
+          "DỰ ÁN",
+          "HỌC VẤN",
+          "CHỨNG CHỈ"
+        ],
+        "sha256": "b1f2e55f7f9568bae9d10a516546af06fc9f1698453f2664031e3c9f9890d6a4",
+        "textChecks": "pdfplumber+pypdf passed",
+        "geometry": "inside A4 page"
+      }
+    ],
+    "backendSourceHashesUnchanged": 89,
+    "fullBackendSuiteRerun": false
+  },
+  "scope": {
+    "realProviderCalls": 0,
+    "schemaChanges": false,
+    "demoDatabaseUsed": false,
+    "commitPushDeploy": false,
+    "benchmarkAcceptanceChanged": false
+  },
+  "report": "project-docs/report/frontend-style-guide-2026-10-29.md"
+}

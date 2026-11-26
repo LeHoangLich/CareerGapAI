@@ -1,5 +1,72 @@
 # Hiện trạng chuẩn — CareerGap AI
 
+> **Cập nhật nhánh mở rộng sau đóng băng (20–21/11/2026 — `feat/post-freeze-p1-p3-20261121` / tag `v2026.11.21-p1-p3`):**
+> Workspace hiện đang ở nhánh mở rộng sau đóng băng (tách biệt hoàn toàn với gói bảo vệ `release20261031` tại commit `41b82c6`), đã đồng bộ phân hệ Cộng đồng, Xác minh doanh nghiệp và **32/32 tính năng F01–F32** với **31 EF Core migrations**. Kiểm thử gần nhất trên nhánh mới: **231/231 backend PG tests** (Fake) và **42/42 frontend unit tests**, `typecheck`/`lint`/`build` đạt; **bộ Playwright E2E chưa được chạy lại cho các tính năng mới** và danh sách lỗi logic/đồng bộ giao diện cần xử lý tiếp được ghi nhận tại [taskboard_v2.md](../taskboard_v2.md). Bản **Defense Baseline `release20261031`** (222 file, 19 migrations, 160/15/22) vẫn được giữ nguyên.
+
+**01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN BỞI LÊ HOÀNG LỊCH.** Trạng thái cuối **final_defense_ready**; release20261031 là **Defense Baseline**. Giai đoạn E/GĐ6 và phạm vi dự án nội bộ hoàn thành; mã nguồn đã đóng băng. Chủ dự án chính thức khép lại thủ tục dùng thử ngoài trước bảo vệ; đó không còn là điều kiện chờ của M6. Kết quả Hội đồng tại buổi bảo vệ được ghi riêng theo thực tế. [Biên bản](report/m6-internal-acceptance-2026-11-01.md) · [Manifest](evaluation/m6-internal-acceptance-2026-11-01.json) · [Source freeze](evaluation/source-freeze-2026-11-01.json). Các trạng thái M6 chờ/đánh giá ngoài hoãn trong ghi nhận cũ phía dưới chỉ là lịch sử đã được quyết định này thay thế. Metric, human direct review0, backup và archive lịch sử giữ nguyên.
+
+
+## Trạng thái đóng dự án ngày01/11/2026
+
+**Dự án hoàn thành toàn diện trong phạm vi nghiệm thu nội bộ; sẵn sàng bảo vệ.** Acceptor: Lê Hoàng Lịch (Project Owner); acceptance_type=internal_owner_acceptance. Source Freeze:222file ứng dụng/công cụ/config/tests khớp ZIP31 đã kiểm, có hash từng file. Không đổi source hoặc build binary trong lần nghiệm thu này.
+
+| Hạng mục | Trạng thái cuối |
+|---|---|
+| M6 | ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN — final_defense_ready |
+| Giai đoạn E / GĐ6 | HOÀN THÀNH theo phạm vi owner chấp nhận |
+| P01–P21 |21/21 đầu ra trong phạm vi nội bộ đã chốt; P20 đóng theo quyết định mới |
+| Tiến độ phạm vi nội bộ |100%; không dùng tỷ lệ này làm accuracy/coverage hoặc điểm Hội đồng |
+| Bản bảo vệ |release20261031, localhost5190, Fake/Synthetic, Source Freeze |
+| Góp ý35mục |Đã xử lý/phân loại theo phạm vi; A12 verify, A13 đối soát và chấp nhận giới hạn; B01–B14 sẵn sàng, C01–C08 ngoài phạm vi |
+| Đánh giá học thuật chính thức |Thực hiện tại buổi bảo vệ; không phải điều kiện còn treo của nghiệm thu nội bộ |
+
+Không còn công việc phát triển bắt buộc trong phạm vi nội bộ đã được owner nghiệm thu. Vận hành demo/chuẩn bị trình bày tiếp tục theo bộ bàn giao; thay đổi code sau đóng băng cần phiên bản và kiểm chứng mới, không ghi đè baseline. Các mục chưa đo/giới hạn khoa học vẫn giữ trong báo cáo pilot.
+
+
+## Nhật ký trước quyết định nghiệm thu cuối (lịch sử)
+
+**01/11 — Đã xử lý góp ý AI/mô phỏng do owner chuyển:** 6 cụm nhận xét/câu hỏi +1hướng tương lai, triage nhóm1/2/3/4=0/6/0/1. Đã đối chiếu các khẳng định và bổ sung lời bảo vệ/slide notes; không sửa code hoặc phát hành patch. External human feedback vẫn0, M6 pending_external_review. [Ma trận](../docs/reviews/ai-feedback-triage-2026-11-01.md) · [Cẩm nang bổ sung](../docs/reviews/2026-11-01-ai-feedback/thuyet-trinh.md). Ghi nhận chưa có nội dung góp ý phía dưới là trước bản AI này.
+
+**01/11 — Quy trình góp ý ngoài đã chuẩn bị:** owner xác nhận “chưa có góp ý ngoài”; intake0, nhóm1–4 đều0. Đã có nhật ký/mẫu intake/quy trình triage, gate breaking change và checklist patch. Chưa tạo branch/bản vá hoặc chạy lại tests; release20261031 tiếp tục hiện hành, M6 pending_external_review. [Hồ sơ](report/external-review-readiness-2026-11-01.md).
+
+**31/10 — Release20261031 đã đồng bộ A12 vào demo5190:** launcher mặc định31, giữ runtime29/30; backup/restore43bảng/7objects/DPkeys và upgrade data khớp; regression160backend/15unit/22E2E đạt; history reload và reset invalid→forgot trên5190 đạt; rollback30→31/fault31/recover31 đạt, cookie còn dùng và tảiCV khớp. [Bộ31](handoff/stage-e-20261031/README.md) · [Biên bản](report/handoff-sync-2026-10-31.md). Gói27/29/30 giữ nguyên; không provider thật/phí, M6 chờ đánh giá ngoài. Các ghi nhận A12 chưa có demo phía dưới là lịch sử trước release31.
+
+## Đồng bộ tài liệu bảo vệ — 31/10/2026
+
+| Mốc | Trạng thái hiện hành |
+|---|---|
+| 30/10: chấp nhận pilot | Owner chấp nhận 2 CV Anh × 4 JD, 6 nhóm, 131 nhãn final, 8 cặp, k=3; không thay nghiệm thu M3/M5/M6 |
+| 30/10: rà nhãn | Codex đối chiếu 318 nhãn/14 tài liệu/11 nhóm theo ủy quyền; 300 tọa độ chuẩn hóa, thêm 3 needsReview; human direct review=0 |
+| 30/10: ma trận góp ý | 35 mục = 13 Cần sửa + 14 Cần giải thích + 8 Ngoài phạm vi; không phải phản hồi giảng viên |
+| 31/10: A12 | Sửa tại source và tái kiểm backend160/unit15/E2E22; lint/typecheck/build đạt; Vite cảnh báo bundle không chặn |
+| 31/10: A13 | Đối soát đủ 5 tiêu chí, chưa phát hiện lỗi chức năng trong luồng rà, giữ code; chưa chứng minh nguồn tiếng Việt đạt, chưa phát toàn bộ video |
+| 31/10: cẩm nang | Đủ 4 phần và Q&A/demo; cập nhật README/M6, không đóng gói lại runtime/ZIP/PPTX |
+| M6/P20 | Chờ đánh giá ngoài, đang hoãn; owner không cần chốt lại phạm vi pilot |
+
+[Cẩm nang hiện hành](handoff/stage-e-20261030/thuyet-trinh.md) · [Biên bản đồng bộ](report/defense-docs-sync-2026-10-31.md). Demo5190/ZIP30 chưa có A12; test release30 vẫn160/11/21, test source31 là160/15/22. Không API/phí, không thay corpus/metric/ledger. Các trạng thái cũ phía dưới đọc theo ngày, không thay thế bảng này.
+
+
+**31/10 — A12 reset mật khẩu đã sửa ở mã nguồn:** phân biệt invalid/expired reset, password_policy và lỗi máy chủ/mạng; có nút yêu cầu link mới, xóa token khỏi URL khi chuyển forgot. Backend160/160, FE15/15, E2E22/22, lint/typecheck/build đạt trên local/Fake, 0 provider thật/phí. Demo5190 và gói bàn giao30/10 chưa cập nhật thay đổi này; M6 giữ chờ đánh giá ngoài. [Biên bản](report/password-reset-feedback-2026-10-31.md).
+
+**30/10 — Chủ dự án Lê Hoàng Lịch đã chấp nhận phạm vi chất lượng pilot `pilot_2cv_4jd_limited`** (2CVAnh×4JD, 6nhóm, 131nhãn final, 8cặp, k=3) để trình bày/bảo vệ với giới hạn công khai. Mục chốt phạm vi bởi owner hoàn thành; không chờ owner chốt lại. Exact CV F1=0.6231884057971014 trên95nhãnCV, partial chưa đo; rerank CV→JD nDCG=0.9169956161990744 so baseline1.0, không cải thiện. Human direct review=0; không representative/production-ready. M6/P20 vẫn chờ đánh giá ngoài đang hoãn; không đổi nghiệm thu M3/M5. Không API/phí, giữ nhãn/metric/ledger/bộ bàn giao. [Biên bản](report/quality-acceptance-2026-10-30.md). Các ghi nhận owner chưa chốt phạm vi phía dưới là lịch sử.
+
+**30/10 — Rà nhãn theo ủy quyền hoàn thành:** Codex trực tiếp đối chiếu 318 nhãn trường/14 tài liệu/11 nhóm (final131, tuning164, DOCX23); validator offline và kiểm exact spans/hash/split đạt. Bổ sung tọa độ nguồn cho 300 nhãn có trích dẫn, phân loại thêm 3 cấu trúc needsReview; giữ 299present/18absent/1ambiguous. Lê Hoàng Lịch là người ủy quyền, Codex là bên đối chiếu; 318 nhãn rà kỹ thuật được ủy quyền, human trực tiếp vẫn chưa có bằng chứng. Overlay mới giữ nguyên nhãn/metric lịch sử, 0 provider calls; M6 chưa nghiệm thu, đánh giá ngoài vẫn hoãn. [Biên bản](report/label-review-2026-10-30.md).
+
+> 30/10 — Runtime/demo5190 và bộ bàn giao mới đã đồng bộ chức năng Xem kết quả đã lưu CV–JD; giữ dữ liệu synthetic và rollback29/10. Fresh backend160/160, FE11/11/lint/typecheck/build, E2E21/21; production UI, Docker lookup và backup/restore đã kiểm. Không provider thật hoặc đổi phương pháp/nhãn; M6 giữ chờ và đánh giá giảng viên đang hoãn theo owner. [Bộ hiện hành](handoff/stage-e-20261030/README.md) · [Biên bản](report/handoff-sync-2026-10-30.md).
+
+> 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](report/handoff-sync-2026-10-29.md).
+
+
+> 29/10 — Đã áp dụng đủ ba phase Style Guide owner cung cấp: token/typography và field feedback dùng chung, H1/reduced-motion, heading PDF Việt–Anh, dialog xác nhận, badge AI, sub-nav tuyển dụng và drawer mobile. Lint/typecheck/build, unit 11/11, E2E 21/21 Fake trên PostgreSQL riêng đạt; sau hiệu chỉnh màu cuối, production UI 7/7 và 3 PDF Việt→Anh→Việt text/geometry/render đạt. PDF builder dùng worker riêng mỗi lượt để tránh lỗi copy text khi tái sử dụng font cache. Không sửa backend/schema/method/ledger, không provider thật/push/deploy; M6 và chất lượng đại diện không đổi. [Báo cáo và giới hạn kiểm chứng](report/frontend-style-guide-2026-10-29.md).
+
+> 28/10 — Theo yêu cầu owner, giao diện được thiết kế lại theo skill `design-taste-frontend`, phong cách tối giản/tĩnh: điều hướng theo vai trò, menu điện thoại, Geist và màu xanh trầm, biểu mẫu/danh sách thống nhất. Lint/typecheck/build, FE4/4 và E2E9/9 Fake trên DB riêng đạt; kiểm tra hai vai trò ở 5 kích thước không tràn ngang, giữ bản nháp và không animation. Backend/API/schema/phương pháp/ledger không đổi, không provider/phí/deploy/commit/push; M6 không đổi. Frontend/gói source đã ghim trước đây giữ lịch sử. [Chi tiết giao diện và kiểm chứng](report/frontend-minimal-redesign-2026-10-28.md).
+
+> 28/10 — Bằng chứng owner U1/U5 đã bổ sung; actor lượt cũ26/10 là chủ dự án. Dashboard Tavily17:13VN khớp4/1000=D2+E2, ResearcherFree/PAYGoff, không dùng ngoài app theo owner; Usage chi tiết bị khóa, không lấy số0 mờ làm dữ liệu. Đối soát tổng hoàn thành, allowance0/capđóng/responseAPI cũ giữ lịch sử. Còn phản hồi người đánh giá và nhận xét chất lượng để chốt M6; không tăng human benchmark labels hoặc nghiệm thu đại diện. 0provider calls/phí/runtime change. [Bổ sung bằng chứng](report/stage-e-external-evidence-2026-10-28.md).
+
+
+> 27/10 — Đã hoàn tất phần kỹ thuật E sau sửa: CV2/2, pair8/8 trên method mới; F1 exact0,623 và34/44 trạng thái tham chiếu, rerank CV→JD nDCG0,917 so baseline1,00, không cải thiện. Đây là regression trên tập đã xem, giữ kết quả E đầu. Backend159/159, E2E9/9, FE4/4/lint/typecheck/build; restore current DLL19migrations/43tables/11files/3ledger, Docker+3HTTP và full writing UI→PDF→new private version đạt. Demo đã chuyển sang DB persistent riêng, hai role và proposal Fake chưa duyệt sẵn cho giảng viên. DeepSeekfollowup debit0,04+hold0,01; total spent0,11+hold0,03/remaining1,86 trong2USD; một journal unknown trung gian giữreservation, không hoàn. Tavily mới2credits/2requestsDocker, Git khônggap; UsageAPI tổngchưađổi, giữdebit/capđóng; email0. Chưa xác nhận phản hồi giảng viên, M6/representative quality chưa nghiệmthu. Không push/deploy; userWord giữ hash. Xem báo cáo sau sửa và bộ dùng thử hiện hành. Các trạng thái lỗi kỹ thuật chưa sửa phía dưới là lịch sử. [Báo cáo](report/stage-e-followup-2026-10-27.md), [manifest](evaluation/stage-e-followup-2026-10-27.json), [bộ dùng thử](handoff/stage-e-fixed-20261027/README.md).
+
+
 **27/10 — E đã chạy thực nghiệm hẹp, bộ dùng thử và bàn giao local đã chuẩn bị; M6 chưa đạt.** 14 jobs/23 attempts: CV 0/2, pair 2/8, writing 4/4; P/R/F1 và LLM rerank chưa tính được. Giữ các lỗi và phương pháp frozen, 0 search/email mới. Clean working directory build/3frontend/9E2E đạt; restore 19 migrations/43 bảng/18 objects/5 ledger đạt; bảo trì failed 7 ngày thủ công được kiểm cô lập. Có báo cáo, 9 slide, phiếu Word trống, demo synthetic/Fake và hai role private. Owner chưa có phản hồi giảng viên; lỗi AI và chất lượng topic còn mở, chưa release commit. [Báo cáo E](report/stage-e-2026-10-27.md), [manifest](evaluation/stage-e-results-2026-10-27.json), [hướng dẫn thử](handoff/stage-e-20261027/huong-dan-dung-thu.md). E debit0,04USD; development spent0,07+hold0,02/remaining1,91 trong2USD. Source114/test27/DLL authoritative không đổi; dữ liệu nguồn/corpus lịch sử giữ nguyên. Không deploy/commit/push. Các đoạn E chưa chạy phía dưới là lịch sử.
 
 **27/10 — bước7/M5 hoànthành phạmvi localhost; D kếtthúc, E/P20 sẵnsàng nhưng chưa thựcthi.** Đối chiếu7/7điềukiện:backend136/136,E2E9/9,frontend3/3,lint/typecheck/build,DockerLinux+3smoke đạt trên sourcebundle17c07f…/DLL a21e45…;114runtime/27tests/2DLL khôngđổi. Kiểm17writing+2search+16email evidence refs lịch sử,không giả provider run mới. [Biênbản](report/m5-local-acceptance-2026-10-27.md), [manifestM5](evaluation/m5-local-acceptance-2026-10-27.json), [bàn giaoE](tasks/stage-e-entry-2026-10-27.md). M3quality/M6chưađạt;giữ scope/coverage/exposure/human0.0calls/phí/CIremote/deploy/commit/push;ledger vàfinaldataset nguyênvẹn, môi trườngtestđãdọn. Các trạngthái M5chưađạt phía dưới làlịchsử.
@@ -84,7 +151,7 @@
 
 **Lượt kiểm tra M3 mới nhất ngày 21/10:** chủ dự án yêu cầu thực hiện nghiệm thu chất lượng. Validator/replay mới khớp 122/0/0, nhưng chỉ có synthetic/3 nhóm và toàn nhãn present; không đủ kết luận chất lượng đại diện. M3 **chờ đầu vào dữ liệu**, không còn chỉ tạm hoãn theo yêu cầu cũ. [Biên bản M3](report/m3-quality-review-2026-10-21.md). Không thêm phí hoặc sửa runtime; chưa thực hiện C.
 
-Ngày đối chiếu local: **21/10/2026**, Asia/Saigon; GitHub/CI vẫn là bằng chứng đã đối chiếu ngày 16/10. Đây là điểm đọc hiện trạng; nhật ký L01–L13 trong các báo cáo/task cũ giữ nguyên giá trị lịch sử theo từng lần chạy.
+*(Mốc đối chiếu chi tiết phía dưới được giữ nguyên theo nhật ký đến ngày **21/10/2026**, Asia/Saigon; mốc hiện hành mới nhất là bản cập nhật nhánh mở rộng 21/11/2026 và Defense Baseline 01/11/2026 ở đầu tài liệu.)* GitHub/CI bản gốc được đối chiếu ngày 16/10; nhật ký L01–L13 trong các báo cáo/task cũ giữ nguyên giá trị lịch sử theo từng lần chạy.
 
 ## Bản chuẩn và bằng chứng
 

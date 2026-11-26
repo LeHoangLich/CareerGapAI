@@ -57,7 +57,7 @@ public static class ResumeRevisionEndpoints
             .Where(x => x.ResumeVersionId == versionId && x.CandidateId == candidateId)
             .OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
         if (latest is null || latest.Id != revisionId || latest.RevisionNo != input.BaseRevisionNo)
-            return Results.Conflict(new { title = "resume_revision_conflict" });
+            return Results.Problem(statusCode: 409, title: "resume_revision_conflict");
 
         if (!ResumeRevisionFactory.TryConfirm(latest, candidateId, latest.RevisionNo + 1, input,
                 clock.GetUtcNow(), out var confirmed, out var error))
@@ -95,7 +95,7 @@ public static class ResumeRevisionEndpoints
 
         var currentRevisionNo = latest?.RevisionNo ?? 0;
         if (input.BaseRevisionNo != currentRevisionNo)
-            return Results.Conflict(new { title = "resume_revision_conflict" });
+            return Results.Problem(statusCode: 409, title: "resume_revision_conflict");
         if (currentRevisionNo == int.MaxValue)
             return Results.Problem(statusCode: 409, title: "resume_revision_limit");
 
@@ -136,7 +136,7 @@ public static class ResumeRevisionEndpoints
         var latest = await db.ResumeDataRevisions.AsNoTracking().Where(x => x.ResumeVersionId == versionId && x.CandidateId == candidate)
             .OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
         if (latest is null || latest.Id != revisionId || latest.RevisionNo != input.BaseRevisionNo || latest.RevisionNo == int.MaxValue)
-            return Results.Conflict(new { title = "resume_revision_conflict" });
+            return Results.Problem(statusCode: 409, title: "resume_revision_conflict");
         if (!FullCvExtraction.TryConfirm(latest, candidate, input, clock.GetUtcNow(), out var revision))
             return Results.Problem(statusCode: 400, title: "invalid_revision_confirmation");
         db.ResumeDataRevisions.Add(revision!); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);

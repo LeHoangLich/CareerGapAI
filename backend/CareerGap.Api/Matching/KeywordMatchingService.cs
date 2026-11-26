@@ -43,7 +43,7 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
         var resumeText = await ReadAndParseAsync(source.File, source.Version.DocumentHash, ct);
         var now = clock.GetUtcNow();
         var jobs = await db.Jobs.AsNoTracking().Include(x => x.Company).Include(x => x.CurrentVersion)
-            .Where(x => x.Status == "published" && x.CurrentVersionId != null && x.Company!.ArchivedAt == null &&
+            .Where(x => x.Status == "published" && db.BusinessIdentities.Any(b=>b.CompanyId==x.CompanyId&&b.Status=="verified") && x.CurrentVersionId != null && x.Company!.ArchivedAt == null &&
                 (x.ApplicationDeadline == null || x.ApplicationDeadline > now) &&
                 db.Users.Any(owner => owner.Id == x.Company.OwnerUserId && owner.AccountStatus == "active"))
             .ToListAsync(ct);
@@ -87,7 +87,7 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
         var now = clock.GetUtcNow();
         var job = await db.Jobs.AsNoTracking().Include(x => x.Company).Include(x => x.CurrentVersion)
             .SingleOrDefaultAsync(x => x.Id == jobId && x.Company!.OwnerUserId == recruiterId &&
-                x.Status == "published" && x.CurrentVersionId != null && x.Company.ArchivedAt == null &&
+                x.Status == "published" && db.BusinessIdentities.Any(b=>b.CompanyId==x.CompanyId&&b.Status=="verified") && x.CurrentVersionId != null && x.Company.ArchivedAt == null &&
                 (x.ApplicationDeadline == null || x.ApplicationDeadline > now), ct);
         if (job?.CurrentVersion is null) throw new KeywordMatchingError("job_not_available", 404);
 
@@ -190,7 +190,7 @@ public sealed class KeywordMatchingService(AppDb db, IFileStorage storage, Docum
                     db.Users.Any(account => account.Id == selection.CandidateId && account.AccountStatus == "active") &&
                     db.Users.Any(account => account.Id == recruiterId && account.AccountStatus == "active") &&
                     db.Jobs.Any(current => current.Id == jobId && current.CurrentVersionId == job.CurrentVersion.Id &&
-                        current.Status == "published" && current.Company!.OwnerUserId == recruiterId && current.Company.ArchivedAt == null &&
+                        current.Status == "published" && db.BusinessIdentities.Any(b=>b.CompanyId==current.CompanyId&&b.Status=="verified") && current.Company!.OwnerUserId == recruiterId && current.Company.ArchivedAt == null &&
                         (current.ApplicationDeadline == null || current.ApplicationDeadline > releaseTime))
                 select new
                 {

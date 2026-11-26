@@ -1,0 +1,153 @@
+{
+  "date": "2026-11-01",
+  "status": "passed",
+  "scope": "local regression and production-static demo rehearsal; Synthetic/Fake",
+  "baseline_release": "20261031",
+  "m6_status": "final_defense_ready",
+  "source_changed": false,
+  "frozen_hashes_matched": 222,
+  "protected_files_unchanged": 773,
+  "backend_passed": 160,
+  "frontend_unit_passed": 15,
+  "e2e_passed": 22,
+  "lint_typecheck_build": "passed",
+  "nonblocking_warning": "Vite bundle exceeds500kB",
+  "pipeline": {
+    "run": "20261101-141707-55ce",
+    "directory": "D:\\CareerGapAI\\.local\\frontend-step3-20261101-141707-55ce",
+    "providers": "Fake",
+    "dotenvLoaded": false,
+    "checks": {
+      "runner-tests": 0,
+      "playwright-install": 0,
+      "playwright-browser": 0,
+      "postgres-image": 0,
+      "postgres-create": 0,
+      "postgres-ready": 0,
+      "postgres-version": 0,
+      "frontend-lint": 0,
+      "frontend-typecheck": 0,
+      "frontend-test": 0,
+      "frontend-build": 0,
+      "backend-build": 0,
+      "backend-tests": 0,
+      "migration-build": 0,
+      "migration": 0,
+      "seed": 0,
+      "e2e": 0
+    },
+    "completed": true,
+    "cleanup": true,
+    "postgresReadyAttempts": 4,
+    "apiAssemblySha256": "c263a864698185a1f33095d517fce68c46dbfc28d0aa42f9e6944f4a60a7f6ad",
+    "uiUrl": "http://127.0.0.1:49733",
+    "uiDatabaseAudit": {
+      "non_fake_methods": 0,
+      "usd_budgets": 0,
+      "jobs": [
+        {
+          "job_type": "match_pair",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "job_type": "extract_cv",
+          "status": "succeeded",
+          "count": 3
+        },
+        {
+          "job_type": "suggest_cv",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "budgets": [
+        {
+          "service": "Fake",
+          "unit": "test_credit",
+          "spent_amount": 5.0,
+          "reserved_amount": 0.0
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "pid": 3248,
+    "mode": "start",
+    "release": "20261031",
+    "runtime": "D:\\CareerGapAI\\.local\\handoff-demo-20261029\\releases\\20261031\\runtime",
+    "assembly_sha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+    "providers": "Fake",
+    "real_keys_loaded": false,
+    "URL": "http://127.0.0.1:5190/",
+    "database": "isolated synthetic handoff demo",
+    "stopped": false
+  },
+  "listener_pid_matches": true,
+  "health": 200,
+  "history_ui": {
+    "status": "passed",
+    "release": "20261031",
+    "actor": "automated synthetic/Fake",
+    "ordinaryUiNoInterception": true,
+    "fullReload": true,
+    "reopenedOriginalJob": true,
+    "learningTopic": "docker",
+    "matchingPostRequests": 0,
+    "resumeVersions": 3,
+    "privateSelection": null,
+    "applicationStatus": "reviewing",
+    "applicationResumeVersion": 1,
+    "realProviderCalls": 0
+  },
+  "reset_ui": {
+    "release": "20261031",
+    "status": "passed",
+    "realLocalBackend": true,
+    "interceptedResponses": false,
+    "invalidTokenStatus": 400,
+    "errorCode": "invalid_or_expired_reset",
+    "specificAlert": true,
+    "forgotNavigation": true,
+    "tokenQueryCleared": true,
+    "automaticForgotRequests": 0,
+    "realProviderCalls": 0
+  },
+  "external_provider_calls": 0,
+  "new_credits": 0,
+  "cost_usd": 0,
+  "evidence_sha256": {
+    ".local/frontend-step3-20261101-141707-55ce/result.json": "5ab2f7a467fc34035b64dc92e3e1ff541c83d05cbdb453c933ee37e06a5255a7",
+    ".local/frontend-step3-20261101-141707-55ce/results/backend.trx": "31c95754ce52d95a96c134ad8d5f715b9f9aa074c29951ab8dd34fcd19f858a3",
+    ".local/frontend-step3-20261101-141707-55ce/source-sha256.json": "fd5031858a20580a20accba9d2f1fcf68f780d5fa4b430187710ea26eb8418e9",
+    ".local/frontend-step3-20261101-141707-55ce/api.log": "c4f699d6adb300c6d46ab6ff78aaabfaac9d8310dda2de2512bab817b205ef88",
+    ".local/frontend-step3-20261101-141707-55ce/backend-build.log": "67859aaf37ca5f7d7b1585319a7baa317ec8505c3b8fb331283fca19124ccf53",
+    ".local/frontend-step3-20261101-141707-55ce/backend-tests.log": "77be265eb4d1a25db558b6ee8d9f74e3c3cb073962ee9238b27f561216683e2a",
+    ".local/frontend-step3-20261101-141707-55ce/e2e.log": "65a752c9b16c7ef5c51a1ca2fb4883b19fb0a20ab23ccce906faf54976fd3d93",
+    ".local/frontend-step3-20261101-141707-55ce/frontend-build.log": "4b4e0707b73c9548bba0af798830fe7249a7ed7bd2f4a33cc6f5cf49108cd54c",
+    ".local/frontend-step3-20261101-141707-55ce/frontend-lint.log": "10d4e7f6e49377b303e4e01c61668338b9e89e59446244aecc9a4ac3d83b4907",
+    ".local/frontend-step3-20261101-141707-55ce/frontend-test.log": "3e02766c7d3ef2a6ca238fa1693ef01c97330a50663876c31ba7123a784610d9",
+    ".local/frontend-step3-20261101-141707-55ce/frontend-typecheck.log": "b16c94767c8f942c6816c734fd37c185a619e9912f4bdfc90e22ff0ab3bce175",
+    ".local/frontend-step3-20261101-141707-55ce/migration-build.log": "44edfae2c3c9da91ebcc26f0d93efd497740532953d1bb4f00a34fd5a019e23a",
+    ".local/frontend-step3-20261101-141707-55ce/migration.log": "f01741388ad2d069de9b43dfe52206bd8abf20979319ab8341dc7f922eb3a2c7",
+    ".local/frontend-step3-20261101-141707-55ce/playwright-browser.log": "f582cbd664a62fafb2d73a9b46bd03ad25825eba9dfe689834d43c4cf846cdee",
+    ".local/frontend-step3-20261101-141707-55ce/playwright-install.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    ".local/frontend-step3-20261101-141707-55ce/postgres-create.log": "8419c3fdb0acd8e4233eaf83a1ea59af4f281afed63e15aa10ac8ad6970db31a",
+    ".local/frontend-step3-20261101-141707-55ce/postgres-image.log": "4bd67aae37f8e2cd44d6484362cf1dd03f30af726eb706928fd585cc65930426",
+    ".local/frontend-step3-20261101-141707-55ce/postgres-ready.log": "e79c9911d88315dd8fc38c8114123bc79ef760c0e5e0f63346af0a74eff3b631",
+    ".local/frontend-step3-20261101-141707-55ce/postgres-version.log": "b3b4ad8903743803a6c5f4e5c6bf8aaa6b8c659f16c95d26667aa1316959a6af",
+    ".local/frontend-step3-20261101-141707-55ce/provider-audit.log": "74f4f553574f4d5f58e81901a1b3ef74fce3b5b8e09583b487829da191b8cdce",
+    ".local/frontend-step3-20261101-141707-55ce/runner-tests.log": "27cf7777c161be0a18f54c9ff9c44ebf28511968b8a1213078aea50bee70842f",
+    ".local/frontend-step3-20261101-141707-55ce/seed.log": "580ff7bb21384d1b743d9da8babab11dd78086a68ed2fb56cb1a93110951941b",
+    ".local/frontend-step3-20261101-141707-55ce/vite.log": "57fa76806f5298d96b22fa8fe57c1f2f37612f1f300517b7ddbefd2df79694ab",
+    ".local/local-trial-20261101-141707-55ce/history-rehearsal.json": "5537abed0f01fd2da1d2cbc455d4c727a4a31b4beade524f4127335030d0c56d",
+    ".local/local-trial-20261101-141707-55ce/reset-ui.json": "20cee0889529d1dc17cd008440308245727c2756f702db4946c46d64f2a51e08",
+    ".local/local-trial-20261101-141707-55ce/protected-before.json": "59656d7496792f8da09d3b361f24a979561c37038accbd769937dea94f299898",
+    ".local/local-trial-20261101-141707-55ce/media/images/pair-history-learning.png": "b76cc93acdf688fbe3e10b3a887b9f20b56c065adb5074232c9a99b9bc4d66ef",
+    ".local/local-trial-20261101-141707-55ce/media/images/pair-history.png": "d4b4bd25a5e28e47dcc1c34080483c2fad3900537223d892f7b740657037309e",
+    ".local/local-trial-20261101-141707-55ce/media/images/reset-forgot.png": "dcaf07a6d1e614be39ad3f7fd6e141d67a177258e7928689550e6394bc0a8296",
+    ".local/local-trial-20261101-141707-55ce/media/images/reset-invalid.png": "f5a1bab51cb094ddaf3cbf1fe721f2f8672791eecbd1a4523616828273f4af30",
+    ".local/local-trial-20261101-141707-55ce/media/demo-videos/01-pair-history-20261031.webm": "a15b949fcb9b07594cafaf1207443ffec5acc28548ed6d130dc0b1548179b3d8"
+  },
+  "report_sha256": "ec83d7e7dcf363376c77c081f0b7b5f5cefbf8da6afc425cd8430028d4edacc7"
+}

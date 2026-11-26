@@ -276,7 +276,7 @@ Các điểm cần xác nhận hoặc hoàn thiện ở bước thiết kế ti�
 | Owner công ty | Đã chốt: một recruiter owner trên mỗi công ty |
 | Rút/nộp lại và đọc đơn đã rút | Đã chốt: recruiter vẫn đọc hồ sơ sau rút; được nộp lại sau rút/bị loại nếu không bị recruiter chặn |
 | Phạm vi recruiter chặn ứng viên | Đã chốt: chỉ tin tuyển dụng hiện tại; recruiter phụ trách tin đặt/bỏ chặn |
-| Mẫu CV | Đề xuất 2–3 mẫu cố định, xuất PDF; chưa chọn thiết kế cụ thể |
+| Mẫu CV | Đã chốt từ GĐ3 (16/10/2026): một mẫu một cột `simple-v1`, xuất PDF; các mẫu thêm để sau (đã chốt ở mục 4.3) |
 | Quy tắc tính điểm | Chưa chốt trọng số, mức đáp ứng và ngưỡng phân loại; cần góp ý của giảng viên và thực nghiệm |
 | Quy mô thực nghiệm | Chưa chốt số CV/JD, số cặp đánh giá và ngưỡng đạt |
 | Hạn mức AI và tìm kiếm web | Cần đo chi phí thực tế để đáp ứng ngân sách khoảng 4 USD/tháng |
@@ -285,3 +285,18 @@ Các điểm cần xác nhận hoặc hoàn thiện ở bước thiết kế ti�
 Các lựa chọn công nghệ chi tiết, kế hoạch thực hiện và thiết kế dữ liệu sẽ được phát triển trong các tài liệu tương ứng, dựa trên phạm vi nghiệp vụ của đặc tả này.
 
 Quyết định trong lượt xác nhận ngày 15/10/2026 chỉ cập nhật yêu cầu; chưa phải các API GĐ2 đã triển khai. Theo dõi [checklist dịch vụ](phase-01-services-checklist.md) và [chính sách lưu/xóa đã chốt](phase-01-data-retention.md).
+
+## 11. Cập nhật đồng bộ nhánh mở rộng sau đóng băng (`feat/post-freeze-p1-p3-20261121`)
+
+> **Phân biệt phạm vi:** Bản **Defense Baseline (`release20261031`, 19 migrations)** giữ nguyên phạm vi đóng băng ngày 01/11/2026. Trên nhánh mở rộng **`feat/post-freeze-p1-p3-20261121` (`v2026.11.21-p1-p3`, 31 migrations)** đã triển khai bổ sung các chức năng sau trên localhost/Fake (chi tiết backlog ở [taskboard.md](../taskboard.md) và danh sách tinh chỉnh đồng bộ ở [taskboard_v2.md](../taskboard_v2.md)):
+
+- **Trang chủ công khai tổng hợp (`#home`):** Điểm vào khám phá chung gồm tìm kiếm nhanh tin tuyển dụng, chip tag/địa điểm nổi bật, tin tuyển dụng mới nhất, tóm tắt khoảng cách kỹ năng và bài viết cộng đồng (`publicHome.tsx`).
+- **Mạng xã hội Cộng đồng (`#community`):** Tạo/sửa/ẩn/xóa bài viết hỗ trợ Markdown nâng cao (code block, danh sách đánh số, gạch chân/ngang, chèn ảnh nội bộ `/api/community/images/{id}`), lọc nhiều tag kết hợp (`communityTagFilter.tsx`), thống kê từ khóa tìm kiếm xu hướng có lọc PII (`community_searchs`), bình luận/trả lời/nhắc tên `@handle`, tương tác vote/bookmark/follow, hồ sơ tác giả kèm tùy chọn hiển thị thẻ nghề nghiệp (`show_career`, `communityCareer.tsx`), báo cáo & kiểm duyệt nội dung cộng đồng (`communityReports.tsx`) và luồng thông báo SSE thời gian thực (`/api/community/events`).
+- **Xác minh doanh nghiệp & nhận diện tuyển dụng:** Xác minh danh tính doanh nghiệp (`business_identities` với tên pháp lý, mã số thuế, xác minh domain/email doanh nghiệp và duyệt bởi Admin trong `businessIdentity.tsx`), tải & hiển thị logo công ty (`companyLogo.tsx`), tag có cấu trúc cho tin tuyển dụng (`jobTags.tsx`), danh mục kỹ năng (`SkillCatalog`) và danh mục 34 địa điểm chuẩn (`LocationCatalog`).
+- **Mở rộng quy trình Tuyển dụng & Sàng lọc:** Hiển thị mức lương chi tiết (`salary.ts`), thư ứng tuyển (`cover_letter`), liên kết chia sẻ trang chi tiết tin (`jobLinks.ts`), đếm lượt xem tin theo ngày (`job_views`), giới hạn số hồ sơ đang xử lý (`max_applications`), nhà tuyển dụng tự xóa mềm/khôi phục tin (`archived_by_role`, `previous_status`), bộ lọc và phân trang danh sách tin/ứng viên của Recruiter, trung tâm thông báo tuyển dụng tích hợp SSE (`recruitmentNotifications.tsx`) và quy trình duyệt báo cáo nhiều trạng thái (`open` → `reviewed` → `resolved`/`dismissed`).
+- **Mở rộng AI Matching, Viết lại JD & Học tập:**
+  - **Đối chiếu nhanh (`QuickMatch`):** Cho phép chọn CV có sẵn hoặc dán nội dung CV đối chiếu với tin trên hệ thống, JD dán tay hoặc nhập từ URL ngoài (có SSRF guard, timeout 8s, giới hạn 512 KB qua `JdUrlImporter`), kèm bối cảnh nghề nghiệp (`career_start`/`career_switch`/`promotion`).
+  - **Gợi ý viết lại JD (`rewrite_jd`):** Tác vụ AI hỗ trợ nhà tuyển dụng đề xuất cải thiện mô tả/yêu cầu JD trên cơ sở dữ liệu thật (`JobRewriteService`).
+  - **Góc nhìn 6 nhóm tiêu chí & Trung tâm lịch sử:** Tổng hợp kết quả đối chiếu theo 6 nhóm tiêu chí (`PairCriterionGroups`), trang `#analysis-history` xem lại và ẩn mềm lượt phân tích (`analysis_history_hides`).
+  - **Lộ trình học theo tuần & lưu tiến độ:** Chia kỹ năng còn thiếu thành lộ trình từng tuần (`WeeklyRoadmap`), lưu và đánh dấu hoàn thành từng mục (`saved_roadmaps`).
+- **Mở rộng Quản trị (`#admin`):** Dashboard tổng hợp số liệu/biểu đồ (`GET /api/admin/dashboard`), lọc tài khoản theo trạng thái/vai trò/từ khóa và theo dõi `LastLoginAt`, lọc tin tuyển dụng và duyệt hồ sơ doanh nghiệp.

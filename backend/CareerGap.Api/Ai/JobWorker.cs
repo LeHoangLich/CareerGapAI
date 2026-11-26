@@ -52,6 +52,8 @@ public sealed class JobWorker(IServiceScopeFactory scopes, JobWakeup wakeup, ILo
         var job = await db.AiJobs.AsNoTracking().SingleAsync(x => x.Id == jobId, stoppingToken);
         if (job.JobType == "suggest_cv")
         { await Writing.WritingWorker.Process(sp, job, owner, generation, stoppingToken); return; }
+        if (job.JobType == "rewrite_jd")
+        { await Writing.JobRewriteWorker.Process(sp, job, owner, generation, stoppingToken); return; }
         if (job.JobType == "match_pair")
         {
             await Matching.PairMatchingWorker.Process(sp, job, owner, generation, stoppingToken); return;
@@ -72,11 +74,14 @@ public sealed class JobWorker(IServiceScopeFactory scopes, JobWakeup wakeup, ILo
             var bytes = await storage.ReadAsync(file.ObjectKey, timeout.Token);
             if (Convert.ToHexStringLower(SHA256.HashData(bytes)) != version.DocumentHash) throw new ProviderError("file_unavailable", false);
             var doc = sp.GetRequiredService<DocumentParser>().Parse(bytes, file.OriginalName, timeout.Token);
-            if (method.Provider == "DeepSeek" && System.Text.Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(doc.Segments, OutputValidator.Json) + (parameters.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt)) + 1024 > parameters.MaxInputTokens) throw new ProviderError("ai_input_limit", false);
+            var prompt = parameters.Contract == FullCvExtraction.Contract ? FullCvExtraction.PromptForMethod(method.PromptVersion) : DeepSeekClient.Prompt;
+            if (method.Provider == "DeepSeek" && System.Text.Encoding.UTF8.GetByteCount(JsonSerializer.Serialize(doc.Segments, OutputValidator.Json) + prompt) + 1024 > parameters.MaxInputTokens) throw new ProviderError("ai_input_limit", false);
             attemptId = await service.StartAttempt(jobId, owner, generation, timeout.Token);
             if (attemptId is null) return;
             ILlmClient client = method.Provider == "Fake" ? sp.GetRequiredService<FakeLlmClient>() : sp.GetRequiredService<DeepSeekClient>();
-            reply = await client.ExtractAsync(doc, parameters, timeout.Token);
+            reply = client is DeepSeekClient deepSeek
+                ? await deepSeek.CompleteAsync(JsonSerializer.Serialize(doc.Segments, OutputValidator.Json), prompt, parameters, timeout.Token)
+                : await client.ExtractAsync(doc, parameters, timeout.Token);
             CompletionValidator.Validate(reply);
             var full = parameters.Contract == FullCvExtraction.Contract ? FullCvExtraction.Validate(reply.Json, doc) : null;
             var output = full is null ? OutputValidator.Validate(reply.Json, doc) : null;
@@ -90,6 +95,7 @@ public sealed class JobWorker(IServiceScopeFactory scopes, JobWakeup wakeup, ILo
             db.ChangeTracker.Clear();
             if (attemptId is not null) await service.Settle(attemptId.Value, reply, false, stoppingToken);
             var code = ex switch { ProviderError p => p.Code, DocumentError d => d.Code, OperationCanceledException => "provider_timeout", _ => "processing_failed" };
+            await PrivateAiDiagnostics.SaveRejected(sp, jobId, attemptId, reply, code, stoppingToken);
             var retry = ex is HttpRequestException or OperationCanceledException || ex is ProviderError { Retryable: true };
             await service.Finish(jobId, owner, generation, null, code, retry, stoppingToken);
         }

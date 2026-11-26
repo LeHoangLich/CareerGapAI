@@ -23,7 +23,9 @@ public sealed class EmailOptions
 // Local verification mode only: one owner-controlled recipient, no automatic retries.
 public sealed class ResendEmailSender(HttpClient http, AppDb db, IOptions<EmailOptions> options, IConfiguration config, TimeProvider clock) : IEmailSender
 {
-    public async Task SendPasswordRecoveryAsync(string recipient, Uri recoveryLink, CancellationToken ct)
+    public Task SendPasswordRecoveryAsync(string recipient, Uri recoveryLink, CancellationToken ct) => SendAsync(recipient,recoveryLink,"CareerGap AI — Khôi phục mật khẩu","Bạn đã yêu cầu đặt lại mật khẩu.",ct);
+    public Task SendBusinessVerificationAsync(string recipient, Uri link, CancellationToken ct) => SendAsync(recipient,link,"CareerGap AI — Xác minh email doanh nghiệp","Xác minh quyền truy cập email doanh nghiệp. Liên kết này không xác nhận tư cách pháp nhân.",ct);
+    private async Task SendAsync(string recipient, Uri recoveryLink,string subject,string introduction,CancellationToken ct)
     {
         var opt = options.Value; var now = clock.GetUtcNow(); var key = config["Email:ApiKey"];
         if (!opt.Ready(now) || string.IsNullOrWhiteSpace(key) || !string.Equals(recipient, opt.TestRecipient, StringComparison.OrdinalIgnoreCase)) throw new IntegrationError("email_not_configured");
@@ -40,7 +42,7 @@ public sealed class ResendEmailSender(HttpClient http, AppDb db, IOptions<EmailO
         {
             using var request = new HttpRequestMessage(HttpMethod.Post, "https://api.resend.com/emails");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key); request.Headers.Add("Idempotency-Key", "recovery-"+delivery.Id.ToString("N"));
-            request.Content = JsonContent.Create(new { from = opt.Sender, to = new[] { recipient }, subject = "CareerGap AI — Khôi phục mật khẩu", text = "Bạn đã yêu cầu đặt lại mật khẩu. Mở liên kết này trên máy đang chạy CareerGap AI localhost:\n"+recoveryLink.AbsoluteUri+"\nNếu không yêu cầu, hãy bỏ qua thư này." });
+            request.Content = JsonContent.Create(new { from = opt.Sender, to = new[] { recipient }, subject, text = introduction+" Mở liên kết này trên máy đang chạy CareerGap AI localhost:\n"+recoveryLink.AbsoluteUri+"\nNếu không yêu cầu, hãy bỏ qua thư này." });
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(ct); timeout.CancelAfter(TimeSpan.FromSeconds(15));
             using var response = await http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
             if (!response.IsSuccessStatusCode) throw new IntegrationError("email_provider_unavailable");

@@ -1,0 +1,14 @@
+{
+  "milestone": "M6",
+  "acceptance_type": "internal_owner_acceptance",
+  "acceptor": "Lê Hoàng Lịch (Project Owner)",
+  "technical_compiler": "Codex (Authorized by Project Owner)",
+  "final_status": "final_defense_ready",
+  "date": "2026-11-01",
+  "defense_baseline": "20261031",
+  "source_frozen": true,
+  "authoritative_manifest": "../../evaluation/m6-internal-acceptance-2026-11-01.json",
+  "authoritative_manifest_sha256": "aeafd70088ba1ebf412f918d2a610da71eb7cba78fee6967408691ea40bd3509",
+  "historical_verification_status_is_as_of": "2026-10-31",
+  "m6_status": "final_defense_ready"
+}

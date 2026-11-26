@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-31",
+  "auditor": "Codex (Authorized by Project Owner)",
+  "approved_by": "Lê Hoàng Lịch (Project Owner)",
+  "status": "verified",
+  "human_authorized": true,
+  "approval_basis": "owner instruction authorizing execution",
+  "A12": {
+    "backend": 160,
+    "frontend_unit": 15,
+    "e2e": 22,
+    "lint_typecheck_build": "passed",
+    "run": "20261031-172834-d216",
+    "evidence_manifest": "project-docs/evaluation/password-reset-feedback-2026-10-31.json"
+  },
+  "A13": {
+    "five_criteria_review_complete": true,
+    "functional_bug_found_in_reviewed_flow": false,
+    "code_changed": false,
+    "language_quality_limit_retained": true,
+    "reviewed_files_sha256": {
+      "backend/CareerGap.Api/Integrations/TavilySearchClient.cs": "ebbe1de1d7116f3a8d88cd0762ddfd3e9aca83c3c0ce2517dd7c140b1cae052d",
+      "backend/CareerGap.Api/Learning/LearningService.cs": "d1b0bdfa2f8c280636beaeac88b97535225748ee43c3bb372ac28c331bff9912",
+      "frontend/src/learning.tsx": "dabb29514f383978ea375777d420d01cf0d6de27873bd5bd11348cdb7995b91d",
+      "tests/CareerGap.Api.Tests/LearningTests.cs": "4d632ceeecd62e8d0f93bee5091de7432e78abfcefe309e42fae6a02e97078cd"
+    }
+  },
+  "preserved_files": 126,
+  "source_or_ledger_changes_this_task": 0,
+  "external_api_calls": 0,
+  "new_credits": 0,
+  "cost_usd": 0,
+  "demo_handoff_updated": false,
+  "M6": "pending_external_review_deferred"
+}

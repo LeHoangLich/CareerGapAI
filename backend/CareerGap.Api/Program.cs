@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.RateLimiting;
 using CareerGap.Api.Accounts;
+using CareerGap.Api.Community;
 using CareerGap.Api.Ai;
 using CareerGap.Api.Applications;
 using CareerGap.Api.Data;
@@ -66,11 +67,14 @@ builder.Services.AddAntiforgery(o =>
 builder.Services.Configure<FormOptions>(o => { o.MultipartBodyLengthLimit = DocumentParser.MaxBytes + 65536; o.ValueLengthLimit = 1024; o.MultipartHeadersLengthLimit = 4096; });
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = DocumentParser.MaxBytes + 65536);
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<CommunityService>();
 builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = 429;
+    o.AddPolicy("community-stream", http => RateLimitPartition.GetConcurrencyLimiter(http.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "anonymous", _ => new ConcurrencyLimiterOptions { PermitLimit = 2, QueueLimit = 0 }));
+    o.AddPolicy("community", http => RateLimitPartition.GetFixedWindowLimiter(http.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? http.Connection.RemoteIpAddress?.ToString() ?? "anonymous", _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     o.AddPolicy("login", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Environment.IsEnvironment("Testing") ? 1000 : 10, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     o.AddPolicy("register", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Environment.IsEnvironment("Testing") ? 1000 : 5, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
     o.AddPolicy("recovery", http => RateLimitPartition.GetFixedWindowLimiter(http.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions { PermitLimit = builder.Environment.IsEnvironment("Testing") ? 1000 : 4, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -98,7 +102,9 @@ builder.Services.Configure<KeywordBaselineOptions>(builder.Configuration.GetSect
 builder.Services.AddScoped<KeywordMatchingService>();
 builder.Services.AddScoped<PairMatchingService>();
 builder.Services.AddScoped<PairRecommendationService>();
+builder.Services.AddHttpClient<JdUrlImporter>().ConfigurePrimaryHttpMessageHandler(() => new SocketsHttpHandler { AllowAutoRedirect = false });
 builder.Services.AddScoped<CareerGap.Api.Writing.WritingService>();
+builder.Services.AddScoped<CareerGap.Api.Writing.JobRewriteService>();
 builder.Services.Configure<AiOptions>(builder.Configuration.GetSection("Ai"));
 builder.Services.AddHttpClient<DeepSeekClient>(c => { c.BaseAddress = new Uri("https://api.deepseek.com/"); c.Timeout = TimeSpan.FromSeconds(45); });
 builder.Services.AddSingleton<FakeLlmClient>();
@@ -259,11 +265,20 @@ app.Use(async (http, next) =>
 });
 app.UseAuthorization();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapCommunity();
 app.MapAccounts(); app.MapProfiles(); app.MapCompanyJobEndpoints(); app.MapJobRevisions(); app.MapFiles(); app.MapResumeRevisions(); app.MapPublicResumeEndpoints(); app.MapJobs(); app.MapApplicationEndpoints();
 app.MapKeywordMatchingEndpoints();
+SkillCatalog.MapSkillCatalog(app);
+LocationCatalog.MapLocationCatalog(app);
+BusinessIdentityEndpoints.MapBusinessIdentity(app);
+app.MapCompanyLogos();
 app.MapPairMatching();
+app.MapQuickMatch();
+CareerGap.Api.Learning.WeeklyRoadmap.MapWeeklyRoadmap(app);
+CareerGap.Api.Learning.SavedRoadmapEndpoints.MapSavedRoadmap(app);
 app.MapPairRecommendations();
 CareerGap.Api.Writing.WritingService.Map(app);
+CareerGap.Api.Writing.JobRewriteService.Map(app);
 CareerGap.Api.Learning.LearningService.Map(app);
 CareerGap.Api.Administration.AdminEndpoints.Map(app);
 if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) app.MapOpenApi();

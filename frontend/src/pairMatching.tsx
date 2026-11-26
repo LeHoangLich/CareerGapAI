@@ -1,10 +1,20 @@
-import { useEffect, useState } from 'react';
+import { WeeklyRoadmap } from './weeklyRoadmap';
+import { useState } from 'react';
 import { api } from './api';
+import { jobHref, jobIdFromHash } from './jobLinks';
 import { LearningResources } from './learning';
+import { useViewActive } from './persistentView';
+import { ResultPlacement } from './resultPlacement';
+import { useAiJobPolling } from './useAiJobPolling';
+import { StaticLoading } from './workspace';
+import { AiBadge } from './ui';
 
 type Fact = { key: string; value: string; sourceType: string };
 type Criterion = { requirementKey: string; requirement: string; importance: string; status: string; evidence: Fact[]; explanation: string; needsReview: boolean; requirementSourceType: string };
-type Pair = { id: string; context: string; status: string; errorCode: string | null; provider: string; score: number | null; criteria: Criterion[] | null; location: string | null; workMode: string; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null };
+export type CriterionGroupSummary = { key: string; label: string; status: string; totalCriteria: number; metCount: number; partialCount: number; noEvidenceCount: number; summary: string };
+export type Pair = { id: string; context: string; status: string; errorCode: string | null; provider: string; score: number | null; criteria: Criterion[] | null; location: string | null; workMode: string; salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null; careerContext?: string | null; criterionGroups?: CriterionGroupSummary[] | null };
+export const careerContextLabels: Record<string, string> = { career_start: 'Bắt đầu nghề (Career Start)', career_switch: 'Chuyển ngành (Career Switch)', promotion: 'Thăng tiến (Promotion)' };
+const groupStatusLabels: Record<string, string> = { met: 'Đáp ứng', partial: 'Một phần', no_evidence: 'Chưa có bằng chứng', not_requested: 'Không yêu cầu' };
 type Item = { resumeVersionId: string; jobVersionId: string; applicationId: string | null; label: string; retrievalScore: number | null; pairJobId: string | null; errorCode: string | null };
 type Batch = { searchSpaceCount: number; selectedCount: number; page: number; hasMore: boolean; items: Item[] };
 const reasons: Record<string, string> = {
@@ -22,14 +32,19 @@ const reasons: Record<string, string> = {
 };
 const reason = (code: string | null) => code ? reasons[code] ?? 'Chưa phân tích được. Hãy kiểm tra đầu vào hoặc thử lại sau.' : 'Chưa được chọn phân tích sâu trong lượt này.';
 
-function PairDetails({ pair }: { pair: Pair }) {
+export function PairDetails({ pair, jobId }: { pair: Pair; jobId?: string }) {
   if (pair.status !== 'succeeded') return <p role="status">{pair.status === 'failed' || pair.status === 'cancelled' ? reason(pair.errorCode) : 'Đang chờ hoặc đang phân tích…'}</p>;
   const required = pair.criteria?.filter(c => c.importance === 'required' && c.status !== 'met' && c.status !== 'not_assessed').length ?? 0;
   const manual = pair.criteria?.filter(c => c.status === 'not_assessed').length ?? 0;
+  const currentJobId = jobIdFromHash(window.location.hash);
+  const targetJobId = jobId && jobId !== currentJobId ? jobId : undefined;
   return <div className="pair-result">
-    <p><strong>Điểm đối chiếu {pair.score?.toFixed(2)}/100</strong> · rubric thử nghiệm{pair.provider === 'Fake' ? ' · Kết quả mô phỏng kiểm thử' : ''}</p>
+    <AiBadge>{pair.provider === 'Fake' ? 'AI mô phỏng · cần đối chiếu' : 'AI đối chiếu · cần rà soát'}</AiBadge>
+    <p><strong>Điểm đối chiếu {pair.score?.toFixed(2)}/100</strong> · rubric thử nghiệm{pair.provider === 'Fake' ? ' · Kết quả mô phỏng kiểm thử' : ''}{pair.careerContext ? ` · Bối cảnh: ${careerContextLabels[pair.careerContext] ?? pair.careerContext}` : ''}</p>
     <p className="hint">Điểm cho cặp CV–JD này, không phải xác suất trúng tuyển hoặc kết luận năng lực. {required} yêu cầu bắt buộc chưa được chứng minh đầy đủ.</p>
     <p className="hint">Địa điểm: {pair.location ?? 'chưa nêu'} · hình thức: {pair.workMode} · lương: {pair.salaryMin == null && pair.salaryMax == null ? 'chưa công bố' : `${pair.salaryMin ?? '?'}–${pair.salaryMax ?? '?'} ${pair.salaryCurrency ?? ''} ${pair.salaryPeriod ?? ''}`}. Chưa đánh giá sự phù hợp các điều kiện này vì chưa có mong muốn được xác nhận của ứng viên.{manual > 0 && ` ${manual} tiêu chí cần đối chiếu thủ công, không tính vào điểm.`}</p>
+    {!!pair.criterionGroups?.length && <section className="criterion-groups" aria-label="Tổng hợp 6 nhóm tiêu chí"><h4>Tổng hợp 6 nhóm tiêu chí</h4><div className="form-columns">{pair.criterionGroups.map(g => <article className="card" key={g.key}><header className="row"><strong>{g.label}</strong><span className="badge">{groupStatusLabels[g.status] ?? g.status}</span></header><p className="hint">{g.summary}</p></article>)}</div></section>}
+    {pair.context === 'self' && <WeeklyRoadmap key={pair.id} pairId={pair.id} jobId={targetJobId}/>}
     <details><summary>Xem tiêu chí và bằng chứng</summary><ul>{pair.criteria?.map(c => <li key={c.requirementKey}>
       <strong>{c.requirement}</strong> · {c.importance === 'required' ? 'Bắt buộc' : c.importance === 'optional' ? 'Ưu tiên' : 'Chưa phân loại'} · {c.status === 'not_assessed' ? 'Chưa đánh giá điều kiện' : c.status === 'met' ? 'Có bằng chứng đối chiếu' : c.status === 'partial' ? 'Có thông tin một phần' : 'Chưa có bằng chứng'}
       <p>{c.explanation}{c.needsReview ? ' Yêu cầu này cần người dùng đánh giá thêm.' : ''}</p>
@@ -37,68 +52,120 @@ function PairDetails({ pair }: { pair: Pair }) {
       {c.evidence.map(f => <blockquote key={f.key}>{f.value}<small>{f.sourceType === 'user_statement' ? 'Thông tin ứng viên tự khai đã xác nhận' : 'Nội dung CV đã xác nhận'}</small></blockquote>)}
       {pair.context === 'self' && ['partial', 'no_evidence'].includes(c.status) && <LearningResources pairId={pair.id} requirementKey={c.requirementKey}/>}
     </li>)}</ul></details>
+    {pair.context === 'self' && <nav className="row pair-next-steps" aria-label="Bước tiếp theo sau đối chiếu"><a className="secondary" href="#cv-builder">Mở trình tạo CV để bổ sung</a><a className="secondary" href="#private-resumes">Quản lý CV của tôi</a>{targetJobId && <a className="secondary" href={jobHref(targetJobId)}>Xem tin tuyển dụng &amp; Ứng tuyển</a>}</nav>}
   </div>;
 }
 
-export function PairAnalysisButton({ resumeVersionId, jobVersionId, applicationId, context = 'self' }: { resumeVersionId: string; jobVersionId: string; applicationId?: string; context?: string }) {
-  const [id, setId] = useState<string>(); const [pair, setPair] = useState<Pair>();
-  const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    if (!id) return;
-    let disposed = false; let timer: ReturnType<typeof setTimeout>;
-    async function poll() {
-      try {
-        const value = await api<Pair>(`/api/matching/pairs/${id}`);
-        if (disposed) return;
-        setPair(value);
-        if (value.status === 'queued' || value.status === 'running') timer = setTimeout(() => void poll(), 2500);
-      } catch (e) { if (!disposed) { setPair(undefined); setError((e as Error).message); } }
-    }
-    void poll(); return () => { disposed = true; clearTimeout(timer); };
-  }, [id]);
-  async function start() {
-    setBusy(true); setError(''); setPair(undefined); setId(undefined);
-    try {
-      const value = await api<{ id: string }>('/api/matching/pairs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId, jobVersionId, applicationId, context, idempotencyKey: crypto.randomUUID() }) });
-      setId(value.id);
-    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
-  }
-  return <div><button className="secondary" disabled={busy || pair?.status === 'queued' || pair?.status === 'running'} onClick={() => void start()}>{busy ? 'Đang gửi…' : applicationId ? 'Phân tích theo hồ sơ lúc nộp' : 'Phân tích cặp CV–JD'}</button>
-    {error && <p role="alert">{error}</p>}{pair && <PairDetails pair={pair}/>}</div>;
+type PairSelection = { resumeVersionId: string; jobVersionId: string; applicationId?: string; context?: string; jobId?: string };
+export function PairAnalysisButton(props: PairSelection) {
+  return <PairAnalysis key={`${props.resumeVersionId}:${props.jobVersionId}:${props.applicationId ?? ''}:${props.context ?? 'self'}`} {...props}/>;
 }
 
-export function PairRecommendations({ direction, resumeVersionId, jobId }: { direction: 'jobs' | 'public_resumes' | 'applications'; resumeVersionId?: string; jobId?: string }) {
-  const [batch, setBatch] = useState<Batch>(); const [results, setResults] = useState<Record<string, Pair>>({});
+function PairAnalysis({ resumeVersionId, jobVersionId, applicationId, context = 'self', jobId }: PairSelection) {
+  const active = useViewActive();
+  const [pollId, setPollId] = useState<string>();
+  const [pair, setPair] = useState<Pair>();
+  const [careerContext, setCareerContext] = useState('');
+  const [error, setError] = useState(''); const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const { timedOut, retryPolling } = useAiJobPolling({
+    pollKey: pollId,
+    active,
+    maxAttempts: 60,
+    intervalMs: 2500,
+    tick: async signal => {
+      const value = await api<Pair>(`/api/matching/pairs/${pollId}`, { signal });
+      if (signal.aborted) return false;
+      setPair(value);
+      return value.status !== 'queued' && value.status !== 'running';
+    },
+    onError: e => { setError((e as Error).message); },
+  });
+  async function start() {
+    setBusy(true); setError(''); setNotice(''); setPair(undefined); setPollId(undefined);
+    try {
+      const value = await api<{ id: string }>('/api/matching/pairs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId, jobVersionId, applicationId, context, careerContext: careerContext || null, idempotencyKey: crypto.randomUUID() }) });
+      setPollId(value.id);
+    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  }
+  async function readLatest() {
+    setBusy(true); setError(''); setNotice(''); setPair(undefined); setPollId(undefined);
+    const query = new URLSearchParams({ resumeVersionId, jobVersionId, context });
+    if (applicationId) query.set('applicationId', applicationId);
+    try {
+      const value = await api<{ pair: Pair | null }>(`/api/matching/pairs/latest?${query}`);
+      if (value.pair) {
+        setPair(value.pair);
+        if (value.pair.status === 'queued' || value.pair.status === 'running') setPollId(value.pair.id);
+        setNotice('Kết quả đã lưu theo dữ liệu và phương pháp tại lần phân tích trước. Xem lại không tạo yêu cầu AI mới.');
+      } else setNotice('Chưa có kết quả đã lưu có thể xem cho cặp CV–JD này.');
+    } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+  }
+  return <div>{context === 'self' && <label>Bối cảnh nghề nghiệp<select value={careerContext} disabled={busy} onChange={e => setCareerContext(e.target.value)}><option value="">Mặc định</option>{Object.entries(careerContextLabels).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></label>}
+    <div className="row"><button type="button" className="secondary" disabled={busy || pair?.status === 'queued' || pair?.status === 'running'} onClick={() => void start()}>{busy ? 'Đang gửi…' : applicationId ? 'Phân tích theo hồ sơ lúc nộp' : 'Phân tích cặp CV–JD'}</button>
+    <button type="button" className="secondary" disabled={busy} onClick={() => void readLatest()}>Xem kết quả đã lưu</button></div>
+    {notice && <p className="hint" role="status">{notice}</p>}
+    {error && <p role="alert">{error}{timedOut && <> <button type="button" className="secondary" onClick={() => { setError(''); retryPolling(); }}>Kiểm tra lại kết quả</button></>}</p>}{pair && <PairDetails pair={pair} jobId={jobId}/>}</div>;
+}
+
+export function PairRecommendations({ direction, resumeVersionId, jobId, resultsTarget }: { direction: 'jobs' | 'public_resumes' | 'applications'; resumeVersionId?: string; jobId?: string; resultsTarget?: HTMLElement | null }) {
+  const active = useViewActive();
+  const [batch, setBatch] = useState<Batch>();
+  const [batchKey, setBatchKey] = useState<string>();
+  const [results, setResults] = useState<Record<string, Pair>>({});
   const [busy, setBusy] = useState(false); const [error, setError] = useState('');
-  useEffect(() => {
-    if (!batch) return;
-    let disposed = false; let timer: ReturnType<typeof setTimeout>;
-    async function poll() {
-      let pending = false; const next: Record<string, Pair> = {};
-      await Promise.all(batch!.items.filter(i => i.pairJobId).map(async i => {
-        try { const value = await api<Pair>(`/api/matching/pairs/${i.pairJobId}`); next[value.id] = value; pending ||= value.status === 'queued' || value.status === 'running'; }
-        catch { /* Revoked results are removed from the next render. */ }
+  const { timedOut, retryPolling } = useAiJobPolling({
+    pollKey: batchKey,
+    active,
+    maxAttempts: 60,
+    intervalMs: 2500,
+    tick: async signal => {
+      if (!batch) return true;
+      let pending = false;
+      const next: Record<string, Pair> = {};
+      await Promise.all(batch.items.filter(i => i.pairJobId).map(async i => {
+        try {
+          const value = await api<Pair>(`/api/matching/pairs/${i.pairJobId}`, { signal });
+          next[value.id] = value;
+          pending ||= value.status === 'queued' || value.status === 'running';
+        } catch (e) {
+          if (e instanceof Error && e.name === 'AbortError') throw e;
+          /* Revoked results are removed from the next render. */
+        }
       }));
-      if (!disposed) { setResults(next); if (pending) timer = setTimeout(() => void poll(), 2500); }
-    }
-    void poll(); return () => { disposed = true; clearTimeout(timer); };
-  }, [batch]);
+      if (signal.aborted) return false;
+      setResults(next);
+      return !pending;
+    },
+    onError: e => setError((e as Error).message),
+  });
   async function start(page = 1) {
-    setBusy(true); setError(''); setBatch(undefined); setResults({});
-    try { setBatch(await api<Batch>('/api/matching/recommendations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, resumeVersionId, jobId, topK: 3, page, idempotencyKey: crypto.randomUUID() }) })); }
+    setBusy(true); setError(''); setBatch(undefined); setBatchKey(undefined); setResults({});
+    try {
+      const nextBatch = await api<Batch>('/api/matching/recommendations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ direction, resumeVersionId, jobId, topK: 3, page, idempotencyKey: crypto.randomUUID() }) });
+      setBatch(nextBatch);
+      if (nextBatch.items.some(i => i.pairJobId)) setBatchKey(`${direction}:${page}:${crypto.randomUUID()}`);
+    }
     catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
   const ordered = [...(batch?.items ?? [])].sort((a, b) => {
     const x = a.pairJobId ? results[a.pairJobId]?.score : null; const y = b.pairJobId ? results[b.pairJobId]?.score : null;
     return x != null && y != null ? y - x : x != null ? -1 : y != null ? 1 : 0;
   });
-  return <section className="pair-recommendations" aria-label="Đối chiếu AI có bằng chứng"><h4>Phân tích AI có bằng chứng</h4><button disabled={busy || direction === 'jobs' && !resumeVersionId} onClick={() => void start()}>{busy ? 'Đang chọn tập…' : direction === 'applications' ? 'Phân tích tối đa 3 hồ sơ trong trang' : 'Gợi ý và phân tích tối đa 3 cặp'}</button>
-    <p className="hint">Rubric thử nghiệm: bắt buộc trọng số 2, ưu tiên/chưa phân loại trọng số 1; đáp ứng 1, một phần 0,5, chưa có bằng chứng 0. Chỉ các mục đã phân tích thành công được xếp theo điểm. AI không thay đổi trạng thái đơn.</p>
-    {error && <p role="alert">{error}</p>}{batch && <><p>Đã chọn {batch.selectedCount}/{batch.searchSpaceCount} mục để phân tích sâu{direction === 'applications' ? ` · trang ${batch.page}, 20 hồ sơ/trang, chọn theo thứ tự nộp` : ' sau bước tìm từ khóa'}.</p>
+  return <section className="pair-recommendations" aria-label="Đối chiếu AI có bằng chứng"><h4>Phân tích AI có bằng chứng</h4><button type="button" disabled={busy || direction === 'jobs' && !resumeVersionId} onClick={() => void start()}>{busy ? 'Đang chọn tập…' : direction === 'applications' ? 'Phân tích tối đa 3 hồ sơ trong trang' : 'Gợi ý và phân tích tối đa 3 cặp'}</button>
+    {resultsTarget === undefined ? <p className="hint">Rubric thử nghiệm: bắt buộc trọng số 2, ưu tiên/chưa phân loại trọng số 1; đáp ứng 1, một phần 0,5, chưa có bằng chứng 0. Chỉ các mục đã phân tích thành công được xếp theo điểm. AI không thay đổi trạng thái đơn.</p>
+      : <details className="pair-method-details"><summary>Phương pháp và giới hạn</summary><p className="hint">Rubric thử nghiệm: bắt buộc trọng số 2, ưu tiên/chưa phân loại trọng số 1; đáp ứng 1, một phần 0,5, chưa có bằng chứng 0. Chỉ các mục đã phân tích thành công được xếp theo điểm. AI không thay đổi trạng thái đơn.</p></details>}
+    <ResultPlacement target={resultsTarget}>
+    {(busy || error || batch) && <section className={resultsTarget !== undefined ? 'matching-output' : undefined} aria-label="Kết quả đối chiếu AI">
+    {resultsTarget !== undefined && <div className="section-heading"><div><p className="eyebrow">ĐỐI CHIẾU CÓ BẰNG CHỨNG</p><h3>Kết quả phân tích AI</h3></div><span className="badge">CV–JD</span></div>}
+    {busy && <StaticLoading label="Đang chọn tập phân tích…"/>}
+    {error && <p role="alert">{error}{timedOut && <> <button type="button" className="secondary" onClick={() => { setError(''); retryPolling(); }}>Kiểm tra lại kết quả</button></>}</p>}{batch && <><p>Đã chọn {batch.selectedCount}/{batch.searchSpaceCount} mục để phân tích sâu{direction === 'applications' ? ` · trang ${batch.page}, 20 hồ sơ/trang, chọn theo thứ tự nộp` : ' sau bước tìm từ khóa'}.</p>
       <ol>{ordered.map(i => <li key={`${i.resumeVersionId}:${i.jobVersionId}:${i.applicationId}`}><strong>{i.label}</strong>{i.retrievalScore != null && <small> · điểm tìm từ khóa {i.retrievalScore.toFixed(3)}</small>}
         {i.applicationId && <a href={`/api/applications/${i.applicationId}/resume`} target="_blank" rel="noreferrer">Mở CV đã nộp</a>}
         {i.pairJobId ? results[i.pairJobId] ? <PairDetails pair={results[i.pairJobId]}/> : <p>Đang tải hoặc kết quả không còn quyền truy cập.</p> : <p>Chưa chấm · {reason(i.errorCode)}</p>}
         {!i.pairJobId && i.applicationId && <PairAnalysisButton resumeVersionId={i.resumeVersionId} jobVersionId={i.jobVersionId} applicationId={i.applicationId} context="application"/>}
-      </li>)}</ol>{direction === 'applications' && <div className="row">{batch.page > 1 && <button disabled={busy} onClick={() => void start(batch.page - 1)}>Trang trước</button>}{batch.hasMore && <button disabled={busy} onClick={() => void start(batch.page + 1)}>Trang tiếp</button>}</div>}</>}
+      </li>)}</ol>{direction === 'applications' && <div className="row">{batch.page > 1 && <button type="button" disabled={busy} onClick={() => void start(batch.page - 1)}>Trang trước</button>}{batch.hasMore && <button type="button" disabled={busy} onClick={() => void start(batch.page + 1)}>Trang tiếp</button>}</div>}</>}
+    </section>}
+    </ResultPlacement>
   </section>;
 }

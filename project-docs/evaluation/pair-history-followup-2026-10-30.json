@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "scope": "post-rehearsal latest authorized pair result lookup",
+  "ownerDecision": {
+    "externalEvaluatorReview": "deferred_until_owner_reopens",
+    "M6Accepted": false
+  },
+  "baseCommit": "25cc3017013071a8a4fec516b24b3de02f5227b6",
+  "checks": {
+    "runner-tests": 0,
+    "playwright-install": 0,
+    "playwright-browser": 0,
+    "postgres-image": 0,
+    "postgres-create": 0,
+    "postgres-ready": 0,
+    "postgres-version": 0,
+    "frontend-lint": 0,
+    "frontend-typecheck": 0,
+    "frontend-test": 0,
+    "frontend-build": 0,
+    "backend-build": 0,
+    "backend-tests": 0,
+    "migration-build": 0,
+    "migration": 0,
+    "seed": 0,
+    "e2e": 0
+  },
+  "backendCounters": {
+    "total": "160",
+    "executed": "160",
+    "passed": "160",
+    "failed": "0",
+    "error": "0",
+    "timeout": "0",
+    "aborted": "0",
+    "inconclusive": "0",
+    "passedButRunAborted": "0",
+    "notRunnable": "0",
+    "notExecuted": "0",
+    "disconnected": "0",
+    "warning": "0",
+    "completed": "0",
+    "inProgress": "0",
+    "pending": "0"
+  },
+  "frontendTests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "e2e": {
+    "passed": 1,
+    "failed": 0,
+    "scope": "integrated Fake worker, full reload, GET lookup, learning and application snapshot; no interception"
+  },
+  "assemblySha256": "2a19a7a42c8410afbd13b1f738dde2440ba9f6229d9d8497939d3be79c994f8a",
+  "testedSourceHashesVerified": true,
+  "changedSourceHashes": {
+    "backend/CareerGap.Api/Matching/PairMatchingService.cs": "87aeb43ec0e622971ccb084836a5928052628e8506347fc56af9aadd02d4188c",
+    "frontend/src/pairMatching.tsx": "6db90bb2c3356a4ade62465dbab59ce7529ca62ee7c36329ab2c28392faa3be5",
+    "tests/CareerGap.Api.Tests/PairMatchingTests.cs": "305741be06bfdca3c37adc66618088e58b982591af96610ecf69b49bd5926e49",
+    "frontend/e2e/writing-matching.spec.ts": "cdf2116668756f63fecfcc256718cf8473770ef21e64536782198166ba84e603"
+  },
+  "unchangedScoringAndAdmissionHashes": {
+    "backend/CareerGap.Api/Matching/PairMatchingContract.cs": "3e1a02571e4f44acaf2746b32c6cf45646aeb55832336422ec18476606578aa3",
+    "backend/CareerGap.Api/Matching/KeywordMatchingService.cs": "83f9e14d6a9bbbd3a1c4bb581e8d988a49bcc8e3c9ffd7366b7123fd52383049",
+    "backend/CareerGap.Api/Ai/JobService.cs": "ee35a33f99301eed55062b2cf47e6671db565d04d8c23a773da84e1b8be2f4e3"
+  },
+  "isolatedRun": ".local/frontend-step3-20261030-110603-1f9e",
+  "audit": {
+    "non_fake_methods": 0,
+    "usd_budgets": 0,
+    "jobs": [
+      {
+        "job_type": "match_pair",
+        "status": "succeeded",
+        "count": 1
+      },
+      {
+        "job_type": "suggest_cv",
+        "status": "succeeded",
+        "count": 1
+      }
+    ],
+    "budgets": [
+      {
+        "service": "Fake",
+        "unit": "test_credit",
+        "spent_amount": 2.0,
+        "reserved_amount": 0.0
+      }
+    ]
+  },
+  "cleanup": true,
+  "dotenvLoaded": false,
+  "realProviderCalls": 0,
+  "realSpendUsd": 0,
+  "demo5190Updated": false,
+  "frozenHandoffUpdated": false,
+  "commitPushDeploy": false
+}

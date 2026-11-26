@@ -136,6 +136,18 @@ public sealed class FoundationFixture : IAsyncLifetime
         return (client, user.Id);
     }
 
+    // Explicit database fixture for tests of unrelated recruitment behavior. Business approval itself is tested through HTTP separately.
+    public async Task<HttpResponseMessage> PublishWithVerifiedBusinessFixture(HttpClient client, Guid jobId, object payload)
+    {
+        using var scope = App.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+        var companyId = await db.Jobs.Where(x => x.Id == jobId).Select(x => x.CompanyId).SingleAsync();
+        var identity = await db.BusinessIdentities.SingleAsync(x => x.CompanyId == companyId);
+        identity.Status = "verified";
+        await db.SaveChangesAsync();
+        return await client.PostAsJsonAsync($"/api/jobs/{jobId}/publish", payload);
+    }
+
     public static async Task Csrf(HttpClient client)
     {
         var token = await client.GetFromJsonAsync<System.Text.Json.JsonElement>("/api/auth/csrf");

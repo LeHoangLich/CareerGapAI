@@ -1,0 +1,87 @@
+import { expect, test } from '@playwright/test';
+import { openView, register } from './helpers';
+import fs from 'node:fs';
+import path from 'node:path';
+
+test('isolated views retain native file, profile, filter and builder state across navigation and reload', async ({ page }, testInfo) => {
+  await register(page);
+  const mutations: string[] = [];
+  page.on('request', request => { if (request.url().includes('/api/') && request.method() !== 'GET') mutations.push(new URL(request.url()).pathname); });
+  await openView(page, 'private-resumes');
+  await page.getByLabel('Thêm vào CV', { exact: true }).setInputFiles(process.env.CAREERGAP_DOCX_FIXTURE!);
+  await openView(page, 'profile');
+  await page.getByRole('textbox', { name: 'Tên hiển thị', exact: true }).fill('Hồ sơ chưa lưu');
+  await openView(page, 'cv-builder');
+  await page.getByLabel('Tên hiển thị *', { exact: true }).fill('Bản nháp chưa lưu');
+  await page.getByLabel('Giới thiệu', { exact: true }).fill('Nội dung synthetic được giữ trong bộ nhớ.');
+  await openView(page, 'jobs');
+  await page.getByLabel('Từ khóa', { exact: true }).fill('filter chưa gửi');
+  await openView(page, 'public-resumes');
+  await expect(page.locator('#profile, #cv-builder, #private-resumes, #applications, #jobs, #account')).toHaveCount(0);
+  await page.goBack();
+  await expect(page.getByLabel('Từ khóa', { exact: true })).toHaveValue('filter chưa gửi');
+  await page.goForward();
+  await expect(page.locator('[data-workspace-view]')).toHaveAttribute('data-workspace-view', 'public-resumes');
+  await page.reload();
+  await expect(page.locator('[data-workspace-view]')).toHaveAttribute('data-workspace-view', 'public-resumes');
+  // Reload intentionally resets unsaved drafts; test retention again within the new document.
+  await openView(page, 'private-resumes');
+  await page.getByLabel('Thêm vào CV', { exact: true }).setInputFiles(process.env.CAREERGAP_DOCX_FIXTURE!);
+  const file = await page.getByLabel('Thêm vào CV', { exact: true }).elementHandle();
+  await openView(page, 'cv-builder');
+  await page.getByLabel('Tên hiển thị *', { exact: true }).fill('Bản nháp đang soạn');
+  await openView(page, 'profile');
+  await page.getByRole('textbox', { name: 'Tên hiển thị', exact: true }).fill('Profile đang soạn');
+  await openView(page, 'private-resumes');
+  await expect.poll(() => page.getByLabel('Thêm vào CV', { exact: true }).evaluate(input => (input as HTMLInputElement).files?.length)).toBe(1);
+  expect(await file!.evaluate(input => input === document.querySelector('input[name="file"]'))).toBe(true);
+  await openView(page, 'profile');
+  await expect(page.getByRole('textbox', { name: 'Tên hiển thị', exact: true })).toHaveValue('Profile đang soạn');
+  await openView(page, 'cv-builder');
+  await expect(page.getByLabel('Tên hiển thị *', { exact: true })).toHaveValue('Bản nháp đang soạn');
+  await file?.dispose();
+  for (const width of [1440, 1366, 1024, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const columns = await page.locator('.builder-workspace-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length);
+    expect(columns).toBe(width >= 1024 ? 2 : 1);
+    await expect(page.locator('[data-workspace-view]')).toHaveCount(1);
+  }
+  const evidence = process.env.CAREERGAP_E2E_EVIDENCE_DIRECTORY ?? testInfo.outputPath('evidence');
+  fs.mkdirSync(evidence, { recursive: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: path.join(evidence, 'workspace-mobile.png'), fullPage: true });
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.screenshot({ path: path.join(evidence, 'workspace-desktop.png'), fullPage: true });
+  expect(mutations).toEqual([]);
+});
+
+test('onboarding and advanced filters preserve preference, validation and request values', async ({ page }) => {
+  await register(page);
+  await openView(page, 'jobs');
+  await page.getByRole('button', { name: 'Ẩn hướng dẫn', exact: true }).click();
+  await page.reload();
+  await page.getByRole('button', { name: 'Xem hướng dẫn', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Thu gọn', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  const details = page.locator('.advanced-job-filters');
+  await details.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await page.getByLabel('Kinh nghiệm của bạn (năm)', { exact: true }).fill('100');
+  await details.locator('summary').click();
+  await page.getByRole('button', { name: 'Tìm việc', exact: true }).click();
+  await expect(details).toHaveAttribute('open', '');
+  await expect(page.getByLabel('Kinh nghiệm của bạn (năm)', { exact: true })).toBeFocused();
+  await page.getByLabel('Kinh nghiệm của bạn (năm)', { exact: true }).fill('2');
+  await page.getByLabel('Từ khóa', { exact: true }).fill('synthetic-empty');
+  await page.getByLabel('Kỹ năng', { exact: true }).fill('React');
+  await page.getByRole('combobox', { name: 'Hình thức', exact: true }).selectOption('remote');
+  const request = page.waitForRequest(request => new URL(request.url()).pathname === '/api/jobs' && request.url().includes('synthetic-empty'));
+  await page.getByLabel('Từ khóa', { exact: true }).press('Enter');
+  const params = new URL((await request).url()).searchParams;
+  expect(params.get('experienceYears')).toBe('2'); expect(params.get('skill')).toBe('React'); expect(params.get('workMode')).toBe('remote');
+  await openView(page, 'applications');
+  await page.getByRole('link', { name: 'Khám phá việc làm ngay', exact: true }).click();
+  await expect(page.getByLabel('Từ khóa', { exact: true })).toHaveValue('synthetic-empty');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('.onboarding-toggle svg')).toHaveCSS('transition-duration', '0s');
+});

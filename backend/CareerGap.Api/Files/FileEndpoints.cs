@@ -145,12 +145,12 @@ public static class FileEndpoints
             return Results.Problem(statusCode: 400, title: "invalid_resume");
         var resume = await db.Resumes.SingleOrDefaultAsync(x => x.Id == id && x.CandidateId == uid, ct);
         if (resume is null) return Results.NotFound();
-        if (resume.RowVersion != input.RowVersion) return Results.Conflict(new { title = "resume_conflict" });
+        if (resume.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "resume_conflict");
         resume.Title = title;
         resume.RowVersion++;
         resume.UpdatedAt = DateTimeOffset.UtcNow;
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "resume_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "resume_conflict"); }
         return Results.Ok(new { resume.Id, resume.Title, resume.RowVersion, resume.CreatedAt, resume.UpdatedAt });
     }
 
@@ -159,7 +159,8 @@ public static class FileEndpoints
         if (!TryUserId(user, out var uid)) return Results.Unauthorized();
         if (!user.IsInRole("Candidate")) return Results.Forbid();
         var number = page ?? 1;
-        if (number is < 1 or > 10000) return Results.BadRequest();
+        if (number is < 1 or > 10000) return Results.Problem(statusCode: 400, title: "invalid_pagination");
+        var total = await db.Resumes.AsNoTracking().CountAsync(x => x.CandidateId == uid, ct);
         var resumes = await db.Resumes.AsNoTracking().Where(x => x.CandidateId == uid)
             .OrderByDescending(x => x.UpdatedAt).ThenByDescending(x => x.Id)
             .Skip((number - 1) * 20).Take(20)
@@ -172,7 +173,7 @@ public static class FileEndpoints
             versions.Where(version => version.ResumeId == resume.Id)
                 .Select(version => new ResumeVersionDto(version.Id, version.FileId, version.VersionNo, version.DocumentHash, version.CreatedAt)).ToArray()))
             .ToArray();
-        return Results.Ok(result);
+        return Results.Ok(new { items = result, total, page = number, pageSize = 20 });
     }
 
     private static bool TryUserId(ClaimsPrincipal user, out Guid userId) =>

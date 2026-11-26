@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-30",
+  "scope": "P01-P21 local technical deliverables; not academic or representative quality acceptance",
+  "weighting": "one equal unit per P; no hours/effort weighting agreed",
+  "total": 21,
+  "complete": 20,
+  "waitingPartial": 1,
+  "wholeGroupsNotStarted": 0,
+  "percentages": {
+    "complete": 95.24,
+    "waitingPartial": 4.76,
+    "wholeGroupsNotStarted": 0
+  },
+  "tasks": [
+    {
+      "id": "P01",
+      "stage": "A",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P02",
+      "stage": "A",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P03",
+      "stage": "A",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P04",
+      "stage": "B",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P05",
+      "stage": "B",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P06",
+      "stage": "B",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P07",
+      "stage": "B",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P08",
+      "stage": "B",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P09",
+      "stage": "B",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P10",
+      "stage": "C",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P11",
+      "stage": "C",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P12",
+      "stage": "C",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P13",
+      "stage": "C",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P14",
+      "stage": "C",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P15",
+      "stage": "C",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P16",
+      "stage": "D",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P17",
+      "stage": "D",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P18",
+      "stage": "D",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P19",
+      "stage": "D",
+      "status": "technical_local_deliverable_complete"
+    },
+    {
+      "id": "P20",
+      "stage": "E",
+      "status": "waiting_partial"
+    },
+    {
+      "id": "P21",
+      "stage": "E",
+      "status": "technical_local_deliverable_complete"
+    }
+  ],
+  "M6Accepted": false,
+  "representativeQualityAccepted": false,
+  "externalReview": "deferred_until_owner_reopens",
+  "newProviderCalls": 0,
+  "benchmarkSourceReview": {
+    "status": "owner_authorized_technical_source_review_complete",
+    "ownerAuthorizedTechnicalLabels": 318,
+    "directHumanReviewedLabels": 0,
+    "receipt": "project-docs/evaluation/label-review-2026-10-30.json",
+    "affectsOverallTaskPercentage": false
+  },
+  "ownerPilotQualityAcceptance": {
+    "accepted": true,
+    "scope": "pilot_2cv_4jd_limited",
+    "reference": "project-docs/evaluation/quality-acceptance-2026-10-30.json",
+    "M6Accepted": false,
+    "P20Complete": false
+  }
+}

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ReportButton } from './administration';
-import { api } from './api';
+import { api, type PagedResponse } from './api';
 
 type Resume = { id: string; title: string; versions: { id: string; versionNo: number }[] };
 type Selection = { candidateId: string; resumeVersionId: string; versionNo: number; status: 'ready' | 'not_ready'; rowVersion: number; publishedAt: string; redactionVerifiedAt: string | null };
@@ -38,8 +38,8 @@ export function CandidatePublicResumeManager({ resumes, selectedVersionId }: { r
     <h3>Quyền công khai CV</h3>
     <p>Tải lên không tự công khai. Bạn chọn chính xác một phiên bản; recruiter được xem file gốc, candidate khác chỉ được xem bản dựng lại đã kiểm tra và ẩn liên hệ.</p>
     {selection ? <p className="hint" role="status">Đang công khai phiên bản {selection.versionNo} · {selection.status === 'ready' ? 'bản ẩn liên hệ đã sẵn sàng' : 'bản xem cho candidate khác chưa sẵn sàng'}.</p> : <p className="hint">Hiện chưa có phiên bản công khai.</p>}
-    <div className="row public-resume-actions"><button disabled={busy || !selected} onClick={() => void publish()}>{busy ? 'Đang xử lý…' : selection ? `Công khai phiên bản ${selected?.versionNo ?? 'đã chọn'}` : `Công khai phiên bản ${selected?.versionNo ?? 'đã chọn'}`}</button>
-      {selection && <button className="secondary" disabled={busy} onClick={() => void hide()}>Ẩn CV công khai</button>}</div>
+    <div className="row public-resume-actions"><button type="button" disabled={busy || !selected} onClick={() => void publish()}>{busy ? 'Đang xử lý…' : selection ? `Công khai phiên bản ${selected?.versionNo ?? 'đã chọn'}` : `Công khai phiên bản ${selected?.versionNo ?? 'đã chọn'}`}</button>
+      {selection && <button type="button" className="secondary" disabled={busy} onClick={() => void hide()}>Ẩn CV công khai</button>}</div>
     {message && <p role="status">{message}</p>}{error && <p role="alert" className="error">{error}</p>}
   </section>;
 }
@@ -48,19 +48,19 @@ export function PublicResumeBrowser({ session }: { session?: Session }) {
   const [items, setItems] = useState<PublicResume[]>([]);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
   const isCandidate = session?.authenticated === true && session.roles.includes('Candidate');
   const isRecruiter = session?.authenticated === true && session.roles.includes('Recruiter');
   useEffect(() => {
-    if (!isCandidate && !isRecruiter) { setItems([]); return; }
+    if (!isCandidate && !isRecruiter) { setItems([]); setTotal(0); return; }
     let cancelled = false;
-    api<PublicResume[]>(`/api/public/resumes?page=${page}`).then(value => {
-      if (!cancelled) { setItems(value); setHasMore(value.length === 20); setError(''); }
+    api<PagedResponse<PublicResume>>(`/api/public/resumes?page=${page}`).then(value => {
+      if (!cancelled) { setItems(value.items); setTotal(value.total); setError(''); }
     }).catch(e => { if (!cancelled) setError((e as Error).message); });
     return () => { cancelled = true; };
   }, [isCandidate, isRecruiter, page]);
   if (!isCandidate && !isRecruiter) return null;
-  return <section className="card public-resume-browser" id="public-resumes"><div className="section-heading"><h2>Kho CV công khai</h2><span className="badge">{isCandidate ? 'Bản đã ẩn liên hệ' : 'Quyền recruiter'}</span></div>
+  return <section className="card public-resume-browser" id="public-resumes"><div className="section-heading"><h1>Kho CV công khai</h1><span className="badge">{isCandidate ? 'Bản đã ẩn liên hệ' : 'Quyền recruiter'}</span></div>
     <p>{isCandidate ? 'Bạn chỉ thấy CV có bản dẫn xuất đã kiểm tra. Các liên hệ, link và ảnh từ file gốc không được chuyển sang bản này.' : 'CV được ứng viên chủ động công khai. Recruiter có thể mở file gốc theo quyền của kho CV.'}</p>
     {error && <p role="alert" className="error">{error}</p>}
     <ul className="public-resume-list">{items.map(item => <li key={item.candidateId}>
@@ -71,6 +71,6 @@ export function PublicResumeBrowser({ session }: { session?: Session }) {
       {isRecruiter && item.redactionStatus !== 'ready' && <small>Bản dành cho candidate khác chưa sẵn sàng.</small>}
     </li>)}</ul>
     {!items.length && !error && <p>Chưa có CV công khai trong trang này.</p>}
-    <div className="row public-resume-pages"><button className="secondary" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Trước</button><span>Trang {page}</span><button className="secondary" disabled={!hasMore} onClick={() => setPage(value => value + 1)}>Sau</button></div>
+    <div className="row public-resume-pages"><button type="button" className="secondary" disabled={page === 1} onClick={() => setPage(value => value - 1)}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(total / 20))}</span><button type="button" className="secondary" disabled={page * 20 >= total} onClick={() => setPage(value => value + 1)}>Sau</button></div>
   </section>;
 }

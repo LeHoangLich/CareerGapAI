@@ -73,7 +73,7 @@ public static class ProfileEndpoints
         if (details.Length > 16000 || !ValidDetails(details)) return Results.Problem(statusCode: 400, title: "invalid_profile_details");
         var profile = await db.CandidateProfiles.SingleOrDefaultAsync(x => x.UserId == userId, ct);
         if (profile is null) return Results.NotFound();
-        if (profile.RowVersion != input.RowVersion) return Results.Conflict(new { title = "profile_conflict" });
+        if (profile.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "profile_conflict");
 
         profile.DisplayName = input.DisplayName.Trim();
         profile.Headline = input.Headline?.Trim();
@@ -91,7 +91,7 @@ public static class ProfileEndpoints
         db.CandidateProfileVisibility.RemoveRange(currentVisibility);
         db.CandidateProfileVisibility.AddRange(input.SharedFields.Select(field => new CandidateProfileVisibility { CandidateId = userId, FieldKey = field }));
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "profile_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "profile_conflict"); }
         return Results.Ok(ToFullDto(profile, input.SharedFields));
     }
 
@@ -105,22 +105,26 @@ public static class ProfileEndpoints
         catch (JsonException) { return false; }
     }
 
-    private static object ToFullDto(CandidateProfile profile, IEnumerable<string> sharedFields) => new
+    private static object ToFullDto(CandidateProfile profile, IEnumerable<string> sharedFields)
     {
-        userId = profile.UserId,
-        rowVersion = profile.RowVersion,
-        displayName = profile.DisplayName,
-        headline = profile.Headline,
-        summary = profile.Summary,
-        location = profile.Location,
-        contactEmail = profile.ContactEmail,
-        contactPhone = profile.ContactPhone,
-        desiredRole = profile.DesiredRole,
-        preferredWorkMode = profile.PreferredWorkMode,
-        experienceYears = profile.ExperienceYears,
-        details = JsonDocument.Parse(profile.Details).RootElement.Clone(),
-        sharedFields = sharedFields.Order(StringComparer.Ordinal).ToArray()
-    };
+        using var document = JsonDocument.Parse(profile.Details);
+        return new
+        {
+            userId = profile.UserId,
+            rowVersion = profile.RowVersion,
+            displayName = profile.DisplayName,
+            headline = profile.Headline,
+            summary = profile.Summary,
+            location = profile.Location,
+            contactEmail = profile.ContactEmail,
+            contactPhone = profile.ContactPhone,
+            desiredRole = profile.DesiredRole,
+            preferredWorkMode = profile.PreferredWorkMode,
+            experienceYears = profile.ExperienceYears,
+            details = document.RootElement.Clone(),
+            sharedFields = sharedFields.Order(StringComparer.Ordinal).ToArray()
+        };
+    }
 
     private static object ToRecruiterDto(CandidateProfile profile, HashSet<string> shared)
     {

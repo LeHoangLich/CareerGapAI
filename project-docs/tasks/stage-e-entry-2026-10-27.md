@@ -1,5 +1,8 @@
 # Hướng dẫn gốc từ M5 sang E và biên nhận thực thi
 
+> Bản sửa E đã hoàn tất phần kỹ thuật. Dùng [bộ mới](../handoff/stage-e-fixed-20261027/README.md); không rerun runbook dispatch ban đầu. Xem [kết quả sau sửa](../report/stage-e-followup-2026-10-27.md). M6 vẫn chờ người dùng thử thực tế.
+
+
 > Đã thực thi E theo freeze đóng gói v2; đây là hướng dẫn trước chạy được giữ để đối chiếu. Không rerun dispatch/setup/settlement hoặc reset ledger. Xem [báo cáo kết quả](../report/stage-e-2026-10-27.md) và [bộ dùng thử Fake](../handoff/stage-e-20261027/huong-dan-dung-thu.md). M6 vẫn mở.
 
 

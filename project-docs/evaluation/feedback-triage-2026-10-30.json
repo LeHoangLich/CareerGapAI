@@ -1,0 +1,675 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-30",
+  "compiler": "Codex (Authorized by Project Owner)",
+  "reviewed_and_approved_by": "Lê Hoàng Lịch (Project Owner)",
+  "status": "completed",
+  "human_authorized": true,
+  "approval_basis": "explicit owner instruction authorizing compilation/classification in this turn; not a claim owner subsequently read every generated row",
+  "external_evaluator_feedback_received": false,
+  "external_review": "deferred_until_owner_reopens",
+  "scope": "existing_internal_feedback_and_anticipated_defense_questions; no invented external review",
+  "counts": {
+    "Cần sửa": 13,
+    "Cần giải thích": 14,
+    "Ngoài phạm vi": 8
+  },
+  "status_counts": {
+    "fixed_verified": 8,
+    "fixed_with_quality_limits": 2,
+    "fixed_classified": 1,
+    "open_low_priority": 1,
+    "open_evidence_gap": 1,
+    "explanation_ready": 14,
+    "future_work": 7,
+    "not_planned_in_current_design": 1
+  },
+  "items": [
+    {
+      "id": "A01",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Reload mất đường mở lại kết quả cặp; diễn tập phải sửa idempotency key.",
+      "response": "Thêm GET latest và nút Xem kết quả đã lưu, lọc requester/CV/JD/context/application, kiểm lại quyền; thao tác đọc không enqueue.",
+      "status": "fixed_verified",
+      "version": "release20261030/demo5190; source d1192254e424fcbbe83adba31b369746e0c0f53c",
+      "verification": "Backend160/160; FE11/11; fullE2E21/21. Rehearsal5190 reload→read→Docker, 0 POST matching/recommendation, không intercept.",
+      "evidence": [
+        "simulation",
+        "history",
+        "release",
+        "release_receipt"
+      ],
+      "next_action": "Không sửa lại; giữ bằng chứng mới thay giới hạn UI cũ."
+    },
+    {
+      "id": "A02",
+      "group": "Cần sửa",
+      "origin": "Owner testing",
+      "feedback": "U5 báo lỗi chung khi AI tắt, người dùng không biết có thể tiếp tục làm gì.",
+      "response": "Thông báo rõ AI tắt, yêu cầu chưa tạo, vẫn xem/tải CV và thao tác thủ công.",
+      "status": "fixed_verified",
+      "version": "E fixed27/10, kế thừa release30",
+      "verification": "Browser Fake HTTP503 ai_disabled/tải200/session còn; owner28/10 xác nhận thông báo, tải mở được và còn đăng nhập; mode fault30 kiểm writing mới503/read cũ được.",
+      "evidence": [
+        "form_owner",
+        "owner",
+        "E_fixed",
+        "release"
+      ],
+      "next_action": "Giữ nội dung đã kiểm; không suy thành kiểm mọi lỗi mạng provider."
+    },
+    {
+      "id": "A03",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "CV E đầu 0/2: truncated/invalid output.",
+      "response": "Full CV có trần output8192 và prompt giới hạn field/quote/group; phương pháp cv-fields-bounded-v2.",
+      "status": "fixed_with_quality_limits",
+      "version": "E fixed27/10, method mới; không ghi đè E đầu",
+      "verification": "CV2/2 sau sửa; P=0.7962962962962963,R=0.5119047619047619,F1=0.6231884057971014; backend159/159 ở lượt này.",
+      "evidence": [
+        "E_initial",
+        "E_fixed",
+        "E_metrics"
+      ],
+      "next_action": "Giữ cả thất bại ban đầu; không gọi2/2 là độ chính xác100%."
+    },
+    {
+      "id": "A04",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Sáu cặp E đầu bị match_output_invalid.",
+      "response": "candidate-requirements-v4 đưa các requirement/fact được guard cho phép; backend xử lý no_evidence theo policy, không nới kiểm nguồn.",
+      "status": "fixed_with_quality_limits",
+      "version": "E fixed27/10",
+      "verification": "8/8 pair thành công,34/44 trạng thái khớp; vẫn regression nDCG.",
+      "evidence": [
+        "E_initial",
+        "E_fixed",
+        "E_metrics"
+      ],
+      "next_action": "Giải thích phần deterministic và LLM; không tuyên bố LLM tự chấm mọi tiêu chí."
+    },
+    {
+      "id": "A05",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "JSONB format lại khiến kiểm kích thước worker lệch admission, tạo attempt trước khi lỗi local.",
+      "response": "Serialize payload sẽ gửi và preflight trước StartAttempt; giữ unknown reservation lịch sử.",
+      "status": "fixed_verified",
+      "version": "E fixed27/10",
+      "verification": "Backend159/159 và lượt cuối10/10 jobs; attempt unknown trung gian/hold vẫn lưu.",
+      "evidence": [
+        "E_fixed",
+        "E_metrics"
+      ],
+      "next_action": "Không hoàn hold chỉ vì code đã sửa."
+    },
+    {
+      "id": "A06",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Topic marketing bị gợi ý nhầm từ giao tiếp.",
+      "response": "Dùng nguyên cụm alias có biên từ, chuẩn hóa dấu; tách Java/JavaScript và SQL/PostgreSQL.",
+      "status": "fixed_verified",
+      "version": "whole-alias-phrase-v2, E fixed27/10",
+      "verification": "Regression backend/API case communication không còn marketing; search Docker thật2 requests có bằng chứng riêng.",
+      "evidence": [
+        "E_initial",
+        "E_fixed"
+      ],
+      "next_action": "Không suy thành topic accuracy toàn ngành."
+    },
+    {
+      "id": "A07",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Lỗi vị trí nhãn, exact spans và yêu cầu ghép khó chấm.",
+      "response": "Giữ bản cũ; overlay30/10 ghim text/hash/offset, chọn đúng ngữ cảnh từ lặp; thêm3 needsReview/exclusions.",
+      "status": "fixed_classified",
+      "version": "Overlay label-review30/10, không đổi runtime5190",
+      "verification": "318 nhãn;3 validator đạt;300 locator chuẩn hóa;299present/18absent/1ambiguous;human direct0.",
+      "evidence": [
+        "D_labels",
+        "labels"
+      ],
+      "next_action": "Mơ hồ đã phân loại không có nghĩa nguồn tự hết mơ hồ; không dùng overlay để viết lại metric E."
+    },
+    {
+      "id": "A08",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Race quyền profile trong matching/recommendation sau I/O/admission.",
+      "response": "Refresh visibility/account/publicCV/JD trước trả DTO.",
+      "status": "fixed_verified",
+      "version": "D bước5 ngày26/10; runtime sau kế thừa",
+      "verification": "3 regression tái hiện lỗi trước sửa;28/28 PostgreSQL sau sửa. Release30 full backend160/160 là kiểm riêng.",
+      "evidence": [
+        "D_access",
+        "release"
+      ],
+      "next_action": "Không tuyên bố audit bảo mật toàn diện từ các ca này."
+    },
+    {
+      "id": "A09",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "ObjectKey có đuôi.pdf không hợp lệ trước lượt E; gói sạch thiếu font/config.",
+      "response": "Tạo version/file mới cùng bytes với key đúng, freeze bindings trước output; bổ sung assets gốc cho gói.",
+      "status": "fixed_verified",
+      "version": "E27/10 freeze v2 và clean package; release30 đóng gói mới",
+      "verification": "File ownerAPI khớp hash; E2E từ6/9 lên9/9 sau sửa gói. Release30 clean build và21/21 E2E có receipt riêng.",
+      "evidence": [
+        "E_initial",
+        "release"
+      ],
+      "next_action": "Giữ log thất bại đầu; không đổi nhãn hoặc trigger để hợp thức hóa."
+    },
+    {
+      "id": "A10",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Baseline E đầu dùng nhầm cấu hình do working directory.",
+      "response": "Loại lượt sai khỏi metric chính; chạy bằng đúng cấu hình freeze, giữ output sai làm lịch sử.",
+      "status": "fixed_verified",
+      "version": "E27/10 baseline-frozen; config d32f0fca8fd8a12b36d47c09845c599323f94b18875cd405f4f2f81283a6bb5d",
+      "verification": "Báo cáo E ghi rõ config; bảng quality30 dùng kết quả đã freeze.",
+      "evidence": [
+        "E_initial",
+        "quality"
+      ],
+      "next_action": "Không mô tả là chọn config tốt nhất theo metric."
+    },
+    {
+      "id": "A11",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Tavily tổng API chưa tăng sau2 lượt E, dễ hoàn nhầm credits.",
+      "response": "Giữ debit/cap; bổ sung đối soát dashboard owner28/10.",
+      "status": "fixed_verified",
+      "version": "Evidence28/10, không đổi runtime",
+      "verification": "4/1000=D2+E2, PAYGoff; không dùng số0 mờ của Usage bị khóa.",
+      "evidence": [
+        "owner",
+        "D_search"
+      ],
+      "next_action": "Không cấp lại allowance; reset exact time vẫn chưa biết."
+    },
+    {
+      "id": "A12",
+      "group": "Cần sửa",
+      "origin": "Owner testing",
+      "feedback": "Thử lại link reset cũ chỉ hiện lỗi chung Chưa xử lý được yêu cầu.",
+      "response": "Đề xuất thông báo riêng cho invalid_or_expired_reset và gợi ý yêu cầu link mới; không khẳng định riêng nguyên nhân used token.",
+      "status": "open_low_priority",
+      "version": "Chưa ghi nhận bản sửa riêng; email D đã đạt luồng scoped",
+      "verification": "Owner negative UI + relogin; Fake HTTP single-use1/1. Chưa có proof UI lỗi reset chuyên biệt.",
+      "evidence": [
+        "D_email"
+      ],
+      "next_action": "Nếu triển khai: map mã lỗi đã có, không tiết lộ tồn tại tài khoản; kiểm expired/used và lỗi mạng riêng bằng Fake, không gửi email thật."
+    },
+    {
+      "id": "A13",
+      "group": "Cần sửa",
+      "origin": "Technical diagnostics",
+      "feedback": "Chưa đủ bằng chứng chất lượng/ngôn ngữ nội dung nguồn học Việt của E.",
+      "response": "Đây là phần cần kiểm chứng nội dung, không tự kết luận adapter hỏng; review D không thay review E.",
+      "status": "open_evidence_gap",
+      "version": "Không có bản sửa để gán; pilot owner chấp nhận giới hạn",
+      "verification": "E6links/4URLs:2 lỗi429,1shell,1Medium đọc được; ngôn ngữ query không là ngôn ngữ tài liệu.",
+      "evidence": [
+        "E_fixed",
+        "D_search",
+        "quality"
+      ],
+      "next_action": "Khi mở kiểm chứng: đọc/nghe nguồn, ghi ngôn ngữ/liên quan/cấp độ/truy cập; chưa gọi web/API trong đợt offline này."
+    },
+    {
+      "id": "B01",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Vì sao rerank không vượt baseline?",
+      "response": "Baseline1.0 đã đạt trần nDCG trên mẫu này; rerank đổi thứ tự trong tập chọn và còn0.9169956161990744. Không có không gian cải thiện chỉ số tại baseline1.0. Mẫu nhỏ, relevance nội bộ, guard và ties giới hạn kết luận; chưa có ablation để quy nguyên nhân cho một lỗi model. Bài học: so baseline mạnh, giữ kết quả âm, chỉ đánh giá sửa phương pháp trên tập độc lập mới.",
+      "status": "explanation_ready",
+      "version": "Metric E fixed27/10",
+      "verification": "2 query CV; cùng selected set; không thêm số đo mới.",
+      "evidence": [
+        "E_metrics",
+        "quality"
+      ],
+      "next_action": "Đưa baseline và rerank cạnh nhau khi bảo vệ."
+    },
+    {
+      "id": "B02",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Vì sao F1 exact thấp; partial là gì?",
+      "response": "95nhãnCV=84present+11absent trong131CV/JD. TP43/FP11/FN41; P43/54,R43/84,F1=86/138=0.6231884057971014. Exact yêu cầu path/index và value nên đổi thứ tự mảng có thể sai. Partial cần quy tắc matching được định nghĩa trước; hiện null, không lấy parser81/84 làm partial F1.",
+      "status": "explanation_ready",
+      "version": "cv-capture-exact-path-value-v1",
+      "verification": "28 predictions chưa có nhãn không chấm; absent đúng không cộngTP. Không đồng nhất FP với bịa dữ kiện.",
+      "evidence": [
+        "quality",
+        "E_metrics"
+      ],
+      "next_action": "Nêu mẫu số và giới hạn, không nâng metric bằng đổi cách chấm hồi tố."
+    },
+    {
+      "id": "B03",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Vì sao PostgreSQL jsonb?",
+      "response": "Quan hệ/owner/quyền/trạng thái/FK dùng bảng/cột quan hệ; JSONB lưu payload trích xuất/AI và metadata có schema version. Cho phép giữ cấu trúc biến đổi mà vẫn gắn provenance/method. JSONB không tự kiểm schema nghiệp vụ và không tự bất biến; backend validation, FK và trigger bổ sung. Tradeoff: query/index/đổi schema payload phức tạp, cần migration hoặc revision rõ.",
+      "status": "explanation_ready",
+      "version": "Thiết kế và hợp đồng triển khai hiện hành",
+      "verification": "Không lấy bảng thiết kế đích làm bằng chứng tất cả đã triển khai.",
+      "evidence": [
+        "stack",
+        "db",
+        "matching",
+        "extraction"
+      ],
+      "next_action": "Dùng ví dụ một input/result revision và FK owner thay khẩu hiệu JSON linh hoạt."
+    },
+    {
+      "id": "B04",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Vì sao ghim snapshot/revision bất biến?",
+      "response": "Recruiter cần đánh giá đúng CV/JD lúc nộp dù candidate sửa CV hoặc recruiter sửa tin sau đó. Version/file hash và revision/method input được ghim; sửa tạo child/newversion thay ghi đè. Quyền đọc vẫn kiểm hiện tại; bất biến không có nghĩa giữ dữ liệu mãi hoặc bỏ retention/quyền xóa.",
+      "status": "explanation_ready",
+      "version": "Application snapshot và matching context",
+      "verification": "E2E snapshot/file; test latest application và public revocation.",
+      "evidence": [
+        "matching",
+        "extraction",
+        "history",
+        "release"
+      ],
+      "next_action": "Phân biệt file version, structured revision và snapshot đơn."
+    },
+    {
+      "id": "B05",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Vì sao k=3?",
+      "response": "Đây là quyết định phạm vi/thử nghiệm hữu hạn để kiểm được ranking và chi phí, không phải k tối ưu đã chứng minh. CV có4JD, chiều ngược chỉ2CV; min(k,pool) và các query ideal0 phải giải thích. Không suy recall1.0 nghĩa mô hình tốt trên catalog lớn.",
+      "status": "explanation_ready",
+      "version": "Protocol frozen k3",
+      "verification": "Tập2×4 và số query/mẫu số trong quality30.",
+      "evidence": [
+        "protocol",
+        "quality"
+      ],
+      "next_action": "Nếu nghiên cứu tiếp, thử k trên tuning và chốt trước holdout mới."
+    },
+    {
+      "id": "B06",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Vì sao chỉ có mẫu simple-v1?",
+      "response": "Owner chốt một cột ngày16/10; tập trung đúng dữ kiện, dấu, PDF text, phiên bản và snapshot trong nguồn lực1người/3tháng. Một mẫu giảm số tổ hợp layout cần kiểm; chưa chứng minh ATS tương thích mọi hệ thống.",
+      "status": "explanation_ready",
+      "version": "simple-v1 theo đặc tả",
+      "verification": "Owner PDF Việt/Anh và workflow; release testPDF có scope cụ thể.",
+      "evidence": [
+        "spec",
+        "D_writing",
+        "release"
+      ],
+      "next_action": "Thêm mẫu là phát triển tiếp, không tự biến thành blocker."
+    },
+    {
+      "id": "B07",
+      "group": "Cần giải thích",
+      "origin": "Owner testing",
+      "feedback": "U1–U5 đã đạt có đồng nghĩa nghiệm thu?",
+      "response": "Owner xác nhận thao tác thật; U1 bổ sung thấy quote/revision/lưu, U2 nộp đơn, U3 recruiterreview, U4PDF/version, U5manualfallback. Không bấm giờ, không có điểm usability/5, có xem hướng dẫn. Fake UI không chứng minh chất lượng DeepSeek; owner không là giảng viên độc lập.",
+      "status": "explanation_ready",
+      "version": "Owner26/10 và bổ sung28/10",
+      "verification": "Phiếu cũ giữ nguyên; blank form30 vẫn là mẫu, không lời chứng.",
+      "evidence": [
+        "form_owner",
+        "form_blank",
+        "owner"
+      ],
+      "next_action": "Không điền hộ thời gian/điểm/nhận xét chưa quan sát."
+    },
+    {
+      "id": "B08",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Đã được owner chấp nhận thì sao M6 còn chờ?",
+      "response": "Chỉ thị30/10 chấp nhận pilot có giới hạn và cho tổng hợp góp ý; không tạo phản hồi bên ngoài. Rà318nhãn theoủyquyền vẫn actorCodex, human direct0. Mục scopeowner đã đóng; M6/externalreview đang hoãn đến khi owner mở lại.",
+      "status": "explanation_ready",
+      "version": "Quality acceptance30/10",
+      "verification": "Có biên bản owner; không có danh tính/ý kiến giảng viên được tạo.",
+      "evidence": [
+        "quality",
+        "labels",
+        "owner"
+      ],
+      "next_action": "Không hỏi lại owner chốt scope; không tự đóng M6."
+    },
+    {
+      "id": "B09",
+      "group": "Cần giải thích",
+      "origin": "Technical diagnostics",
+      "feedback": "Fake/demo có thay được real provider hoặc thử mất mạng?",
+      "response": "Demo5190 Fake/synthetic kiểm chức năng và quyền; real DeepSeek/Tavily/Resend có evidence lịch sử riêng. AIoff503 là tắt cấu hình local, không phải timeout/429/500 thực của provider. Báo cáo AI mô phỏng là nguồn chẩn đoán thứ cấp, không chứng thực độc lập đầy đủ.",
+      "status": "explanation_ready",
+      "version": "Release30 và provider histories",
+      "verification": "Không dùng PID/demo trạng thái trong báo cáo mô phỏng làm live state hiện tại.",
+      "evidence": [
+        "simulation",
+        "release",
+        "E_fixed",
+        "D_email"
+      ],
+      "next_action": "Ghi actor/mode/runtime cạnh từng bằng chứng."
+    },
+    {
+      "id": "B10",
+      "group": "Cần giải thích",
+      "origin": "Technical diagnostics",
+      "feedback": "CV Anh/Việt pha ngôn ngữ; baseline có token đơn âm trùng.",
+      "response": "Chọn ngôn ngữ trình bày không bảo đảm dịch mọi dữ kiện; bảo toàn nguồn được ưu tiên. Token chung trong một ca là quan sát, chưa có bằng chứng thêm stopwords làm ranking tốt hơn; tránh sửa method theo final đã xem.",
+      "status": "explanation_ready",
+      "version": "Quan sát diễn tậpAI30/10; chưa là lỗi có fix được kiểm",
+      "verification": "Không gán causal conclusion hoặc kết quả ablation chưa có.",
+      "evidence": [
+        "simulation",
+        "quality"
+      ],
+      "next_action": "Giải thích giới hạn; mở translation/ablation riêng nếu đổi scope."
+    },
+    {
+      "id": "B11",
+      "group": "Cần giải thích",
+      "origin": "Technical diagnostics",
+      "feedback": "Tin closed còn xem qua URL trực tiếp có phải lỗi quyền?",
+      "response": "Diễn tập ghi direct200/acceptingApplications=false, không ở danh sách; archived trả404. Đây là khác biệt đóng nhận hồ sơ và ẩn nội dung. Chưa có quyết định mới yêu cầu che mọi URL closed nên chưa kết luận bug; nếu cần đổi phải chốt policy trước.",
+      "status": "explanation_ready",
+      "version": "Quan sát AI simulation, không retest trong lần tổng hợp",
+      "verification": "Bằng chứng chỉ ca đã thử, không bảo đảm mọi ACL.",
+      "evidence": [
+        "simulation",
+        "spec"
+      ],
+      "next_action": "Giữ behavior; đánh dấu câu hỏi policy nếu người đánh giá yêu cầu."
+    },
+    {
+      "id": "B12",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Điểm0–100, thiếu bằng chứng và đề xuất viết CV có quyết định tuyển thay người?",
+      "response": "Điểm theo rubric thử nghiệm, không xác suất tuyển/năng lực. no_evidence là thiếu dữ kiện trong nguồn, không chứng minh ứng viên không có kỹ năng. User_statement tách span; writing phải qua duyệt, AI không tự đổi trạng thái sàng lọc.",
+      "status": "explanation_ready",
+      "version": "Hợp đồng matching/writing",
+      "verification": "Nguồn/tình trạng được hiển thị; các ca manualreview và nguồn dữ kiện.",
+      "evidence": [
+        "matching",
+        "spec",
+        "D_writing",
+        "quality"
+      ],
+      "next_action": "Giữ con người quyết định; nêu fairness/excluded gender-health."
+    },
+    {
+      "id": "B13",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Ngân sách nhỏ và unknown attempts được xử lý thế nào?",
+      "response": "Ledger theo spend+reservation, không reset theo DB/lượt demo; unknown giữ hold. Snapshot chi0.11+hold0.03 còn1.86 trong cap2USD; không phải hóa đơn/quy đổiCNY. Tavily4credits tổng đã đối soát; email1accepted/1unknown giữ riêng.",
+      "status": "explanation_ready",
+      "version": "Snapshot lịch sử27–28/10",
+      "verification": "Lần này không đọc balance live hoặc chi phí mới.",
+      "evidence": [
+        "E_fixed",
+        "owner",
+        "D_email"
+      ],
+      "next_action": "Báo mốc thời gian và phân biệt upperbound/debit/invoice."
+    },
+    {
+      "id": "B14",
+      "group": "Cần giải thích",
+      "origin": "Defense preparation",
+      "feedback": "Có thể tái lập và giữ dữ liệu an toàn đến đâu?",
+      "response": "Gói30 có manifest/sourcecommit; cleanbuild cùngWindows/cache, restore43tables/7objects/DPkeys và rollback29→30 đã kiểm. Đây là local synthetic proof, không chứng minh cloud/S3/OSmới/SLA khi máy tắt; bất biến và quyền vẫn có giới hạn ca thử.",
+      "status": "explanation_ready",
+      "version": "Release30",
+      "verification": "Backend160/FE11/E2E21 có bằng chứng lịch sử, không chạy mới lần triage.",
+      "evidence": [
+        "release",
+        "release_receipt"
+      ],
+      "next_action": "Không dùng số test thành phần trăm chất lượng AI."
+    },
+    {
+      "id": "C01",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "Tự cào/xử lý hàng chục ngàn JD đa ngành.",
+      "response": "Vượt corpus, quyền sử dụng, dedup, vận hành ingestion và ngân sách hiện tại; không phải yêu cầu đã được giảng viên nêu.",
+      "status": "future_work",
+      "version": "Chưa triển khai/không cam kết",
+      "verification": "Không có scale benchmark tương ứng.",
+      "evidence": [
+        "spec",
+        "quality"
+      ],
+      "next_action": "Giai đoạn sau: nguồn có phép/API/import giới hạn, lineage/dedup, pilot tải tăng dần trước mở rộng."
+    },
+    {
+      "id": "C02",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "Pre-train/fine-tune LLM riêng.",
+      "response": "Pretrain và finetune khác quy mô nhưng đều chưa thuộc thiết kế/nguồn lực hiện tại; chưa có corpus đủ quyền và nhãn độc lập để chứng minh lợi ích. Không khẳng định mọi finetune luôn đắt hoặc bất khả thi.",
+      "status": "future_work",
+      "version": "Chưa thực hiện",
+      "verification": "Hiện tích hợp model qua contract/prompt/guard; không tuyên bố đang huấn luyện.",
+      "evidence": [
+        "spec",
+        "stack",
+        "quality"
+      ],
+      "next_action": "Nếu nghiên cứu sau: chuẩn bị dữ liệu/quyền, baseline, heldout; cân nhắc mô hình nhỏ/PEFT theo ngân sách đo thực."
+    },
+    {
+      "id": "C03",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "ATS doanh nghiệp đa tenant, nhiều cấp quyền, phỏng vấn/offer/HR.",
+      "response": "Bản đồ án quản lý tới sàng lọc với Candidate/Recruiter/Admin; doanh nghiệp lớn thêm policy tenant/team, audit/compliance/vận hành vượt phạm vi.",
+      "status": "future_work",
+      "version": "Chưa triển khai",
+      "verification": "Không gọi ba role hiện tại là ATS enterprise.",
+      "evidence": [
+        "spec"
+      ],
+      "next_action": "Khảo sát tenant/roles và workflow trước thiết kế mở rộng; kiểm cách ly dữ liệu."
+    },
+    {
+      "id": "C04",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "OCR mọi CV scan/ảnh và mọi layout.",
+      "response": "Phạm vi chính PDFtext/DOCX; OCR thêm sai số, chi phí, cần benchmark riêng.",
+      "status": "future_work",
+      "version": "Chưa cam kết",
+      "verification": "Không dùng corpusPDFdẫn xuất chứng minh OCR.",
+      "evidence": [
+        "spec",
+        "quality"
+      ],
+      "next_action": "Thêm pipeline OCR opt-in có cảnh báo độ tin cậy và bộ nguồn ảnh hợp lệ."
+    },
+    {
+      "id": "C05",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "Nhiều mẫu CV và dịch dữ kiện hoàn toàn tự động.",
+      "response": "Owner đã chốt1mẫu; dịch phải kiểm nghĩa/factuality và quyền duyệt, không chỉ đổi heading.",
+      "status": "future_work",
+      "version": "Chưa triển khai như chức năng hoàn chỉnh",
+      "verification": "Quan sát pha ngôn ngữ được công khai.",
+      "evidence": [
+        "spec",
+        "simulation"
+      ],
+      "next_action": "Thêm mẫu từng bước; translation proposal có nguồn và useraccept, đo bảo toàn dữ kiện."
+    },
+    {
+      "id": "C06",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "Production cloud/HA/SLA, hàng loạt email trên domain dự án.",
+      "response": "Bộ nghiệm thu hiện hành local; production cần triển khai/bảo mật/TLS/storage/quota/domain và vận hành riêng. Các hướng cloud trong thiết kế không là bằng chứng đã triển khai.",
+      "status": "future_work",
+      "version": "Chưa nghiệm thu production",
+      "verification": "Local Docker/restore và sender test không thay nghiệm thu cloud.",
+      "evidence": [
+        "stack",
+        "release",
+        "D_email"
+      ],
+      "next_action": "Lập kế hoạch triển khai riêng, chốt chi phí rồi kiểm storage/TLS/backup/restore/monitoring/domain."
+    },
+    {
+      "id": "C07",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "App mobile, chat realtime, billing và LMS đầy đủ.",
+      "response": "Không nằm trong lõi web tuyển dụng tới sàng lọc; tăng bề mặt phát triển/vận hành trong3tháng.",
+      "status": "future_work",
+      "version": "Chưa triển khai",
+      "verification": "Nguồn học là gợi ý liên kết, không LMS.",
+      "evidence": [
+        "spec"
+      ],
+      "next_action": "Ưu tiên từng nhu cầu sau đo dùng thử; không đưa vào checklist đóng pilot."
+    },
+    {
+      "id": "C08",
+      "group": "Ngoài phạm vi",
+      "origin": "Defense preparation",
+      "feedback": "AI tự động tuyển/loại hoặc sửa hồ sơ không cần duyệt.",
+      "response": "Vượt phạm vi và trái nguyên tắc người dùng quyết định; chất lượng pilot không đủ căn cứ tự động hóa quyết định nhân sự.",
+      "status": "not_planned_in_current_design",
+      "version": "Không triển khai",
+      "verification": "Không đề xuất bật tự động chỉ vì tăng mẫu hoặc điểm cao.",
+      "evidence": [
+        "spec",
+        "quality"
+      ],
+      "next_action": "Giữ hỗ trợ có giải thích và phê duyệt; nếu xem xét chính sách khác phải thiết kế/thẩm định riêng trước."
+    }
+  ],
+  "sources": {
+    "owner": {
+      "path": "project-docs/report/stage-e-external-evidence-2026-10-28.md",
+      "sha256": "300fb053414eb343e18165ee8ce9017b5aa7a78294ee8e6bf1f78620b6d88407"
+    },
+    "form_blank": {
+      "path": "project-docs/handoff/stage-e-20261030/Phieu-dung-thu-CareerGapAI.docx",
+      "sha256": "ff83082221955afc7f6c486033f99b76e93c7b28dcd9d84402be4772b69d71c4"
+    },
+    "form_owner": {
+      "path": "project-docs/handoff/stage-e-20261027/Phieu-dung-thu-CareerGapAI.docx",
+      "sha256": "e80d014350bd0c3d25b3b953421e40f323aa87d7ffce0562505d11cce7e811ac"
+    },
+    "simulation": {
+      "path": "project-docs/report/ai-simulation-synthesis-2026-10-30.md",
+      "sha256": "6ebbb7877f66b75deaccda489baf26c564a4d811126e1bd5f45a9e3929aed1db"
+    },
+    "E_initial": {
+      "path": "project-docs/report/stage-e-2026-10-27.md",
+      "sha256": "40b878ebc07421d39042eefe73ea0fba127c435db8de633c8e8904a4299b2806"
+    },
+    "E_fixed": {
+      "path": "project-docs/report/stage-e-followup-2026-10-27.md",
+      "sha256": "4fa566cf28563f154a4f7a2a7434394afe8fd5cb6dc59cba7f6aef74583a7bb8"
+    },
+    "E_metrics": {
+      "path": "project-docs/evaluation/stage-e-followup-2026-10-27.json",
+      "sha256": "643fd8e4c6ad7b1e7b445d1870e488b256d5e429605d5731a96995521eea91b1"
+    },
+    "D_access": {
+      "path": "project-docs/report/stage-d-step4-step5-2026-10-26.md",
+      "sha256": "3f24cb99f589b008a0e654518e8cd5e210d3a045fa0b7b873efbd1b7fd0fbdaa"
+    },
+    "D_labels": {
+      "path": "project-docs/report/stage-d-step3-step4-2026-10-25.md",
+      "sha256": "dea7cb8c6c094425bc64668a1d0bedd46cad6bf5a1596ee49aeddf47396e421e"
+    },
+    "D_email": {
+      "path": "project-docs/evaluation/stage-d-email-provider-2026-10-24.json",
+      "sha256": "ff27170929b9db3047da467bb6d668ef4bca790933e86fc2eba65b94e94965c4"
+    },
+    "D_search": {
+      "path": "project-docs/evaluation/stage-d-search-provider-2026-10-23.json",
+      "sha256": "fac95ec4233dcf9d5990093d0b43fb72afa926ee3ff249f9239a24f32ade7dad"
+    },
+    "D_writing": {
+      "path": "project-docs/evaluation/stage-d-writing-provider-2026-10-23.json",
+      "sha256": "9f66430f7c41799754b772258746ba7e78d45dbb4ee51946e64d2881b314af0f"
+    },
+    "history": {
+      "path": "project-docs/report/pair-history-followup-2026-10-30.md",
+      "sha256": "b27a0823b6db37372323f656167e863b95a5aaf860e9927217b79697ba35fdc3"
+    },
+    "release": {
+      "path": "project-docs/report/handoff-sync-2026-10-30.md",
+      "sha256": "fc85018c23ae175375286c3b4f50ec0f119113386ec875be7011e70c4834d455"
+    },
+    "release_receipt": {
+      "path": "project-docs/handoff/stage-e-20261030/verification.json",
+      "sha256": "21ec8fe5144c2f6731d2dd2860b858d866352e49d47f9109603a9279673e3aa3"
+    },
+    "labels": {
+      "path": "project-docs/report/label-review-2026-10-30.md",
+      "sha256": "c25f894590ebc62047453c2c8eae474ed61df07e449af853c0652481f088d9dc"
+    },
+    "quality": {
+      "path": "project-docs/report/quality-acceptance-2026-10-30.md",
+      "sha256": "467c98fc0104a91eefe259ced372706532cc14dc9502ed0d3eecea3395f6e963"
+    },
+    "spec": {
+      "path": "project-docs/01-system-specification.md",
+      "sha256": "e2a69a4fd9801f8a0326cf2ac9c2db9595d9c44e6e2d1d89a50130235ac90068"
+    },
+    "stack": {
+      "path": "project-docs/02-tech-stack-decisions.md",
+      "sha256": "40d2b4d3416fc96620682572bab65edaf9f7ea018aef26421aaf0ef898c2cbff"
+    },
+    "db": {
+      "path": "project-docs/04-database-design.md",
+      "sha256": "4948605eec1dd123985232aedf1acb26faac050b1dd50c6d8ea1f10a173304b3"
+    },
+    "matching": {
+      "path": "project-docs/phase-04-matching.md",
+      "sha256": "4af16058b43008dfb3827fbe70a522fc2e61cb239f79232352990a03a6044e44"
+    },
+    "extraction": {
+      "path": "project-docs/phase-03-extraction-contract.md",
+      "sha256": "542826c5a77d453ac5f5737e0dbc516b62d8d1a886ba8ad22d361c12ec3127be"
+    },
+    "protocol": {
+      "path": "project-docs/evaluation/stage-d-final-protocol-2026-10-27.md",
+      "sha256": "1074cc05ff8de7e577a6d59381d1e486717474c553e7cdd45cb159cfd3cb2347"
+    }
+  },
+  "execution": {
+    "external_API_calls": 0,
+    "new_cost_usd": "0.00",
+    "new_product_fixes": 0,
+    "tests_rerun": false,
+    "source_and_history_changed": false
+  },
+  "M6_accepted": false,
+  "completion_means": "triage document complete, not all open findings fixed or project accepted"
+}

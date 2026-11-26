@@ -1,0 +1,227 @@
+{
+  "date": "2026-10-30",
+  "release": "20261030",
+  "status": "local_demo_and_handoff_synchronized",
+  "M6Accepted": false,
+  "externalReview": "deferred_until_owner_reopens",
+  "regression": {
+    "directory": ".local/frontend-step3-20261030-113503-4cad",
+    "checks": {
+      "runner-tests": 0,
+      "playwright-install": 0,
+      "playwright-browser": 0,
+      "postgres-image": 0,
+      "postgres-create": 0,
+      "postgres-ready": 0,
+      "postgres-version": 0,
+      "frontend-lint": 0,
+      "frontend-typecheck": 0,
+      "frontend-test": 0,
+      "frontend-build": 0,
+      "backend-build": 0,
+      "backend-tests": 0,
+      "migration-build": 0,
+      "migration": 0,
+      "seed": 0,
+      "e2e": 0
+    },
+    "backendPassed": 160,
+    "frontendPassed": 11,
+    "e2ePassed": 21,
+    "e2eMixedIntegratedAndMock": true,
+    "testAssemblySha256": "5fbd779f1ff1e2b79ad6dd1f4cb72b8ef3f060642614b6a2debf6916cd43848e",
+    "cleanup": true,
+    "audit": {
+      "non_fake_methods": 0,
+      "usd_budgets": 0,
+      "jobs": [
+        {
+          "job_type": "match_pair",
+          "status": "succeeded",
+          "count": 1
+        },
+        {
+          "job_type": "extract_cv",
+          "status": "succeeded",
+          "count": 3
+        },
+        {
+          "job_type": "suggest_cv",
+          "status": "succeeded",
+          "count": 1
+        }
+      ],
+      "budgets": [
+        {
+          "service": "Fake",
+          "unit": "test_credit",
+          "spent_amount": 5.0,
+          "reserved_amount": 0.0
+        }
+      ]
+    }
+  },
+  "demo": {
+    "url": "http://127.0.0.1:5190/",
+    "release": "20261030",
+    "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+    "allProviders": "Fake",
+    "dataAndAccountsReused": true
+  },
+  "upgrade": {
+    "status": "passed",
+    "release": "20261030",
+    "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+    "tablesCompared": 43,
+    "objectsCompared": 7,
+    "backup": ".local/handoff-demo-20261029/backups/20261030T043210Z",
+    "allTableContentsUnchanged": true,
+    "allObjectBytesUnchanged": true,
+    "realProviderCalls": 0
+  },
+  "modeChecks": {
+    "status": "passed",
+    "checks": [
+      {
+        "mode": "start",
+        "release": "20261029",
+        "assemblySha256": "003e91c93a2ae6dd46e0983917886be3dd2bfd9e802f4e156fdddb6de7dfe4f6",
+        "health": 200
+      },
+      {
+        "mode": "start",
+        "release": "20261030",
+        "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+        "health": 200
+      },
+      {
+        "mode": "fault",
+        "release": "20261030",
+        "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+        "health": 200
+      },
+      {
+        "mode": "start",
+        "release": "20261030",
+        "assemblySha256": "6f193cfddc4d7ff71ec223cc33f749388a7313efa694f6c12f7e2ed07d0aab6c",
+        "health": 200
+      }
+    ],
+    "cookieRetainedInThisRoundTrip": true,
+    "historicalReadInFaultMode": true,
+    "newWritingBlocked503": true,
+    "finalMode": "start",
+    "finalRelease": "20261030",
+    "realProviderCalls": 0
+  },
+  "productionRehearsal": {
+    "status": "passed",
+    "release": "20261030",
+    "actor": "automated synthetic/Fake",
+    "ordinaryUiNoInterception": true,
+    "fullReload": true,
+    "reopenedOriginalJob": true,
+    "learningTopic": "docker",
+    "matchingPostRequests": 0,
+    "resumeVersions": 3,
+    "privateSelection": null,
+    "applicationStatus": "reviewing",
+    "applicationResumeVersion": 1,
+    "realProviderCalls": 0
+  },
+  "docker": {
+    "status": "passed",
+    "image": "sha256:c17aaea01d410263376c4e155062cb2ec203d39748006e459a54562d491cf87b",
+    "checks": [
+      {
+        "path": "/api/health",
+        "status": 200
+      },
+      {
+        "path": "/api/jobs",
+        "status": 200
+      },
+      {
+        "path": "/",
+        "status": 200
+      }
+    ],
+    "mainJs200": true,
+    "workerPackaged": true,
+    "authenticatedLatestLookup": true,
+    "providers": "Fake",
+    "aiDisabled": true,
+    "newExternalAttempts": 0,
+    "database": "separate disposable clone of synthetic backup",
+    "productionDatabaseUsed": false,
+    "linuxBinarySeparateFromWindows": true
+  },
+  "newProviderCalls": 0,
+  "newRealSpendUsd": 0,
+  "methodsDatasetLabelsUnchanged": true,
+  "oldHandoffAndProtectedFilesHashVerified": true,
+  "cloudDeploy": false,
+  "commitReceipt": "companion verification.json beside source ZIP, written after local commit",
+  "artifacts": [
+    {
+      "path": "project-docs/handoff/stage-e-20261030/CV-synthetic-dung-thu.docx",
+      "bytes": 1219,
+      "sha256": "f7739309a707788f57292746efdbcbab4a67dd4d90ec5c190d3b43124995bca2"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/demo-videos/01-pair-history-20261030.webm",
+      "bytes": 1635695,
+      "sha256": "147cf0efccd251fe123086feccd674bf01b6ef108ff7511d0b5676113893fb85"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/demo.html",
+      "bytes": 1082,
+      "sha256": "e82dc6a898ba2771a0eea37552a5fd3c9372d7b1f54ef200d06069572eccfb13"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/huong-dan-dung-thu.md",
+      "bytes": 3367,
+      "sha256": "0e45ef6fcc8e20ac6470c7062c24326bf6b685c1375a0ef4e716f5f2bd28df9e"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/images/pair-history-learning.png",
+      "bytes": 154094,
+      "sha256": "aa9cbf27f7bae6830ccbf4603de47d65568a5bfa2e94afc6aabf6e36e798e520"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/images/pair-history.png",
+      "bytes": 167626,
+      "sha256": "1ea741088df281ab2f8a8b0dcc5ac23b25387d8cf4d1d91990fe6b7deecb177c"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/JD-synthetic-dung-thu.txt",
+      "bytes": 147,
+      "sha256": "25dd77dfaf8a78fe82c2b9d23c2482417ae8cdae748772d3825618ccd0563920"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/nghiem-thu-M6.md",
+      "bytes": 1367,
+      "sha256": "303b738cffa68c6f04d67f80f8932595abd67438ab543e50c09f7a3f239695bc"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/Phieu-dung-thu-CareerGapAI.docx",
+      "bytes": 38557,
+      "sha256": "ff83082221955afc7f6c486033f99b76e93c7b28dcd9d84402be4772b69d71c4"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/README.md",
+      "bytes": 1502,
+      "sha256": "28a075b755258d2d5777ef22db0ad38545b07ae80fdf5bb8cec2c1db29a6f449"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/thuyet-trinh.md",
+      "bytes": 1148,
+      "sha256": "6e7841662a09ad38b3d3eaf30172b0e8ec45f08b9dbd34197eedfafaa24d8ac3"
+    },
+    {
+      "path": "project-docs/handoff/stage-e-20261030/van-hanh-local.md",
+      "bytes": 2730,
+      "sha256": "df763ba12d016b15bf730eedd5bb4c9ea0520b70eaac20e78b13014f955b5f19"
+    }
+  ]
+}

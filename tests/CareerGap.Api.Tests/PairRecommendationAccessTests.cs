@@ -45,7 +45,7 @@ public sealed class PairRecommendationAccessTests(FoundationFixture fixture) : I
         Assert.Equal(HttpStatusCode.Created, jobResponse.StatusCode);
         var job = await jobResponse.Content.ReadFromJsonAsync<JsonElement>();
         var jobId = job.GetProperty("id").GetGuid();
-        Assert.Equal(HttpStatusCode.OK, (await owner.PostAsJsonAsync($"/api/jobs/{jobId}/publish",
+        Assert.Equal(HttpStatusCode.OK, (await fixture.PublishWithVerifiedBusinessFixture(owner, jobId,
             new { rowVersion = job.GetProperty("rowVersion").GetInt64() })).StatusCode);
 
         string ownerEmail;

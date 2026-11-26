@@ -43,28 +43,37 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         EnqueueCore(uid, new(match.ResumeVersionId, key, PairMatchingContract.Version), match, ct);
     public Task<AiJob> EnqueueWriting(Guid uid, Guid key, WritingInput writing, CancellationToken ct) =>
         EnqueueCore(uid, new(writing.ResumeVersionId, key, WritingContract.Version), null, ct, writing);
-    private async Task<AiJob> EnqueueCore(Guid uid, CreateJobRequest input, MatchInput? match, CancellationToken ct, WritingInput? writing = null)
+    public Task<AiJob> EnqueueJobRewrite(Guid uid, Guid key, JobRewriteInput jobRewrite, CancellationToken ct) =>
+        EnqueueCore(uid, new(Guid.Empty, key, JobRewriteContract.Version), null, ct, null, jobRewrite);
+    private async Task<AiJob> EnqueueCore(Guid uid, CreateJobRequest input, MatchInput? match, CancellationToken ct, WritingInput? writing = null, JobRewriteInput? jobRewrite = null)
     {
         if (input.IdempotencyKey == Guid.Empty) throw new JobError("idempotency_key_required", 400);
-        if (match is null && writing is null && input.Contract is not ("skills-v1" or FullCvExtraction.Contract)) throw new JobError("invalid_extraction_contract", 400);
+        if (match is null && writing is null && jobRewrite is null && input.Contract is not ("skills-v1" or FullCvExtraction.Contract)) throw new JobError("invalid_extraction_contract", 400);
         var opt = options.Value;
         if (!opt.Enabled) throw new JobError("ai_disabled", 503);
         if (opt.Provider is not ("Fake" or "DeepSeek")) throw new JobError("provider_not_configured", 503);
         if (opt.Provider == "DeepSeek" && (!opt.RealIsConfigured() || string.IsNullOrWhiteSpace(config["Ai:ApiKey"]))) throw new JobError("provider_not_configured", 503);
-        if (opt.Provider == "DeepSeek" && writing is not null && opt.WritingMaxOutputTokens is not (>= 128 and <= 2048)) throw new JobError("writing_output_budget_required", 503);
-        if (opt.Provider == "DeepSeek" && writing is null && (match is null ? !opt.SupportsContract(input.Contract) : opt.MatchMaxOutputTokens is not (>= 128 and <= 2048)))
+        if (opt.Provider == "DeepSeek" && (writing is not null || jobRewrite is not null) && opt.WritingMaxOutputTokens is not (>= 128 and <= 2048)) throw new JobError("writing_output_budget_required", 503);
+        if (opt.Provider == "DeepSeek" && writing is null && jobRewrite is null && (match is null ? !opt.SupportsContract(input.Contract) : opt.MatchMaxOutputTokens is not (>= 128 and <= 4096)))
             throw new JobError(match is null ? "full_cv_output_budget_required" : "match_output_budget_required", 503);
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         // Serialize only short admission transactions: method/period creation and idempotency.
         await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_xact_lock(341017)", ct);
-        var version = await db.ResumeVersions.SingleOrDefaultAsync(x => x.Id == input.ResumeVersionId && x.CandidateId == (match == null ? uid : match.CandidateId), ct) ?? throw new JobError("not_found", 404);
-        if (match is not null && !await PairMatchingService.CanAccess(db, uid, match, DateTimeOffset.UtcNow, ct)) throw new JobError("not_found", 404);
-        if (writing is not null && !await WritingService.CanAccess(db, uid, writing, ct)) throw new JobError("not_found", 404);
-        var file = await db.StoredFiles.SingleAsync(x => x.Id == version.FileId && x.OwnerUserId == version.CandidateId, ct);
-        if (file.Status != "ready" || file.Sha256 != version.DocumentHash) throw new JobError("file_unavailable", 409);
+        if (jobRewrite is not null)
+        {
+            if (!await JobRewriteService.CanAccess(db, uid, jobRewrite, ct)) throw new JobError("not_found", 404);
+        }
+        else
+        {
+            var version = await db.ResumeVersions.SingleOrDefaultAsync(x => x.Id == input.ResumeVersionId && x.CandidateId == (match == null ? uid : match.CandidateId), ct) ?? throw new JobError("not_found", 404);
+            if (match is not null && !await PairMatchingService.CanAccess(db, uid, match, DateTimeOffset.UtcNow, ct)) throw new JobError("not_found", 404);
+            if (writing is not null && !await WritingService.CanAccess(db, uid, writing, ct)) throw new JobError("not_found", 404);
+            var file = await db.StoredFiles.SingleAsync(x => x.Id == version.FileId && x.OwnerUserId == version.CandidateId, ct);
+            if (file.Status != "ready" || file.Sha256 != version.DocumentHash) throw new JobError("file_unavailable", 409);
+        }
         var existing = await db.AiJobs.SingleOrDefaultAsync(x => x.RequestedBy == uid && x.IdempotencyKey == input.IdempotencyKey, ct);
         // Request identity excludes mutable provider configuration. A retry returns its original method.
-        var inputHash = writing is not null ? Hash($"{WritingContract.Version}:{writing.Fingerprint}") : match is null ? Hash($"{PromptVersion}:{version.Id}:{version.DocumentHash}" + (input.Contract == "skills-v1" ? "" : ":" + input.Contract)) :
+        var inputHash = jobRewrite is not null ? Hash($"{JobRewriteContract.Version}:{jobRewrite.Fingerprint}") : writing is not null ? Hash($"{WritingContract.Version}:{writing.Fingerprint}") : match is null ? Hash($"{PromptVersion}:{input.ResumeVersionId}:{(await db.ResumeVersions.AsNoTracking().SingleAsync(x => x.Id == input.ResumeVersionId, ct)).DocumentHash}" + (input.Contract == "skills-v1" ? "" : ":" + input.Contract)) :
             Hash($"{match.Fingerprint}:{match.Context}:{match.ApplicationId}");
         if (existing is not null)
         {
@@ -73,17 +82,17 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         }
         var parameters = opt.Provider == "Fake" ? new MethodParameters("fake-keyword-v1", 16000, 512, 0, 0, "not-applicable") : opt.Snapshot(input.Contract);
         if (match is not null) parameters = parameters with { MaxOutputTokens = opt.Provider == "Fake" ? 2048 : opt.MatchMaxOutputTokens!.Value };
-        if (writing is not null) parameters = parameters with { MaxOutputTokens = opt.Provider == "Fake" ? 2048 : opt.WritingMaxOutputTokens!.Value };
+        if (writing is not null || jobRewrite is not null) parameters = parameters with { MaxOutputTokens = opt.Provider == "Fake" ? 2048 : opt.WritingMaxOutputTokens!.Value };
         parameters = parameters with { Contract = input.Contract, CompletionPolicy = CompletionValidator.Version, ParserVersion = DocumentParser.Version };
-        var schema = writing is not null ? WritingContract.Version : match is not null ? PairMatchingContract.Version : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Contract : OutputSchemaVersion;
-        var prompt = writing is not null ? WritingContract.Prompt : match is not null ? PairMatchingContract.Prompt + PairMatchingContract.Rubric : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt;
+        var schema = jobRewrite is not null ? JobRewriteContract.Version : writing is not null ? WritingContract.Version : match is not null ? PairMatchingContract.Version : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Contract : OutputSchemaVersion;
+        var prompt = jobRewrite is not null ? JobRewriteContract.Prompt : writing is not null ? WritingContract.Prompt : match is not null ? PairMatchingContract.Prompt + PairMatchingContract.GroundingInstructions + PairMatchingContract.Rubric : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.Prompt : DeepSeekClient.Prompt;
         var raw = JsonSerializer.Serialize(parameters, OutputValidator.Json);
         var configHash = Hash($"{opt.Provider}:{PromptVersion}:{schema}:{OutputValidator.Version}:{Files.DocumentParser.Version}:{prompt}:{raw}");
         var method = await db.AiMethods.SingleOrDefaultAsync(x => x.ConfigHash == configHash, ct);
         if (method is null)
         {
             method = new AiMethod { ConfigHash = configHash, Provider = opt.Provider, Model = parameters.Model,
-                    PromptVersion = writing is not null ? WritingContract.Version : match is null ? PromptVersion : PairMatchingContract.Version, SchemaVersion = schema, Parameters = raw };
+                    PromptVersion = jobRewrite is not null ? JobRewriteContract.Version : writing is not null ? WritingContract.Version : match is not null ? PairMatchingContract.GroundingPolicy : input.Contract == FullCvExtraction.Contract ? FullCvExtraction.PromptPolicy : PromptVersion, SchemaVersion = schema, Parameters = raw };
             db.AiMethods.Add(method);
         }
         if (match is not null)
@@ -104,10 +113,12 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
                 db.MatchResults.Add(new MatchResult { AiJobId = reused.Id, Score = result.Score, Criteria = result.Criteria, CreatedAt = result.CreatedAt });
                 await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return reused;
             }
-            if (Encoding.UTF8.GetByteCount(match.Payload + PairMatchingContract.Prompt) + 1024 > parameters.MaxInputTokens)
+            var payload = JsonSerializer.Deserialize<PairPayload>(match.Payload, OutputValidator.Json)!;
+            if (Encoding.UTF8.GetByteCount(PairMatchingContract.Serialize(PairMatchingContract.ProviderPayload(payload)) + PairMatchingContract.ProviderPrompt(payload)) + 1024 > parameters.MaxInputTokens)
                 throw new JobError("matching_input_limit", 422);
         }
         if (writing is not null && Encoding.UTF8.GetByteCount(writing.Payload + WritingContract.Prompt) + 1024 > parameters.MaxInputTokens) throw new JobError("writing_input_limit", 422);
+        if (jobRewrite is not null && Encoding.UTF8.GetByteCount(jobRewrite.Payload + JobRewriteContract.Prompt) + 1024 > parameters.MaxInputTokens) throw new JobError("writing_input_limit", 422);
         var now = await Now(ct);
         var start = opt.Provider == "Fake" ? new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero) : DateTimeOffset.Parse(opt.PeriodStart).ToUniversalTime();
         var end = opt.Provider == "Fake" ? start.AddMonths(1) : DateTimeOffset.Parse(opt.PeriodEnd).ToUniversalTime();
@@ -126,10 +137,11 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         var estimate = perCall * 2;
         if (budget.SpentAmount + budget.ReservedAmount + estimate > effectiveLimit) throw new JobError("quota_exhausted", 429);
         await CheckUserQuota(uid, budget.Id, opt, estimate, ct);
-        var job = new AiJob { JobType = writing is not null ? "suggest_cv" : match is null ? "extract_cv" : "match_pair", RequestedBy = uid, ResumeVersionId = match is null ? version.Id : null, MethodVersionId = method.Id, IdempotencyKey = input.IdempotencyKey, InputHash = inputHash, AvailableAt = now };
+        var job = new AiJob { JobType = jobRewrite is not null ? "rewrite_jd" : writing is not null ? "suggest_cv" : match is null ? "extract_cv" : "match_pair", RequestedBy = uid, ResumeVersionId = match is null && jobRewrite is null ? input.ResumeVersionId : null, MethodVersionId = method.Id, IdempotencyKey = input.IdempotencyKey, InputHash = inputHash, AvailableAt = now };
         db.AiJobs.Add(job);
         if (match is not null) { match.AiJobId = job.Id; db.MatchInputs.Add(match); }
         if (writing is not null) { writing.AiJobId = job.Id; db.WritingInputs.Add(writing); }
+        if (jobRewrite is not null) { jobRewrite.AiJobId = job.Id; db.JobRewriteInputs.Add(jobRewrite); }
         db.BudgetReservations.Add(new BudgetReservation { AiJobId = job.Id, BudgetPeriodId = budget.Id, ReservedRemaining = estimate, UnallocatedAmount = estimate, PerCallEstimate = perCall });
         budget.ReservedAmount += estimate;
         await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
@@ -191,6 +203,11 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
         {
             var input = await db.WritingInputs.AsNoTracking().SingleOrDefaultAsync(x => x.AiJobId == id, ct);
             if (input is null || !await WritingService.CanAccess(db, job.RequestedBy, input, ct)) throw new ProviderError("access_revoked", false);
+        }
+        if (job.JobType == "rewrite_jd")
+        {
+            var input = await db.JobRewriteInputs.AsNoTracking().SingleOrDefaultAsync(x => x.AiJobId == id, ct);
+            if (input is null || !await JobRewriteService.CanAccess(db, job.RequestedBy, input, ct)) throw new ProviderError("access_revoked", false);
         }
         var method = await db.AiMethods.AsNoTracking().SingleAsync(x => x.Id == job.MethodVersionId, ct);
         if (method.Provider == "DeepSeek" && (!options.Value.RealIsConfigured() || options.Value.Provider != "DeepSeek")) throw new ProviderError("provider_not_configured", false);
@@ -256,6 +273,17 @@ public sealed class JobService(AppDb db, IOptions<AiOptions> options, IConfigura
             {
                 var payload = JsonSerializer.Deserialize<WritingPayload>(input.Payload, OutputValidator.Json)!;
                 db.WritingResults.Add(new WritingResult { AiJobId = id, Sections = PairMatchingContract.Serialize(WritingContract.Validate(output, payload)), CreatedAt = now });
+            }
+        }
+        else if (output is not null && job.JobType == "rewrite_jd")
+        {
+            var input = await db.JobRewriteInputs.AsNoTracking().SingleOrDefaultAsync(x => x.AiJobId == id, ct);
+            if (input is null || !await JobRewriteService.CanAccess(db, job.RequestedBy, input, ct))
+            { output = null; error = "access_revoked"; retry = false; }
+            else
+            {
+                var payload = JsonSerializer.Deserialize<JobRewritePayload>(input.Payload, OutputValidator.Json)!;
+                db.JobRewriteResults.Add(new JobRewriteResult { AiJobId = id, Sections = PairMatchingContract.Serialize(JobRewriteContract.Validate(output, payload)), CreatedAt = now });
             }
         }
         else if (output is not null && job.JobType == "match_pair")
@@ -340,7 +368,7 @@ public static class JobEndpoints
             var attempts = await db.ExternalCallAttempts.AsNoTracking().Where(x => x.AiJobId == id).ToListAsync(ct);
             return Results.Ok(new { schemaVersion = 1, contract = parameters.Contract, parser = parameters.ParserVersion,
                 row.Method.Provider, row.Method.Model, method = row.Method.ConfigHash,
-                promptSha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(FullCvExtraction.Prompt))),
+                promptSha256 = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(FullCvExtraction.PromptForMethod(row.Method.PromptVersion)))),
                 parameters = JsonSerializer.Deserialize<JsonElement>(row.Method.Parameters), beforeUserCorrection = true,
                 unit = row.Method.Provider == "Fake" ? "test_credit" : "usd",
                 document = new { sourceJobId = id, sourceSha256 = row.DocumentHash, rawOutput = row.Job.OutputJson,
@@ -350,7 +378,7 @@ public static class JobEndpoints
                     cost = attempts.Count > 0 && attempts.All(x => x.ActualAmount.HasValue) ? (decimal?)attempts.Sum(x => x.ActualAmount!.Value) : null,
                     elapsedMs = row.Job.FinishedAt.HasValue ? (long?)(row.Job.FinishedAt.Value - row.Job.CreatedAt).TotalMilliseconds : null } });
         }).RequireAuthorization();
-        app.MapGet("/api/ai/jobs/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, PairMatchingService pairService, WritingService writingService, CancellationToken ct) =>
+        app.MapGet("/api/ai/jobs/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, PairMatchingService pairService, WritingService writingService, JobRewriteService jobRewriteService, CancellationToken ct) =>
         {
             var uid = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if (await db.AiJobs.AnyAsync(x => x.Id == id && x.RequestedBy == uid && x.JobType == "suggest_cv", ct))
@@ -362,6 +390,11 @@ public static class JobEndpoints
             {
                 var match = await pairService.Read(uid, id, ct);
                 return match is null ? Results.NotFound() : Results.Ok(match);
+            }
+            if (await db.AiJobs.AnyAsync(x => x.Id == id && x.RequestedBy == uid && x.JobType == "rewrite_jd", ct))
+            {
+                var rewrite = await jobRewriteService.Read(uid, id, ct);
+                return rewrite is null ? Results.NotFound() : Results.Ok(rewrite);
             }
             var result = await (from j in db.AiJobs.AsNoTracking() join m in db.AiMethods on j.MethodVersionId equals m.Id
                 where j.Id == id && j.RequestedBy == uid

@@ -1,0 +1,34 @@
+{
+  "status": "verified",
+  "preserved_files": 142,
+  "changed_protected_files": [],
+  "checked_handoff_links": 23,
+  "missing_links": [],
+  "parts": 4,
+  "B_items": 14,
+  "C_items": 8,
+  "metric_values_checked": [
+    "0.7962962962962963",
+    "0.5119047619047619",
+    "0.6231884057971014",
+    "0.9169956161990744"
+  ],
+  "external_api_calls": 0,
+  "cost_usd": 0,
+  "date": "2026-10-31",
+  "auditor": "Codex (Authorized by Project Owner)",
+  "approved_by": "Lê Hoàng Lịch (Project Owner)",
+  "approval_basis": "owner instruction authorizing document synchronization",
+  "human_authorized": true,
+  "M6": "pending_external_review_deferred",
+  "runtime_zip_pptx_updated": false,
+  "output_sha256": {
+    "project-docs/handoff/stage-e-20261030/thuyet-trinh.md": "23e02ca002aa01e8745aa27a02d72521f043c092140e0c222ca2b44f0368f810",
+    "project-docs/handoff/stage-e-20261030/README.md": "0870facd52415904431e4dde2c5af937aaf52c40118085837a1b2dd9d7f4c118",
+    "project-docs/handoff/stage-e-20261030/nghiem-thu-M6.md": "747c13c5a37e9e9cdc9fc936938a09ee7a89c6a6671f3e54b6c594f55428cbf1",
+    "project-docs/current-status.md": "9d1536eb7afb5d2720acfe9ee59899cebf17310d3f26702f3907033cc888d498",
+    "project-docs/03-roadmap.md": "12784527ab28d8c18efd0a4d0c5fd1cd667fa08bdc64fe3f65da34d0c7e4d08b",
+    "project-docs/report/defense-docs-sync-2026-10-31.md": "32da661dd6adddb3871eeccc32f0be9a9a41e2019cdda3ac8e080100d3b30164"
+  },
+  "verification_sha256": "e3241861a489108a26d8c81b14ee47cea981dd0dc736f3ffe936b6a6e4fae25b"
+}

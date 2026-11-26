@@ -62,8 +62,8 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
         Assert.Equal(HttpStatusCode.Unauthorized, (await candidate.GetAsync("/api/profile/me")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await candidate.GetAsync($"/api/files/{fileId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await staleSession.GetAsync("/api/profile/me")).StatusCode);
-        var otherPublic = await otherCandidate.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        Assert.DoesNotContain(otherPublic!, x => x.GetProperty("candidateId").GetGuid() == candidateId);
+        var otherPublic = await otherCandidate.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        Assert.DoesNotContain(otherPublic.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == candidateId);
         Assert.Equal(HttpStatusCode.NotFound, (await otherCandidate.GetAsync($"/api/public/resumes/{candidateId}/{versionId}/file")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await recruiter.GetAsync($"/api/applications/{applicationId}/resume")).StatusCode);
         var recruiterApps = await recruiter.GetFromJsonAsync<JsonElement>($"/api/jobs/{jobId}/applications");
@@ -189,6 +189,12 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
         var upload = await FoundationFixture.Upload(candidate, FoundationFixture.Docx("Synthetic CV stays with applicant."));
         var versionId = upload.GetProperty("versionId").GetGuid();
         var (jobId, _) = await CreatePublishedJob(recruiter, "Synthetic historical job");
+        Guid businessAudit;
+        using(var scope=fixture.App.Services.CreateScope()){
+            var db=scope.ServiceProvider.GetRequiredService<AppDb>();var identity=await db.BusinessIdentities.SingleAsync(x=>x.UserId==recruiterId);
+            identity.LegalName="Synthetic private legal name";identity.TaxCode="1234567890";
+            var audit=new AdminAudit{ActorId=candidateId,TargetId=identity.CompanyId,Action="business_verify",Reason="Synthetic legal evidence"};db.AdminAudits.Add(audit);await db.SaveChangesAsync();businessAudit=audit.Id;
+        }
         using var apply = await candidate.PostAsJsonAsync($"/api/jobs/{jobId}/applications", new { resumeVersionId = versionId, submissionKey = Guid.NewGuid() });
         Assert.Equal(HttpStatusCode.Created, apply.StatusCode);
         var applicationId = (await apply.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
@@ -211,6 +217,8 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
             var account = await db.Users.SingleAsync(x => x.Id == recruiterId);
             Assert.Equal("deleted", account.AccountStatus);
             Assert.EndsWith("@deleted.invalid", account.Email);
+            Assert.False(await db.BusinessIdentities.AnyAsync(x=>x.UserId==recruiterId));
+            Assert.Equal("[erased]",(await db.AdminAudits.SingleAsync(x=>x.Id==businessAudit)).Reason);
             Assert.Empty(await db.UserRoles.Where(x => x.UserId == recruiterId).ToArrayAsync());
             var company = await db.Companies.SingleAsync(x => x.OwnerUserId == recruiterId);
             Assert.Equal("Nhà tuyển dụng đã xóa", company.Name);
@@ -309,7 +317,7 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
         return (await scope.ServiceProvider.GetRequiredService<AppDb>().Users.SingleAsync(x => x.Id == userId)).Email!;
     }
 
-    private static async Task Reauthenticate(HttpClient client, string email, string password)
+    private async Task Reauthenticate(HttpClient client, string email, string password)
     {
         await FoundationFixture.Csrf(client);
         using var response = await client.PostAsJsonAsync("/api/auth/login", new { email, password });
@@ -317,7 +325,7 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
         await FoundationFixture.Csrf(client);
     }
 
-    private static async Task<(Guid JobId, Guid CompanyId)> CreatePublishedJob(HttpClient recruiter, string title)
+    private async Task<(Guid JobId, Guid CompanyId)> CreatePublishedJob(HttpClient recruiter, string title)
     {
         using var companyResponse = await recruiter.PostAsJsonAsync("/api/companies", new { name = $"Synthetic {Guid.NewGuid():N}"[..20], websiteUrl = "", location = "Hà Nội" });
         Assert.Equal(HttpStatusCode.Created, companyResponse.StatusCode);
@@ -337,7 +345,7 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
         Assert.Equal(HttpStatusCode.Created, created.StatusCode);
         var draft = await created.Content.ReadFromJsonAsync<JsonElement>();
         var jobId = draft!.GetProperty("id").GetGuid();
-        using var publish = await recruiter.PostAsJsonAsync($"/api/jobs/{jobId}/publish", new { rowVersion = draft.GetProperty("rowVersion").GetInt64() });
+        using var publish = await fixture.PublishWithVerifiedBusinessFixture(recruiter, jobId, new { rowVersion = draft.GetProperty("rowVersion").GetInt64() });
         Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
         return (jobId, company.GetProperty("id").GetGuid());
     }

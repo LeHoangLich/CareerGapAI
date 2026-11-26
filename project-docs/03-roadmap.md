@@ -1,5 +1,41 @@
 # CareerGap AI – Roadmap Phát triển
 
+> **Đồng bộ nhánh mở rộng sau đóng băng (20–21/11/2026 — `feat/post-freeze-p1-p3-20261121` / `v2026.11.21-p1-p3`):** Sau khi chốt Defense Baseline `release20261031`, nhánh phát triển mở rộng đã đồng bộ phân hệ Cộng đồng (`CommunityNetwork`), Xác minh doanh nghiệp (`BusinessIdentity`) và hoàn thiện **32/32 hạng mục backlog F01–F32** với **31 migrations**, **231/231 backend PG tests** và **42/42 frontend unit tests** (E2E chưa chạy lại trên nhánh mới; danh sách lỗi & tinh chỉnh đồng bộ UI toàn bộ cửa sổ theo dõi tại [taskboard_v2.md](../taskboard_v2.md)). Bản Defense Baseline `release20261031` (222 file, 19 migrations) vẫn được bảo toàn nguyên vẹn.
+
+**01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN BỞI LÊ HOÀNG LỊCH.** Trạng thái cuối **final_defense_ready**; release20261031 là **Defense Baseline**. Giai đoạn E/GĐ6 và phạm vi dự án nội bộ hoàn thành; mã nguồn đã đóng băng. Chủ dự án chính thức khép lại thủ tục dùng thử ngoài trước bảo vệ; đó không còn là điều kiện chờ của M6. Kết quả Hội đồng tại buổi bảo vệ được ghi riêng theo thực tế. [Biên bản](report/m6-internal-acceptance-2026-11-01.md) · [Manifest](evaluation/m6-internal-acceptance-2026-11-01.json) · [Source freeze](evaluation/source-freeze-2026-11-01.json). Các trạng thái M6 chờ/đánh giá ngoài hoãn trong ghi nhận cũ phía dưới chỉ là lịch sử đã được quyết định này thay thế. Metric, human direct review0, backup và archive lịch sử giữ nguyên.
+
+
+## Nhật ký quyết định trước nghiệm thu nội bộ01/11
+
+**31/10 — Release20261031 đã đồng bộ A12 vào demo5190:** launcher mặc định31, giữ runtime29/30; backup/restore43bảng/7objects/DPkeys và upgrade data khớp; regression160backend/15unit/22E2E đạt; history reload và reset invalid→forgot trên5190 đạt; rollback30→31/fault31/recover31 đạt, cookie còn dùng và tảiCV khớp. [Bộ31](handoff/stage-e-20261031/README.md) · [Biên bản](report/handoff-sync-2026-10-31.md). Gói27/29/30 giữ nguyên; không provider thật/phí, M6 chờ đánh giá ngoài. Các ghi nhận A12 chưa có demo phía dưới là lịch sử trước release31.
+
+## Đồng bộ tài liệu bảo vệ — 31/10/2026
+
+| Mốc | Trạng thái hiện hành |
+|---|---|
+| 30/10: chấp nhận pilot | Owner chấp nhận 2 CV Anh × 4 JD, 6 nhóm, 131 nhãn final, 8 cặp, k=3; không thay nghiệm thu M3/M5/M6 |
+| 30/10: rà nhãn | Codex đối chiếu 318 nhãn/14 tài liệu/11 nhóm theo ủy quyền; 300 tọa độ chuẩn hóa, thêm 3 needsReview; human direct review=0 |
+| 30/10: ma trận góp ý | 35 mục = 13 Cần sửa + 14 Cần giải thích + 8 Ngoài phạm vi; không phải phản hồi giảng viên |
+| 31/10: A12 | Sửa tại source và tái kiểm backend160/unit15/E2E22; lint/typecheck/build đạt; Vite cảnh báo bundle không chặn |
+| 31/10: A13 | Đối soát đủ 5 tiêu chí, chưa phát hiện lỗi chức năng trong luồng rà, giữ code; chưa chứng minh nguồn tiếng Việt đạt, chưa phát toàn bộ video |
+| 31/10: cẩm nang | Đủ 4 phần và Q&A/demo; cập nhật README/M6, không đóng gói lại runtime/ZIP/PPTX |
+| M6/P20 | Chờ đánh giá ngoài, đang hoãn; owner không cần chốt lại phạm vi pilot |
+
+[Cẩm nang hiện hành](handoff/stage-e-20261030/thuyet-trinh.md) · [Biên bản đồng bộ](report/defense-docs-sync-2026-10-31.md). Demo5190/ZIP30 chưa có A12; test release30 vẫn160/11/21, test source31 là160/15/22. Không API/phí, không thay corpus/metric/ledger. Các trạng thái cũ phía dưới đọc theo ngày, không thay thế bảng này.
+
+
+**30/10 — Chủ dự án Lê Hoàng Lịch đã chấp nhận phạm vi chất lượng pilot `pilot_2cv_4jd_limited`** (2CVAnh×4JD, 6nhóm, 131nhãn final, 8cặp, k=3) để trình bày/bảo vệ với giới hạn công khai. Mục chốt phạm vi bởi owner hoàn thành; không chờ owner chốt lại. Exact CV F1=0.6231884057971014 trên95nhãnCV, partial chưa đo; rerank CV→JD nDCG=0.9169956161990744 so baseline1.0, không cải thiện. Human direct review=0; không representative/production-ready. M6/P20 vẫn chờ đánh giá ngoài đang hoãn; không đổi nghiệm thu M3/M5. Không API/phí, giữ nhãn/metric/ledger/bộ bàn giao. [Biên bản](report/quality-acceptance-2026-10-30.md). Các ghi nhận owner chưa chốt phạm vi phía dưới là lịch sử.
+
+> 30/10 — Đã đồng bộ sửa xem lại kết quả vào demo5190/release20261030 và [bộ bàn giao mới](handoff/stage-e-20261030/README.md), giữ rollback29 và dữ liệu synthetic. Fresh backend160/160, FE11/11/lint/typecheck/build, E2E21/21; backup/restore và production/Docker history đã kiểm. Đánh giá ngoài hoãn theo owner; M6 chưa nghiệm thu, không đổi điều kiện. [Biên bản](report/handoff-sync-2026-10-30.md). Ghi nhận demo chưa cập nhật bên dưới là trước lần đồng bộ này.
+
+> 30/10 — Chủ dự án tạm hoãn đánh giá giảng viên cho đến khi mở lại; M6 vẫn chờ, giữ điều kiện nghiệm thu. Tiếp tục kỹ thuật sau diễn tập: đã thêm xem lại kết quả CV–JD qua UI/API chỉ đọc, không tạo job/attempt; backend160/160, FE11/11 và lint/typecheck/build, E2E tích hợp1/1 đạt trên môi trường riêng. Demo5190 và gói bàn giao29/10 chưa cập nhật sửa này. [Báo cáo và ranh giới phiên bản](report/pair-history-followup-2026-10-30.md).
+
+> 29/10 — Đồng bộ bộ bàn giao mới: UI multi-view/StyleGuide, launcher static Fake riêng5190, unit11/backend159/E2E21 mới đạt, video ba luồng và AIoff có nhãn, backup/restore43bảng/4objects+DPkeys khớp. Source/Docker/slide/package có biên nhận riêng, gói27/10 giữ lịch sử. Không sửa method/dataset/ledger hoặc gọi provider. M6 còn chờ giảng viên dùng thử/nhận xét phạm vi chất lượng, không tự nghiệmthu thay người. [Biên bản](report/handoff-sync-2026-10-29.md).
+
+
+> 27/10 — Đã hoàn tất phần kỹ thuật E sau sửa: CV2/2, pair8/8 trên method mới; F1 exact0,623 và34/44 trạng thái tham chiếu, rerank CV→JD nDCG0,917 so baseline1,00, không cải thiện. Đây là regression trên tập đã xem, giữ kết quả E đầu. Backend159/159, E2E9/9, FE4/4/lint/typecheck/build; restore current DLL19migrations/43tables/11files/3ledger, Docker+3HTTP và full writing UI→PDF→new private version đạt. Demo đã chuyển sang DB persistent riêng, hai role và proposal Fake chưa duyệt sẵn cho giảng viên. DeepSeekfollowup debit0,04+hold0,01; total spent0,11+hold0,03/remaining1,86 trong2USD; một journal unknown trung gian giữreservation, không hoàn. Tavily mới2credits/2requestsDocker, Git khônggap; UsageAPI tổngchưađổi, giữdebit/capđóng; email0. Chưa xác nhận phản hồi giảng viên, M6/representative quality chưa nghiệmthu. Không push/deploy; userWord giữ hash. Xem báo cáo sau sửa và bộ dùng thử hiện hành. Các trạng thái lỗi kỹ thuật chưa sửa phía dưới là lịch sử. [Báo cáo](report/stage-e-followup-2026-10-27.md), [manifest](evaluation/stage-e-followup-2026-10-27.json), [bộ dùng thử](handoff/stage-e-fixed-20261027/README.md).
+
+
 > 27/10 — E đã thực thi14jobs/23attempts:CV0/2,pair2/8,writing4/4; P/R/F1 và LLM rerank chưa tính được. Clean directory/9E2E/3FE và restore19migrations/43bảng/18objects đạt; đã chuẩn bị bộ dùng thử, chưa có feedback giảng viên. **E/M6 chưa hoàn thành**, còn lỗi AI/topic và chưa release commit. [Báo cáo hiện hành](report/stage-e-2026-10-27.md). Các ghi nhận E chưa chạy bên dưới là lịch sử.
 
 
@@ -64,7 +100,7 @@ Nguyên tắc tổ chức:
 | GĐ3 | Tuần 5–6 | Trích xuất CV/JD, xác nhận dữ liệu, phiên bản và tạo CV từ mẫu | M3: dữ liệu đầu vào cho matching được kiểm tra; có CV PDF tạo từ mẫu và kết quả đánh giá trích xuất ban đầu |
 | GĐ4 | Tuần 7–8 | Đối sánh hai chiều, điểm 0–100, bằng chứng và thực nghiệm sơ bộ | M4: ứng viên tìm việc và nhà tuyển dụng tìm người bằng AI trên bản tích hợp |
 | GĐ5 | Tuần 9–10 | Hoàn thiện AI viết CV, nguồn học, quản trị và các luồng tích hợp | M5: đủ chức năng cốt lõi; chốt phiên bản phương pháp trước đánh giá cuối |
-| GĐ6 | Tuần 11–12 | Đánh giá chính thức, sửa lỗi, báo cáo, bàn giao và diễn tập | M6: có bản demo ổn định, kết quả thực nghiệm, hướng dẫn và phương án dự phòng |
+| GĐ6 | Tuần 11–12 | Đánh giá, ổn định, bàn giao và diễn tập — HOÀN THÀNH NỘI BỘ01/11 | M6: ĐẠT internal_owner_acceptance, final_defense_ready; release31/source freeze |
 
 Chuỗi phụ thuộc chính:
 
@@ -208,7 +244,7 @@ Phạm vi thực hiện:
 - Cấu hình đánh giá được cố định, tập đánh giá cuối chưa dùng để tinh chỉnh; có kế hoạch sử dụng API đủ cho đánh giá và demo trong hạn mức tháng.
 - Các lỗi còn lại có mức độ ảnh hưởng, người phụ trách và thời gian xử lý; nếu còn thiếu chức năng cốt lõi thì M5 chưa đạt, dù đã hết tuần 10.
 
-### GĐ6 — Đánh giá chính thức, ổn định và bàn giao
+### GĐ6 — Đánh giá chính thức, ổn định và bàn giao — HOÀN THÀNH NỘI BỘ01/11
 
 **Thời gian:** tuần 11–12. **Đầu vào:** bản M5, dữ liệu đánh giá được giữ riêng và phương pháp đã cố định.
 
@@ -225,14 +261,16 @@ Phạm vi thực hiện:
 
 **Đầu ra:** bản phát hành bàn giao, báo cáo và bằng chứng thực nghiệm, hướng dẫn vận hành và bộ tài liệu bảo vệ.
 
-Điều kiện hoàn thành M6:
+**Trạng thái01/11: M6 ĐẠT — nghiệm thu nội bộ toàn diện; GĐ6 hoàn thành.** Owner đã thay gate dùng thử ngoài trước bảo vệ bằng quyết định nghiệm thu nội bộ. Quy định giảng viên dùng thử trong kế hoạch ban đầu được giữ để truy vết; không còn là điều kiện treo. Điều kiện hiện hành và kết luận ĐẠT từng mục tại [M6 bản cuối](handoff/stage-e-20261031/nghiem-thu-M6.md).
+
+Điều kiện kỹ thuật của kế hoạch gốc (đọc cùng quyết định phạm vi01/11):
 
 - Mọi chức năng cốt lõi trong phạm vi đã thống nhất có bằng chứng chạy và kiểm thử; phần đánh giá bắt buộc đã hoàn tất. Nếu còn thiếu chức năng hoặc đánh giá thì M6 chưa đạt, dù người thực hiện đã bàn giao được hiện trạng; chỉ các giới hạn/lỗi không chặn phạm vi được ghi nhận như tồn đọng.
 - Có dữ liệu kết quả, quy tắc gán nhãn, cấu hình và phiên bản mã đủ để kiểm tra lại cách tính; phân biệt kết quả đo thật, dữ liệu minh họa và kết quả lưu từ lần chạy trước.
 - Kết luận nghiên cứu phản ánh kết quả, kể cả khi phương pháp có LLM không cải thiện một tiêu chí; không sửa phương pháp theo tập cuối rồi gọi đó là đánh giá độc lập chưa từng xem.
 - Không còn lỗi chặn ba luồng chính hoặc sai quyền nghiêm trọng. Bản bàn giao đã được kiểm tra trên localhost ở commit bàn giao.
 - Hướng dẫn chạy và khôi phục đã được thử, tài liệu phù hợp bản localhost bàn giao; thông tin bí mật được quản lý riêng.
-- Nhóm diễn tập được kịch bản của cả ứng viên và nhà tuyển dụng, trả lời được cơ sở điểm số, giới hạn AI, chi phí và kết quả thực nghiệm.
+- Chủ dự án diễn tập được kịch bản của cả ứng viên và nhà tuyển dụng, trả lời được cơ sở điểm số, giới hạn AI, chi phí và kết quả thực nghiệm.
 
 ## 4. Dữ liệu, thực nghiệm và báo cáo xuyên suốt
 
@@ -347,7 +385,7 @@ OCR, mobile, chat thời gian thực, quản lý phỏng vấn/offer/hợp đồ
 
 Việc hoàn thiện tài liệu roadmap không đồng nghĩa các mốc M1–M6 đã đạt. Người thực hiện ghi ngày nghiệm thu thực tế, phiên bản đầu ra và các thay đổi phạm vi tại từng mốc để kế hoạch phản ánh đúng tiến độ.
 
-## 9. Điều kiện mở lại deploy
+## 8. Điều kiện mở lại deploy
 
 Deploy không nằm trong công việc hiện tại và không tự khởi động lại khi hết tuần 12. Trước khi đề xuất mở lại: ba luồng cốt lõi phải hoàn thiện trên localhost, kiểm thử quyền/snapshot/job/quota và build phải có bằng chứng ở phiên bản bàn giao, các tích hợp AI/search/email thật cần thiết phải được kiểm chứng riêng trong ngân sách, không còn lỗi chặn hoặc sai quyền nghiêm trọng. Fake không thay thế đánh giá chất lượng AI.
 

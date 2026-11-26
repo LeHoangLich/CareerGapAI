@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api, errorMessage } from './api';
+import { useViewActive } from './persistentView';
+import { AiBadge } from './ui';
+import { useAiJobPolling } from './useAiJobPolling';
 
 type Field = { path: string; value: string };
 type Evidence = { path: string; sourceType: string; segmentId: string | null; quote: string | null };
@@ -19,7 +22,8 @@ export function fieldLabel(path: string) {
 const allPaths = [...Object.keys(scalars), ...['skills', 'certifications'].flatMap(key => Array.from({ length: 20 }, (_, i) => `${key}[${i}]`)),
   ...Object.entries(groups).flatMap(([group, fields]) => Array.from({ length: 10 }, (_, i) => Object.keys(fields).map(field => `${group}[${i}].${field}`)).flat())];
 
-export function FullCvReview({ versionId, refreshKey }: { versionId: string; refreshKey: string }) {
+export function FullCvReview({ versionId, refreshKey, parentPolling = false }: { versionId: string; refreshKey: string; parentPolling?: boolean }) {
+  const active = useViewActive();
   const [revision, setRevision] = useState<Revision>();
   const [fields, setFields] = useState<Field[]>([]);
   const [path, setPath] = useState('');
@@ -28,30 +32,38 @@ export function FullCvReview({ versionId, refreshKey }: { versionId: string; ref
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   useEffect(() => {
-    let cancelled = false; let timer: ReturnType<typeof setTimeout> | undefined; let attempts = 0;
     setRevision(undefined); setFields([]); setError(''); setMessage('');
-    async function load() {
-      try {
-        const { job: status } = await api<{ job: { status: string; errorCode?: string } | null }>(`/api/resume-versions/${versionId}/extraction-status`);
-        if (cancelled) return;
-        if (status && ['queued', 'running'].includes(status.status)) {
-          setMessage('Đang đọc CV đầy đủ; có thể tải lại trang mà không tạo tác vụ mới.');
-          if (++attempts < 60) timer = setTimeout(() => void load(), 2000);
-          else setError('Tác vụ vẫn đang xử lý; hãy chọn lại phiên bản để kiểm tra sau.');
-          return;
-        }
-        if (status?.status === 'failed') setError(errorMessage(status.errorCode ?? '', 422));
-        const items = await api<Revision[]>(`/api/resume-versions/${versionId}/revisions`);
-        if (cancelled) return;
-        const latest = items[0]; setMessage('');
-        if (latest?.schemaVersion === 3) { setRevision(latest); setFields(latest.structuredData.fields); }
-      } catch (e) { if (!cancelled) setError((e as Error).message); }
-    }
-    if (versionId) void load();
-    return () => { cancelled = true; if (timer) clearTimeout(timer); };
   }, [versionId, refreshKey]);
-  if (!revision) return <>{message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}</>;
+  const { timedOut, retryPolling } = useAiJobPolling({
+    pollKey: versionId && !parentPolling ? `${versionId}:${refreshKey}` : undefined,
+    active,
+    maxAttempts: 60,
+    intervalMs: 2000,
+    tick: async signal => {
+      const { job: status } = await api<{ job: { status: string; errorCode?: string } | null }>(`/api/resume-versions/${versionId}/extraction-status`, { signal });
+      if (signal.aborted) return false;
+      if (status && ['queued', 'running'].includes(status.status)) {
+        setMessage('Đang đọc CV đầy đủ; có thể tải lại trang mà không tạo tác vụ mới.');
+        return false;
+      }
+      if (status?.status === 'failed') setError(errorMessage(status.errorCode ?? '', 422));
+      const items = await api<Revision[]>(`/api/resume-versions/${versionId}/revisions`, { signal });
+      if (signal.aborted) return false;
+      const latest = items[0];
+      setMessage('');
+      if (latest?.schemaVersion === 3) {
+        setRevision(latest);
+        setFields(latest.structuredData.fields);
+      }
+      return true;
+    },
+    onError: e => setError((e as Error).message),
+    timeoutMessage: 'Tác vụ vẫn đang xử lý; hãy chọn lại phiên bản để kiểm tra sau.',
+  });
+  const displayMessage = parentPolling ? 'Đang đọc CV đầy đủ; có thể tải lại trang mà không tạo tác vụ mới.' : message;
+  if (!revision) return <>{displayMessage && <p role="status">{displayMessage}</p>}{error && <p role="alert">{error}{timedOut && <> <button type="button" className="secondary" onClick={() => { setError(''); retryPolling(); }}>Kiểm tra lại</button></>}</p>}</>;
   return <section className="card full-cv-review"><h2>Rà soát toàn bộ dữ liệu CV</h2>
+    <AiBadge accepted={revision.origin !== 'ai_extracted'}/>
     <p>{revision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'} · revision {revision.revisionNo}. Trường thiếu được để trống. Nội dung sửa hoặc thêm là thông tin bạn tự xác nhận.</p>
     {fields.map(field => {
       const original = revision.structuredData.fields.find(item => item.path === field.path);
@@ -65,8 +77,8 @@ export function FullCvReview({ versionId, refreshKey }: { versionId: string; ref
     })}
     <div><label>Trường cần bổ sung<select value={path} onChange={e => setPath(e.target.value)}><option value="">Chọn trường cần bổ sung</option>{allPaths.filter(item => fields.every(field => field.path !== item)).map(item => <option key={item} value={item}>{fieldLabel(item)}</option>)}</select></label>
       <label>Nội dung tự bổ sung<textarea value={value} maxLength={3000} onChange={e => setValue(e.target.value)}/></label>
-      <button disabled={!path || !value.trim() || fields.some(field => field.path === path)} onClick={() => { setFields(current => [...current, { path, value: value.trim() }]); setValue(''); setPath(''); }}>Thêm thông tin</button></div>
-    <button disabled={busy} onClick={() => { setBusy(true); setError(''); void api<Revision>(`/api/resume-versions/${versionId}/revisions/${revision.id}/confirm-full`, {
+      <button type="button" disabled={!path || !value.trim() || fields.some(field => field.path === path)} onClick={() => { setFields(current => [...current, { path, value: value.trim() }]); setValue(''); setPath(''); }}>Thêm thông tin</button></div>
+    <button type="button" disabled={busy} onClick={() => { setBusy(true); setError(''); void api<Revision>(`/api/resume-versions/${versionId}/revisions/${revision.id}/confirm-full`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseRevisionNo: revision.revisionNo, fields: fields.filter(field => field.value.trim()).map(field => ({ ...field, value: field.value.trim() })) })
     }).then(saved => { setRevision(saved); setFields(saved.structuredData.fields); setMessage('Đã lưu bản xác nhận mới; dữ liệu trích xuất ban đầu được giữ nguyên.'); }).catch(e => setError((e as Error).message)).finally(() => setBusy(false)); }}>Xác nhận toàn bộ dữ liệu CV</button>
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}

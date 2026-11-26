@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "milestone": "M6",
+  "acceptance_type": "internal_owner_acceptance",
+  "acceptor": "Lê Hoàng Lịch (Project Owner)",
+  "technical_compiler": "Codex (Authorized by Project Owner)",
+  "final_status": "final_defense_ready",
+  "date": "2026-11-01",
+  "status": "complete",
+  "human_authorized": true,
+  "decision_basis": "explicit final owner decision in current chat",
+  "project_internal_scope_complete": true,
+  "stage_E": "complete_internal_owner_accepted",
+  "stage_GD6": "complete_internal_owner_accepted",
+  "P20": "complete_internal_owner_accepted",
+  "progress": {
+    "scope": "owner-accepted internal deliverables P01-P21, equal-count convention; not accuracy, coverage or academic grade",
+    "total": 21,
+    "complete": 21,
+    "waiting": 0,
+    "not_started": 0,
+    "percent_complete": 100
+  },
+  "informal_pre_defense_external_trial": {
+    "status": "closed_by_owner_decision",
+    "required_for_internal_acceptance": false
+  },
+  "formal_academic_defense": {
+    "status": "to_be_evaluated_at_formal_defense",
+    "result": null,
+    "blocks_internal_M6": false
+  },
+  "human_external_review_count": 0,
+  "human_direct_label_review_count": 0,
+  "source_freeze": {
+    "status": "frozen",
+    "manifest": "project-docs/evaluation/source-freeze-2026-11-01.json",
+    "sha256": "0a13ad0ce3bb3ce843515de428d5347dca2facc7c7b9b9b328bc1dc33412498e",
+    "file_count": 222,
+    "all_checkout_hashes_match": true
+  },
+  "defense_baseline": {
+    "release": "20261031",
+    "url": "http://127.0.0.1:5190/",
+    "providers": "Fake/Synthetic",
+    "source_archive_path": "project-docs/handoff/stage-e-20261031/CareerGapAI-source-20261031.zip",
+    "source_archive_sha256": "0d966516f3b032f99708c079243be67619852004657f11779b55caed03665175",
+    "windows_runtime_dll_sha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+    "runtime_live_state_rechecked_today": false,
+    "last_runtime_verification_date": "2026-10-31",
+    "source_state": "exact release bytes includes uncommitted changes; do not identify by HEAD alone"
+  },
+  "criteria": [
+    {
+      "id": "core_functions_and_regression",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed"
+    },
+    {
+      "id": "build_handoff",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed"
+    },
+    {
+      "id": "local_flows_A12_fallback",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed"
+    },
+    {
+      "id": "backup_restore_rollback",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed"
+    },
+    {
+      "id": "pilot_quality_scope",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed_with_owner_accepted_limitations"
+    },
+    {
+      "id": "label_traceability",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed"
+    },
+    {
+      "id": "A13_audit",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed_with_language_and_playback_limitations"
+    },
+    {
+      "id": "triage_and_defense_material",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed_with_out_of_scope_classified"
+    },
+    {
+      "id": "owner_acceptance_and_gate_revision",
+      "internal_verdict": "ĐẠT",
+      "evidence_status": "passed"
+    }
+  ],
+  "historical_regression": {
+    "date": "2026-10-31",
+    "run": "20261031-192425-d924",
+    "backend_passed": 160,
+    "frontend_unit_passed": 15,
+    "e2e_passed": 22,
+    "lint_typecheck_build": "passed",
+    "nonblocking_warnings_retained": [
+      "Vite bundle exceeds 500 kB",
+      "Cached npm ci reports deprecated eslint 9.39.2; dependencies unchanged"
+    ]
+  },
+  "pilot": {
+    "scope": "pilot_2cv_4jd_limited",
+    "cv_en": 2,
+    "cv_vi": 0,
+    "jd": 4,
+    "groups": 6,
+    "final_field_labels": 131,
+    "cv_labels": 95,
+    "jd_labels": 36,
+    "pairs": 8,
+    "k": 3,
+    "exact_precision": 0.7962962962962963,
+    "exact_recall": 0.5119047619047619,
+    "exact_f1": 0.6231884057971014,
+    "partial_f1": null,
+    "status_matches": 34,
+    "status_denominator": 44,
+    "cv_to_jd_rerank_ndcg": 0.9169956161990744,
+    "baseline_ndcg": 1.0,
+    "rerank_improves_baseline": false,
+    "new_holdout": false,
+    "representative_quality_claimed": false,
+    "production_ready_claimed": false
+  },
+  "label_audit": {
+    "technical_labels": 318,
+    "documents": 14,
+    "groups": 11,
+    "locator_normalized": 300,
+    "additional_needs_review": 3,
+    "human_direct": 0
+  },
+  "triage": {
+    "historical_total": 35,
+    "action_classified": 13,
+    "explain": 14,
+    "out_of_scope": 8,
+    "A12": "verified_in_source_and_runtime31",
+    "A13": "audit_verified_and_limits_accepted_not_verified_Vietnamese_content",
+    "B01_B14": "defense_arguments_ready",
+    "AI_simulation_feedback_does_not_become_human_review": true
+  },
+  "historical_protected_files": 773,
+  "changed_protected_files": [],
+  "application_code_changes_today": false,
+  "new_application_tests_run": false,
+  "new_model_evaluation": false,
+  "external_api_calls": 0,
+  "new_credits": 0,
+  "cost_usd": 0,
+  "historical_release_manifests_preserved": true,
+  "supersedes_current_M6_status_in": [
+    "project-docs/handoff/stage-e-20261031/verification.json",
+    "project-docs/evaluation/handoff-sync-2026-10-31.json",
+    "project-docs/evaluation/external-review-intake-2026-11-01.json",
+    "project-docs/evaluation/ai-feedback-triage-2026-11-01.json"
+  ],
+  "output_sha256": {
+    "AGENTS.md": "535489efdcd3f5744f291cd4afa6ec7a4869931a5f6e8f0cdcce4882ede23279",
+    "project-docs/03-roadmap.md": "a2244a31329c98e9d2e680fce853c9bce167327eb418a42cabcc802c11410a76",
+    "project-docs/current-status.md": "1e5dc307aa52d73a722ea1078ff7548433bb099cc72f9dc41e4b9855eb27b0f0",
+    "project-docs/tasks/CareerGapAI-danh-gia-va-ke-hoach-2026-10-16.md": "f2b59f1b2b308c80bae73a40dca2c625461a80ec6f08aa7c1d604c5a1b6fa241",
+    "project-docs/handoff/stage-e-20261031/nghiem-thu-M6.md": "e9929a9255a2dab83935fef09bc3cff6460fdd442519b524b066cbb8e2bd0e47",
+    "project-docs/handoff/stage-e-20261031/README.md": "a34c906040d415c2e53d45830edeb91fcf6474847ab536339b663a1816a15d29",
+    "project-docs/handoff/stage-e-20261031/thuyet-trinh.md": "66877aad1e8058a78d09dd7ba0472d276e6cae92bfff72d6dd795894d7590cfe",
+    "project-docs/report/m6-internal-acceptance-2026-11-01.md": "68c3b02654cd81637cde628491cbf93759de4515fece467951ff6d89e4d83e84",
+    "docs/reviews/review-logs.md": "20b53b4edb1d31d19325cd5ae48442aa9ab4d622ff48cf8ec1aa31a3079335db",
+    "docs/reviews/external-review-workflow.md": "7af7e61150d8d86b461002fd00d1ec365912d1b6c3bb4f2e2194f227616e8c39",
+    "docs/reviews/ai-feedback-triage-2026-11-01.md": "b9d375290a2a2a75cf3c57a9c793484c5c294227826617c94bc1431614df041b",
+    "docs/reviews/2026-11-01-ai-feedback/thuyet-trinh.md": "0a87dacc1bc6af38d455737657def660e59db3099d3bf4629d274657b0b7258e",
+    "docs/reviews/2026-11-01-ai-feedback/slide-notes.md": "d6eeb87fea2e9935fa6fb18b69e9bc98d9027ddb465141ee3022308d041c5ee0",
+    "README.md": "010256e09c4250e9a098d00c747af4a7faabece9f460abfc96266791b158ab2c"
+  },
+  "historical_evidence_sha256": {
+    "project-docs/handoff/stage-e-20261031/verification.json": "8e4351826244c84b653498ad63155a18f5683fa08963f6cac853ecf5c7b72799",
+    "project-docs/evaluation/handoff-sync-2026-10-31.json": "e813d4ac202fb075b33b8996fb6c9849e00b276081176cd69b794bf658552cc3",
+    "project-docs/report/quality-acceptance-2026-10-30.md": "467c98fc0104a91eefe259ced372706532cc14dc9502ed0d3eecea3395f6e963",
+    "project-docs/report/label-review-2026-10-30.md": "c25f894590ebc62047453c2c8eae474ed61df07e449af853c0652481f088d9dc",
+    "project-docs/report/feedback-triage-2026-10-30.md": "3c0436eb53566e1552161538fbb4a78aa9809b0dba5bd4975ce95454e10da641",
+    "project-docs/report/stage-e-learning-source-review-2026-10-31.md": "bcf52c1b0e7fdc75e3c1e81c123402fca900f07cd655cc93dc4a912dfa5abc46"
+  },
+  "m6_status": "final_defense_ready"
+}

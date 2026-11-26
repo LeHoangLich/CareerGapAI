@@ -1,3 +1,4 @@
+import { openView } from './helpers';
 import { expect, test } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
@@ -16,18 +17,21 @@ test('candidate submits a selected resume version and recruiter reads it only th
   const candidatePage = await candidateContext.newPage();
 
   try {
-    await recruiterPage.goto('/');
+    await recruiterPage.goto('/#access');
     await recruiterPage.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
     await recruiterPage.getByLabel('Email', { exact: true }).fill(`recruiter-apply-${suffix}@example.invalid`);
     await recruiterPage.getByLabel('Mật khẩu', { exact: true }).fill(password);
     await recruiterPage.locator('select[name="role"]').selectOption('Recruiter');
     await recruiterPage.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
     await recruiterPage.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+    await openView(recruiterPage, 'recruiter-jobs');
     const manager = recruiterPage.locator('.recruiter-jobs');
     await expect(manager.getByRole('heading', { name: 'Công ty và tin tuyển dụng' })).toBeVisible();
+    await openView(recruiterPage, 'recruiter-company');
     await manager.getByLabel('Tên công ty', { exact: true }).fill(`Apply Company ${suffix}`);
     await manager.getByRole('button', { name: 'Tạo công ty', exact: true }).click();
     await expect(manager.getByRole('status').filter({ hasText: 'Hồ sơ công ty đã được lưu.' })).toBeVisible();
+    await openView(recruiterPage, 'recruiter-jobs');
     const editor = manager.locator('.editor-form').last();
     await editor.getByLabel('Chức danh', { exact: true }).fill(title);
     await editor.getByLabel('Mô tả công việc', { exact: true }).fill('Tin giả cho kiểm thử ứng tuyển.');
@@ -36,29 +40,33 @@ test('candidate submits a selected resume version and recruiter reads it only th
     const managedJob = manager.locator('.job-card').filter({ hasText: title });
     await managedJob.getByRole('button', { name: 'Công khai', exact: true }).click();
 
-    await candidatePage.goto('/');
+    await candidatePage.goto('/#access');
     await candidatePage.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
     await candidatePage.getByLabel('Email', { exact: true }).fill(`candidate-apply-${suffix}@example.invalid`);
     await candidatePage.getByLabel('Mật khẩu', { exact: true }).fill(password);
     await candidatePage.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
     await candidatePage.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
+    await openView(candidatePage, 'private-resumes');
     await expect(candidatePage.getByRole('heading', { name: 'CV riêng của bạn' })).toBeVisible();
     const docxMime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
     await candidatePage.getByLabel('Thêm vào CV', { exact: true }).setInputFiles({ name: `apply-${suffix}.docx`, mimeType: docxMime, buffer: bytes });
     await candidatePage.getByRole('button', { name: 'Tạo CV riêng tư', exact: true }).click();
 
+    await openView(candidatePage, 'jobs');
     const browserPanel = candidatePage.locator('.job-browser');
     const candidateMatching = browserPanel.locator('.matching-panel[aria-label="Gợi ý việc bằng từ khóa"]');
     await candidateMatching.getByRole('button', { name: 'Tìm việc theo CV', exact: true }).click();
     // The local app database intentionally keeps synthetic E2E jobs. Assert the bounded ranking UI
     // renders valid results without assuming this newly created job fits inside its top-20 window.
-    const recommendedJobs = candidateMatching.locator('.matching-results li');
+    const recommendedJobs = browserPanel.locator('.job-discovery-results .matching-results li');
     await expect(recommendedJobs.first()).toContainText('retrieval_score');
     // Other test data can include a confirmed JD; this newly uploaded CV is still unconfirmed.
     await expect(recommendedJobs.first()).toContainText(/CV (và JD )?chưa có revision xác nhận/);
 
+    await openView(candidatePage, 'private-resumes');
     await candidatePage.locator('.public-resume-controls').getByRole('button', { name: 'Công khai phiên bản 1', exact: true }).click();
     await expect(candidatePage.locator('.public-resume-controls')).toContainText('CV đã công khai');
+    await openView(candidatePage, 'jobs');
     await browserPanel.getByLabel('Từ khóa', { exact: true }).fill(title);
     await browserPanel.getByRole('button', { name: 'Tìm việc', exact: true }).click();
     const publicJob = browserPanel.locator('.job-card').filter({ hasText: title });
@@ -66,6 +74,7 @@ test('candidate submits a selected resume version and recruiter reads it only th
     await expect(publicJob.getByRole('button', { name: 'Nộp hồ sơ', exact: true })).toBeEnabled();
     await publicJob.getByRole('button', { name: 'Nộp hồ sơ', exact: true }).click();
     await expect(candidatePage.getByText(`Đã nộp hồ sơ cho “${title}”.`, { exact: true })).toBeVisible();
+    await openView(candidatePage, 'applications');
     await expect(candidatePage.locator('.application-center').first()).toContainText(title);
     await expect(candidatePage.locator('.notification-center')).toContainText('Đã nộp hồ sơ');
 
@@ -75,6 +84,7 @@ test('candidate submits a selected resume version and recruiter reads it only th
     await expect(matchingCandidates.first()).toContainText('retrieval_score');
     await expect(recruiterMatching.locator('.matching-results')).not.toContainText(`candidate-apply-${suffix}@example.invalid`);
 
+    await openView(recruiterPage, 'recruiter-applicants');
     await managedJob.getByRole('button', { name: /Hồ sơ ứng tuyển/ }).click();
     const applicant = managedJob.locator('.application-list li');
     await expect(applicant).toHaveCount(1);
@@ -96,6 +106,7 @@ test('candidate submits a selected resume version and recruiter reads it only th
     await candidateApplications.getByRole('button', { name: 'Lịch sử trạng thái', exact: true }).click();
     await expect(candidateApplications.locator('.status-history')).toContainText('Đang xem xét');
     await candidateApplications.getByRole('button', { name: 'Rút hồ sơ', exact: true }).click();
+    await candidatePage.getByRole('dialog').getByRole('button', { name: 'Xác nhận rút hồ sơ', exact: true }).click();
     await expect(candidateApplications).toContainText('Đã rút');
     const applicationsResponse = await candidateContext.request.get('/api/applications/mine?page=1&pageSize=10');
     const applicationPage = await applicationsResponse.json() as { items: { id: string; jobId: string; jobTitle: string; status: string }[] };
@@ -103,7 +114,7 @@ test('candidate submits a selected resume version and recruiter reads it only th
     expect(application?.status).toBe('withdrawn');
     const resumesResponse = await candidateContext.request.get('/api/resumes?page=1');
     expect(resumesResponse.ok()).toBeTruthy();
-    const resumeList = await resumesResponse.json() as { versions: { id: string; fileId: string }[] }[];
+    const resumeList = (await resumesResponse.json() as { items: { versions: { id: string; fileId: string }[] }[] }).items;
     const resumeVersionId = resumeList[0].versions[0].id;
     const fileId = resumeList[0].versions[0].fileId;
     const csrf = await candidateContext.request.get('/api/auth/csrf').then(response => response.json() as Promise<{ token: string }>);

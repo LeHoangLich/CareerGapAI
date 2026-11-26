@@ -6,6 +6,7 @@ public sealed class AppUser : IdentityUser<Guid>
 {
     public string AccountStatus { get; set; } = "active";
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset? LastLoginAt { get; set; }
 }
 public sealed class AccountDeletionRequestRecord
 {
@@ -61,6 +62,7 @@ public sealed class CandidateProfileVisibility
 }
 public sealed class Company
 {
+    public Guid? LogoImageId { get; set; }
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid OwnerUserId { get; set; }
     public string Name { get; set; } = "";
@@ -77,6 +79,7 @@ public sealed class Company
 }
 public sealed class JobPosting
 {
+    public string[] Tags { get; set; } = [];
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid CompanyId { get; set; }
     public string Status { get; set; } = "draft";
@@ -84,6 +87,9 @@ public sealed class JobPosting
     public DateTimeOffset? PublishedAt { get; set; }
     public DateTimeOffset? ClosedAt { get; set; }
     public DateTimeOffset? ApplicationDeadline { get; set; }
+    public int? MaxApplications { get; set; }
+    public string? ArchivedByRole { get; set; }
+    public string? PreviousStatus { get; set; }
     public long RowVersion { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
@@ -121,6 +127,12 @@ public sealed class SavedJob
     public Guid JobId { get; set; }
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 }
+public sealed class JobView
+{
+    public Guid JobId { get; set; }
+    public string Viewer { get; set; } = "";
+    public DateOnly Day { get; set; }
+}
 public sealed class ApplicationRecord
 {
     public Guid Id { get; set; } = Guid.NewGuid();
@@ -134,6 +146,7 @@ public sealed class ApplicationRecord
     public DateTimeOffset? WithdrawnAt { get; set; }
     public Guid SubmissionKey { get; set; }
     public string SubmissionHash { get; set; } = "";
+    public string? CoverLetter { get; set; }
     public long RowVersion { get; set; }
 }
 public sealed class ApplicationStatusHistory
@@ -292,16 +305,34 @@ public sealed class AiJob
     public string? OutputJson { get; set; }
     public string? ErrorCode { get; set; }
 }
+public sealed class QuickMatchJd
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid CandidateId { get; set; }
+    public string SourceType { get; set; } = "paste";
+    public string? SourceUrl { get; set; }
+    public string Title { get; set; } = "";
+    public string RawText { get; set; } = "";
+    public string RequirementsJson { get; set; } = "[]";
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
+}
+public sealed class AnalysisHistoryHide
+{
+    public Guid AiJobId { get; set; }
+    public DateTimeOffset HiddenAt { get; set; } = DateTimeOffset.UtcNow;
+}
 public sealed class MatchInput
 {
     public Guid AiJobId { get; set; }
     public Guid CandidateId { get; set; }
     public Guid ResumeVersionId { get; set; }
     public Guid ResumeRevisionId { get; set; }
-    public Guid JobVersionId { get; set; }
-    public Guid JobRevisionId { get; set; }
+    public Guid? JobVersionId { get; set; }
+    public Guid? JobRevisionId { get; set; }
+    public Guid? QuickMatchJdId { get; set; }
     public Guid? ApplicationId { get; set; }
     public string Context { get; set; } = "self";
+    public string? CareerContext { get; set; }
     public string Fingerprint { get; set; } = "";
     public string Payload { get; set; } = "{}";
 }

@@ -173,11 +173,21 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
         var token = query["resetToken"].ToString();
         var resetEmail = query["resetEmail"].ToString();
         const string resetPassword = "Reset!Password2026";
+        async Task AssertResetError(object payload, string code)
+        {
+            var response = await request.PostAsJsonAsync("/api/auth/password/reset", payload);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal(code, (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("title").GetString());
+        }
         await FoundationFixture.Csrf(request);
-        Assert.Equal(HttpStatusCode.BadRequest, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = resetEmail, token = "invalid-token", newPassword = resetPassword })).StatusCode);
+        await AssertResetError(new { email = resetEmail, token = "invalid-token", newPassword = resetPassword }, "invalid_or_expired_reset");
+        await AssertResetError(new { email = resetEmail, token = "", newPassword = resetPassword }, "invalid_or_expired_reset");
+        await AssertResetError(new { email = "unknown@example.invalid", token, newPassword = resetPassword }, "invalid_or_expired_reset");
+        foreach (var invalidPassword in new string?[] { null, "", new('x', 11), new('x', 257) })
+            await AssertResetError(new { email = resetEmail, token, newPassword = invalidPassword }, "password_policy");
         await Task.Delay(TimeSpan.FromSeconds(6));
         await FoundationFixture.Csrf(request);
-        Assert.Equal(HttpStatusCode.BadRequest, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = resetEmail, token, newPassword = resetPassword })).StatusCode);
+        await AssertResetError(new { email = resetEmail, token, newPassword = resetPassword }, "invalid_or_expired_reset");
         await FoundationFixture.Csrf(request);
         Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/password/forgot", new { email })).StatusCode);
         var renewed = await request.GetFromJsonAsync<JsonElement[]>("/api/dev/mailbox");
@@ -188,7 +198,7 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
         await FoundationFixture.Csrf(request);
         Assert.Equal(HttpStatusCode.NoContent, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = renewedEmail, token = renewedToken, newPassword = resetPassword })).StatusCode);
         await FoundationFixture.Csrf(request);
-        Assert.Equal(HttpStatusCode.BadRequest, (await request.PostAsJsonAsync("/api/auth/password/reset", new { email = renewedEmail, token = renewedToken, newPassword = "Reused!Password2026" })).StatusCode);
+        await AssertResetError(new { email = renewedEmail, token = renewedToken, newPassword = "Reused!Password2026" }, "invalid_or_expired_reset");
         await FoundationFixture.Csrf(request);
         Assert.Equal(HttpStatusCode.Unauthorized, (await request.PostAsJsonAsync("/api/auth/login", new { email, password = originalPassword })).StatusCode);
         await FoundationFixture.Csrf(request);
@@ -369,12 +379,12 @@ public sealed class FoundationTests(FoundationFixture fixture) : IClassFixture<F
             await using var db = new AppDb(new DbContextOptionsBuilder<AppDb>().UseNpgsql(cs.ConnectionString).Options);
             var migrator = db.GetService<IMigrator>();
             await migrator.MigrateAsync("20261015025051_Foundation");
-            var user = new AppUser { Id = Guid.NewGuid(), UserName = "fake-upgrade@example.invalid", Email = "fake-upgrade@example.invalid" };
-            db.Users.Add(user); await db.SaveChangesAsync();
+            var userId = Guid.NewGuid();
+            await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO \"AspNetUsers\" (\"Id\",\"AccountStatus\",\"CreatedAt\",\"UserName\",\"NormalizedUserName\",\"Email\",\"NormalizedEmail\",\"EmailConfirmed\",\"PhoneNumberConfirmed\",\"TwoFactorEnabled\",\"LockoutEnabled\",\"AccessFailedCount\") VALUES ({userId},'active',now(),'fake-upgrade@example.invalid','FAKE-UPGRADE@EXAMPLE.INVALID','fake-upgrade@example.invalid','FAKE-UPGRADE@EXAMPLE.INVALID',false,false,false,false,0)");
             await migrator.MigrateAsync();
-            Assert.True(await db.Users.AnyAsync(x => x.Id == user.Id));
+            Assert.True(await db.Users.AnyAsync(x => x.Id == userId));
             await migrator.MigrateAsync("20261015025051_Foundation");
-            Assert.True(await db.Users.AnyAsync(x => x.Id == user.Id));
+            Assert.True(await db.Users.AnyAsync(x => x.Id == userId));
             await migrator.MigrateAsync();
             Assert.False(db.Database.HasPendingModelChanges());
         }

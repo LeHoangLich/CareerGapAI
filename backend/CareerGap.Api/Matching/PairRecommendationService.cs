@@ -100,7 +100,7 @@ public sealed class PairRecommendationService(AppDb db, KeywordMatchingService b
                     db.Users.Any(account => account.Id == selection.CandidateId && account.AccountStatus == "active") &&
                     db.Users.Any(account => account.Id == uid && account.AccountStatus == "active") &&
                     db.Jobs.Any(job => job.Id == request.JobId && job.CurrentVersionId == selectedJobVersion &&
-                        job.Status == "published" && job.Company!.OwnerUserId == uid && job.Company.ArchivedAt == null &&
+                        job.Status == "published" && db.BusinessIdentities.Any(b=>b.CompanyId==job.CompanyId&&b.Status=="verified") && job.Company!.OwnerUserId == uid && job.Company.ArchivedAt == null &&
                         (job.ApplicationDeadline == null || job.ApplicationDeadline > releaseTime))
                 select new
                 {

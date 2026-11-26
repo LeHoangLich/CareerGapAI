@@ -352,7 +352,7 @@ public sealed class MatchingTests(FoundationFixture fixture) : IClassFixture<Fou
         }
     }
 
-    private static async Task<Guid> CreateCompany(HttpClient recruiter)
+    private async Task<Guid> CreateCompany(HttpClient recruiter)
     {
         using var response = await recruiter.PostAsJsonAsync("/api/companies", new
         {
@@ -363,7 +363,7 @@ public sealed class MatchingTests(FoundationFixture fixture) : IClassFixture<Fou
         return (await response.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
     }
 
-    private static async Task<Guid> CreateJob(HttpClient recruiter, Guid companyId, string title,
+    private async Task<Guid> CreateJob(HttpClient recruiter, Guid companyId, string title,
         string requirements, bool publish, bool close = false, string description = "Synthetic backend role for keyword matching tests.")
     {
         var content = new
@@ -383,7 +383,7 @@ public sealed class MatchingTests(FoundationFixture fixture) : IClassFixture<Fou
         var id = draft.GetProperty("id").GetGuid();
         if (publish)
         {
-            using var publishResponse = await recruiter.PostAsJsonAsync($"/api/jobs/{id}/publish",
+            using var publishResponse = await fixture.PublishWithVerifiedBusinessFixture(recruiter, id,
                 new { rowVersion = draft.GetProperty("rowVersion").GetInt64() });
             Assert.Equal(HttpStatusCode.OK, publishResponse.StatusCode);
             if (close)

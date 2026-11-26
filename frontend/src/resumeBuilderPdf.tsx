@@ -19,7 +19,13 @@ export type ResumeBuilderContent = {
   certifications: string[];
 };
 
-Font.register({ family: 'NotoCV', src: '/fonts/NotoSans-Regular.ttf' });
+Font.register({
+  family: 'NotoCV',
+  fonts: [
+    { src: '/fonts/NotoSans-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/NotoSans-Bold.ttf', fontWeight: 700 },
+  ],
+});
 
 const styles = StyleSheet.create({
   page: { paddingTop: 42, paddingBottom: 46, paddingHorizontal: 48, color: '#17312c', fontFamily: 'NotoCV', fontSize: 10 },
@@ -37,16 +43,23 @@ const styles = StyleSheet.create({
 
 function nonempty(...values: string[]) { return values.map(value => value.trim()).filter(Boolean).join(' · '); }
 
-export function ResumeBuilderPdf({ content }: { content: ResumeBuilderContent }) {
-  return <Document title={`CV ${content.displayName}`} author={content.displayName}>
+export type PdfLanguage = 'vi' | 'en';
+export const pdfHeadings = {
+  vi: { summary: 'GIỚI THIỆU', skills: 'KỸ NĂNG', experience: 'KINH NGHIỆM', projects: 'DỰ ÁN', education: 'HỌC VẤN', certifications: 'CHỨNG CHỈ' },
+  en: { summary: 'PROFILE', skills: 'SKILLS', experience: 'EXPERIENCE', projects: 'PROJECTS', education: 'EDUCATION', certifications: 'CERTIFICATIONS' },
+};
+// A document factory (no hooks/DOM). It also stays outside React Fast Refresh in workers.
+export function createResumePdfDocument({ content, language = 'vi' }: { content: ResumeBuilderContent; language?: PdfLanguage }) {
+  const headings = pdfHeadings[language];
+  return <Document title={`CV ${content.displayName}`} author={content.displayName} language={language}>
     <Page size="A4" style={styles.page} wrap>
       <Text style={styles.name}>{content.displayName || 'Tên ứng viên'}</Text>
       {content.headline.trim() && <Text style={styles.headline}>{content.headline.trim()}</Text>}
       {nonempty(content.email, content.phone, content.location) && <Text style={styles.contact}>{nonempty(content.email, content.phone, content.location)}</Text>}
-      {content.summary.trim() && <View style={styles.section}><Text style={styles.heading}>GIỚI THIỆU</Text><Text>{content.summary.trim()}</Text></View>}
-      {!!content.skills.filter(Boolean).length && <View style={styles.section}><Text style={styles.heading}>KỸ NĂNG</Text><Text style={styles.skills}>{content.skills.filter(Boolean).join('  ·  ')}</Text></View>}
+      {content.summary.trim() && <View style={styles.section}><Text style={styles.heading}>{headings.summary}</Text><Text>{content.summary.trim()}</Text></View>}
+      {!!content.skills.filter(Boolean).length && <View style={styles.section}><Text style={styles.heading}>{headings.skills}</Text><Text style={styles.skills}>{content.skills.filter(Boolean).join('  ·  ')}</Text></View>}
       {!!content.experience.some(item => item.role || item.organization || item.description) && <View style={styles.section}>
-        <Text style={styles.heading}>KINH NGHIỆM</Text>
+        <Text style={styles.heading}>{headings.experience}</Text>
         {content.experience.filter(item => item.role || item.organization || item.description).map((item, index) => <View key={`experience-${index}`} style={styles.item} wrap={false}>
           <Text style={styles.itemTitle}>{nonempty(item.role, item.organization)}</Text>
           {nonempty(item.period) && <Text style={styles.detail}>{item.period.trim()}</Text>}
@@ -54,20 +67,20 @@ export function ResumeBuilderPdf({ content }: { content: ResumeBuilderContent })
         </View>)}
       </View>}
       {!!content.projects.some(item => item.name || item.description) && <View style={styles.section}>
-        <Text style={styles.heading}>DỰ ÁN</Text>
+        <Text style={styles.heading}>{headings.projects}</Text>
         {content.projects.filter(item => item.name || item.description).map((item, index) => <View key={`project-${index}`} style={styles.item} wrap={false}>
           <Text style={styles.itemTitle}>{nonempty(item.name, item.context)}</Text><Text style={styles.detail}>{item.description}</Text>
         </View>)}
       </View>}
       {!!content.education.some(item => item.program || item.institution) && <View style={styles.section}>
-        <Text style={styles.heading}>HỌC VẤN</Text>
+        <Text style={styles.heading}>{headings.education}</Text>
         {content.education.filter(item => item.program || item.institution).map((item, index) => <View key={`education-${index}`} style={styles.item} wrap={false}>
           <Text style={styles.itemTitle}>{nonempty(item.program, item.institution)}</Text>
           {nonempty(item.period) && <Text style={styles.detail}>{item.period.trim()}</Text>}
           {!!item.details.trim() && <Text style={styles.detail}>{item.details.trim()}</Text>}
         </View>)}
       </View>}
-      {!!content.certifications.filter(Boolean).length && <View style={styles.section}><Text style={styles.heading}>CHỨNG CHỈ</Text>{content.certifications.filter(Boolean).map((item, index) => <Text key={`certification-${index}`} style={styles.item}>{item}</Text>)}</View>}
+      {!!content.certifications.filter(Boolean).length && <View style={styles.section}><Text style={styles.heading}>{headings.certifications}</Text>{content.certifications.filter(Boolean).map((item, index) => <Text key={`certification-${index}`} style={styles.item}>{item}</Text>)}</View>}
       <Text style={styles.footer} fixed render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
     </Page>
   </Document>;

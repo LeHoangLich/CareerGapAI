@@ -1,0 +1,1138 @@
+{
+  "schema_version": 1,
+  "date": "2026-11-01",
+  "status": "frozen",
+  "release": "20261031",
+  "source_of_truth": "SOURCE-MANIFEST.json inside original source ZIP31; exact file bytes, not HEAD alone",
+  "base_git_commit": "41b82c684406cd7535b04db5db3797181e953206",
+  "contains_uncommitted_release_changes": true,
+  "owner": "Lê Hoàng Lịch (Project Owner)",
+  "scope": "validated application, dependencies, tests, launcher and deployment configuration from release20261031",
+  "file_count": 222,
+  "files": [
+    {
+      "path": ".dockerignore",
+      "bytes": 218,
+      "sha256": "02698a11689d3a7e74f5e5d65c57c41154bbab1a807ef4ccf247b79a44e1e024"
+    },
+    {
+      "path": ".env.example",
+      "bytes": 1691,
+      "sha256": "8c7ffc9660c35fd51d9adcaca847e9c3d8874c8eefca6bc979a255c3fe397744"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 1988,
+      "sha256": "38b652a5a4ed439177336536bcd927648071d975b383690ea0f4e5e1db67869c"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 226,
+      "sha256": "d50132f4a8e7bfa8366df98d4e49a22cdeaf3c8725f97e5b6482eafd77eef92f"
+    },
+    {
+      "path": ".node-version",
+      "bytes": 8,
+      "sha256": "2722b61f414f07f08be7f1f1316012813818f26f1c40d6a24a748686cec7d2ff"
+    },
+    {
+      "path": "backend/CareerGap.Api/Accounts/AccountDeletionService.cs",
+      "bytes": 32464,
+      "sha256": "ccc017ca5098009ff3cab7e1bc41b642b5aa89ac25b437a240ccb8f92bc5e84c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Accounts/AccountEndpoints.cs",
+      "bytes": 12307,
+      "sha256": "8f79b0d5bea34cd5ff0572ce087b101f80a47e7f1c734836685ebaa6aaea42f4"
+    },
+    {
+      "path": "backend/CareerGap.Api/Administration/AdminEndpoints.cs",
+      "bytes": 9850,
+      "sha256": "110fe42db50b6ca2084c5dcf915df1c15fa794b45c7005704480f90108bd041a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/JobService.cs",
+      "bytes": 29764,
+      "sha256": "ee35a33f99301eed55062b2cf47e6671db565d04d8c23a773da84e1b8be2f4e3"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/JobWorker.cs",
+      "bytes": 6839,
+      "sha256": "6326b3acb6b7a7429931ccd1e456e1ef71ea848e3a8b586712a996c47b2baebd"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/LlmClients.cs",
+      "bytes": 11245,
+      "sha256": "f0262693dfc1b23fe1b57a5732dc69ba88a085cf03889f820a3eafb29ecdd067"
+    },
+    {
+      "path": "backend/CareerGap.Api/Ai/PrivateAiDiagnostics.cs",
+      "bytes": 1772,
+      "sha256": "80d57e7f2cb56f998b88cc02665a47e70f8bb850225747d326ad2acdc92eeb3c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Applications/ApplicationEndpoints.cs",
+      "bytes": 18470,
+      "sha256": "ad9026af5a5c37ae01b70bf75b1d34ed2d438b97abf63507df1483e6c664b48b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Applications/ApplicationRetentionService.cs",
+      "bytes": 3011,
+      "sha256": "79915b9785497d0bc7df7d5b6298b752901dfca4293c1bebeb8354401cd5ad5b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Applications/ApplicationWorkflowEndpoints.cs",
+      "bytes": 13835,
+      "sha256": "2b67664ede70dca12aaea17d93b579cf0c829e006f5df58b6086a03c53b6f787"
+    },
+    {
+      "path": "backend/CareerGap.Api/appsettings.json",
+      "bytes": 1140,
+      "sha256": "0419d5865cce8571f32e80856364ca6ab9e04732267d443ad189b48d8680dfe8"
+    },
+    {
+      "path": "backend/CareerGap.Api/CareerGap.Api.csproj",
+      "bytes": 913,
+      "sha256": "d66c03318ef14f1b340eba98b6d2c415a067276e9015c94b08995427deced3a5"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/AdministrationModels.cs",
+      "bytes": 1159,
+      "sha256": "6aa912c182b995e56217d767282862ce4adcf83184fb8be773d6f1bc15e64e58"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/AppDb.cs",
+      "bytes": 39080,
+      "sha256": "1fe0793b40815435088d0a84a8807d3688830f08e15b9ca1b9615e248e6cff1a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/LearningModels.cs",
+      "bytes": 952,
+      "sha256": "3f39de604487446d74ed8e91a103773fc4938366d7859d6efcea7d2ac94dd67a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025051_Foundation.cs",
+      "bytes": 33263,
+      "sha256": "4e6f8b93b6a5eb1408b3c337cbdeddfad6e01b87d25d0e65f6f42549855b440a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025051_Foundation.Designer.cs",
+      "bytes": 36248,
+      "sha256": "4bcbfeed7e9009819184a741ad7017aab09d43d4c0e25194a8517c760f4a4a0b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025127_ImmutableDocuments.cs",
+      "bytes": 2225,
+      "sha256": "e2e73201ff7afc69846674859cd432f1f8c1501befe7e2b807216e1307d33994"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015025127_ImmutableDocuments.Designer.cs",
+      "bytes": 36264,
+      "sha256": "6bc644b3f96181c734dbfbed64bf1c3e0efdf1e48d1cc8efcbdb2313c1dcfbab"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015030402_JobInputIntegrity.cs",
+      "bytes": 2314,
+      "sha256": "a62b35ad9b434b330eee220b2e55e88e3669b89731b22ca0b4ba635d7d0bbe97"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015030402_JobInputIntegrity.Designer.cs",
+      "bytes": 36262,
+      "sha256": "f7e62412a0b24ae56d334827fcc543f486a6f08230ef127e23f0b3f70134a32a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015171732_CandidateProfilesAndRegistration.cs",
+      "bytes": 6264,
+      "sha256": "d95369d25085effceb5504be41ac2b3f593b73acbf709f61bc296959a37c4fbc"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015171732_CandidateProfilesAndRegistration.Designer.cs",
+      "bytes": 40311,
+      "sha256": "aed92ee73d72566af693c2498c01489f0e10d8537564eb35f9062c1eaaed0ee1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015172221_ProfileTimestampsAndVisibilityConstraint.cs",
+      "bytes": 1858,
+      "sha256": "0129cc2b45ac1a6bcac9b7fe8d1cb338667b1472442eaf942245bae65f003b33"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015172221_ProfileTimestampsAndVisibilityConstraint.Designer.cs",
+      "bytes": 41260,
+      "sha256": "10a18a185c0d1511374a9a1d6a148494233990c00bb29356c5fce58af63bf8b1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015173907_RecruitmentJobsLocal.cs",
+      "bytes": 14963,
+      "sha256": "2109c72519d91b69a8cb734c3d2be6f36a356ec5307428b6a46e78a98c0cad6d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015173907_RecruitmentJobsLocal.Designer.cs",
+      "bytes": 56122,
+      "sha256": "01395583cb57c8fff0e5d8aee170155103782e1e35020f26ac9fd0b70e269705"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015175740_ResumeCollectionVersioning.cs",
+      "bytes": 4072,
+      "sha256": "422009bc6f909ea24bc58d802fbd56eb1dade36150fa2bab8a0eb36323fe54f6"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015175740_ResumeCollectionVersioning.Designer.cs",
+      "bytes": 56785,
+      "sha256": "b0793c24b0da2d2c1249fe53591e295bcf4064e740bb7eb17c7f3046a19ff6fd"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015181328_ApplicationSnapshotsAndNotifications.cs",
+      "bytes": 13850,
+      "sha256": "5cc868ebbc116b64df56f020764ceaac2d9d8d038e0c69506bb0e8e3f5e69e30"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015181328_ApplicationSnapshotsAndNotifications.Designer.cs",
+      "bytes": 68140,
+      "sha256": "6a54d9cd0a7027ebdb6815f8a4b34e868234389bef7855bc5807f0b3c6288bec"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015183630_ApplicationNotesAndJobCandidateBlocks.cs",
+      "bytes": 5728,
+      "sha256": "d435f5fe86e27bca4ae2687195f9586759925eca2b1f98584c734ff8abae24af"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015183630_ApplicationNotesAndJobCandidateBlocks.Designer.cs",
+      "bytes": 72195,
+      "sha256": "59dec10146f8256f1364376dd4ff4122d77c29a755622ced4228b9d9e75790c9"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015185621_PublicResumeRedaction.cs",
+      "bytes": 4252,
+      "sha256": "9a3b8252ada4922154ddbdd72128eb423d30c5db89ca16cc8b1d02786920588a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015185621_PublicResumeRedaction.Designer.cs",
+      "bytes": 75940,
+      "sha256": "447d754da4dcfc70d95bac3bc414484747577928bc32008b16b59b9eced8bd8f"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015192020_AccountDeletionLifecycle.cs",
+      "bytes": 13602,
+      "sha256": "fd59a3ce85cb97d01b6b54dd350e1aaaa15172ef422d552f386eee8fe942c215"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015192020_AccountDeletionLifecycle.Designer.cs",
+      "bytes": 83054,
+      "sha256": "b9c53369b1cd91d59a60ec4575c7abfd96c3388b80652ced7ed9ba9fae4ea851"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015194815_ApplicationRetentionWindow.cs",
+      "bytes": 3431,
+      "sha256": "5715994d19ac2f3f9abf49204910d6bc187bfd25a37fe27513085d3c1b725ba0"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015194815_ApplicationRetentionWindow.Designer.cs",
+      "bytes": 83058,
+      "sha256": "715e844821fcd8dce02573e7639ab4384dc9241a2748aed2fdd27a6169e96582"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015201038_OrphanFileCleanupLifecycle.cs",
+      "bytes": 3859,
+      "sha256": "0379482315cab10711deafe1773fefa71a3aeb1d2092e0e8606efa3ff52e3bae"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015201038_OrphanFileCleanupLifecycle.Designer.cs",
+      "bytes": 84192,
+      "sha256": "8333395d46cefc4781e7de6e08e665529d506bf11621c9f214345752cf97e57c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015205526_ResumeDataRevisions.cs",
+      "bytes": 7837,
+      "sha256": "a432bceeeb6302f7b2a68044e57aa16c7937d5b459b06a1ad64747b006bf0f20"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015205526_ResumeDataRevisions.Designer.cs",
+      "bytes": 90295,
+      "sha256": "252dda2ca72e76fd7f2b08b45e06c43eb61ad6ad6fe79f6085ee78bd6280b953"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015211227_JobDataRevisions.cs",
+      "bytes": 5616,
+      "sha256": "3927c8f4b9f10e68b37502d1a0981a9368950e606feb9e97b37c0a8a8382cfed"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261015211227_JobDataRevisions.Designer.cs",
+      "bytes": 94923,
+      "sha256": "bc0a391e4804d8990c6b76e7a33abf4f0c0518604c563287d47719c29fa0c501"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261021084251_PairMatching.cs",
+      "bytes": 10922,
+      "sha256": "87f0d3748a36032d214922bf0ab898277510b1d1741376b9f0a375b0f1a11d90"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261021084251_PairMatching.Designer.cs",
+      "bytes": 101146,
+      "sha256": "2e27ca1ef3ae014ea565e2669c668024c31a9e507e672ddbfed714555cfa71f4"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022173043_CvWritingProposals.cs",
+      "bytes": 8049,
+      "sha256": "60b280d469eabef2b75f904f654351b57d3672bd1b46ce9b91303492aee46062"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022173043_CvWritingProposals.Designer.cs",
+      "bytes": 106358,
+      "sha256": "06c996398c5bf160d2ceb78dfabf9cca1046a7d4488e909bf663a5661aba05d2"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174358_LearningSearchCredits.cs",
+      "bytes": 4134,
+      "sha256": "ce25e21d17b03f6410e01a1d9e76f959ab4f92905be49427aadad52cd268ae9c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174358_LearningSearchCredits.Designer.cs",
+      "bytes": 110958,
+      "sha256": "b3a5b2de1404e1d5cbd731237525660c1a53828cde9434d12138fbf67603dbc6"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174732_AdministrationAndEmail.cs",
+      "bytes": 5014,
+      "sha256": "08048080a8196a117b7125567ea3c2088bf7ec93660cb71c45e0c014ccd228e8"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/20261022174732_AdministrationAndEmail.Designer.cs",
+      "bytes": 116413,
+      "sha256": "046e6a01633225cff3a4c650649ced5c85cedbf70065962e0462d58d0d99423d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Migrations/AppDbModelSnapshot.cs",
+      "bytes": 116284,
+      "sha256": "df6f6ed8870b713fd3ea37b6f7b2b78cb47dd4df0fdcbc0188f572a59b7d111f"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/Models.cs",
+      "bytes": 14848,
+      "sha256": "31212ff5473d607e0ec4afd5550d30f1d60c0fe21e4bf0c11533cde318efbedc"
+    },
+    {
+      "path": "backend/CareerGap.Api/Data/WritingModels.cs",
+      "bytes": 793,
+      "sha256": "60cea5aa7f754672b207e096197c769bb97688a9210b95077a4e5183d94625f2"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/DocumentParser.cs",
+      "bytes": 5405,
+      "sha256": "8c98ecf1eb8e9c8f7f3cf26fa34549a79e0f6da791ab00f1c8cf1733ae31b421"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/FileEndpoints.cs",
+      "bytes": 10400,
+      "sha256": "6b843567188977f338fb60709225f077ab76121e6423d25d62c586dc050ca91b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/FileStorage.cs",
+      "bytes": 3480,
+      "sha256": "5c0a861684c9896f24ae8fd24e32397606a4c97ac90d39713b711c91b1ba63f0"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/FullCvExtraction.cs",
+      "bytes": 12257,
+      "sha256": "01c1a9a4f07d75eaeddba7e69ca5b87d54cc1f76a2968de470920194cedc0eed"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/OrphanFileCleanupService.cs",
+      "bytes": 5499,
+      "sha256": "5a71825105080802f7754d1dcd12e4f13f973b23dfc5823ce85540d8cbed55c9"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/ParserProcess.cs",
+      "bytes": 4475,
+      "sha256": "ae575c96e295f5e232fd404f7c1c71d90a751748abcb9f6a26a25008ec6f83d3"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/PublicResumeEndpoints.cs",
+      "bytes": 14491,
+      "sha256": "d5c94b125848940e66615ff64a98924a4a4319ef52a9180680e566b83f73f380"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/RedactedResumeBuilder.cs",
+      "bytes": 4683,
+      "sha256": "83086aa29838daefebc276e3e3cb24703ef049d96ca0a8be3414868e8aa601f0"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/ResumeRevisionEndpoints.cs",
+      "bytes": 11329,
+      "sha256": "d8ca90f3d9b1b886df06abe44a5c8d4fa5bae2e03975427a9da8c2887ea810ff"
+    },
+    {
+      "path": "backend/CareerGap.Api/Files/ResumeRevisionFactory.cs",
+      "bytes": 15161,
+      "sha256": "af090554e35ae0425d0281fce1c35977faeb40168dc977baebc38be6cbdd8319"
+    },
+    {
+      "path": "backend/CareerGap.Api/Integrations/ProbeClients.cs",
+      "bytes": 1776,
+      "sha256": "0e53af36f70bb823b2619f4b3bbbfbf7af02dec6044afe9146fcbd900115a46a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Integrations/ResendEmailSender.cs",
+      "bytes": 4550,
+      "sha256": "c42e7a1a3b5e4ed52a86bf7a5d25abeabbe89d9cf4154ad0975c96728f75e14a"
+    },
+    {
+      "path": "backend/CareerGap.Api/Integrations/TavilySearchClient.cs",
+      "bytes": 4814,
+      "sha256": "ebbe1de1d7116f3a8d88cd0762ddfd3e9aca83c3c0ce2517dd7c140b1cae052d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Learning/LearningCacheWorker.cs",
+      "bytes": 1069,
+      "sha256": "1c01a8a31f094844d5d9e3211ca4949da273b4168d68a970287bacd7e73ce28b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Learning/LearningService.cs",
+      "bytes": 11251,
+      "sha256": "d1b0bdfa2f8c280636beaeac88b97535225748ee43c3bb372ac28c331bff9912"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/ConfirmedRevisionDiagnostics.cs",
+      "bytes": 10361,
+      "sha256": "10bbaf785dbf9e8083e166ca3abcfb770c19d78f5f2736d6465f6ea03fab5d01"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/CvCaptureEvaluation.cs",
+      "bytes": 14895,
+      "sha256": "5383daf86de3e995a4fec8b119e01420da1208ca477d32758c20022dd2d22b67"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/ExtractionEvaluation.cs",
+      "bytes": 6180,
+      "sha256": "05d99dcafe836e6e6867c47400f2ec2b97c2b4241c12d1a64172e90a4db72503"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/KeywordBaseline.cs",
+      "bytes": 8164,
+      "sha256": "122dc21da5993faac1c39d75ddfd204ec049690b043edb934229ab23135c1ac8"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/KeywordMatchingService.cs",
+      "bytes": 17984,
+      "sha256": "83f9e14d6a9bbbd3a1c4bb581e8d988a49bcc8e3c9ffd7366b7123fd52383049"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/MatchingEvaluationRunner.cs",
+      "bytes": 24934,
+      "sha256": "417876541fb356cea75c98fe27f0d8d3199853b37c980998ec1bb2c2a7745d6e"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/MatchRetention.cs",
+      "bytes": 918,
+      "sha256": "e276fb92311961fcc991a518686c79ccaa64fa4659aa92a92ab26c8a4cedb5b3"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairMatchingContract.cs",
+      "bytes": 14788,
+      "sha256": "3e1a02571e4f44acaf2746b32c6cf45646aeb55832336422ec18476606578aa3"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairMatchingService.cs",
+      "bytes": 15184,
+      "sha256": "87aeb43ec0e622971ccb084836a5928052628e8506347fc56af9aadd02d4188c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairMatchingWorker.cs",
+      "bytes": 3734,
+      "sha256": "130ba055a9a442f28d875a019b74fb156da6ce3391efdac448b61f264488779d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/PairRecommendationService.cs",
+      "bytes": 9339,
+      "sha256": "2b986c3769ca4ebc90e04603c4f04634bf23133f4547f712918a5f1a86b2408c"
+    },
+    {
+      "path": "backend/CareerGap.Api/Matching/ResumeSkillProjection.cs",
+      "bytes": 2920,
+      "sha256": "3ed1541bc70c326bf40633a6cf04877c18322d5773b599dfe1e3e2d02d2ae20b"
+    },
+    {
+      "path": "backend/CareerGap.Api/packages.lock.json",
+      "bytes": 12077,
+      "sha256": "9a306a02e691613594cf5f1b30ef8efcc11de5b1aabebd45ebe38c54751f8af8"
+    },
+    {
+      "path": "backend/CareerGap.Api/Profiles/ProfileEndpoints.cs",
+      "bytes": 8379,
+      "sha256": "5f8c697799db3b15beb673c37b4752381545ec6126a2241e824f7911861f099b"
+    },
+    {
+      "path": "backend/CareerGap.Api/Program.cs",
+      "bytes": 19046,
+      "sha256": "211da1704f2eeed8ae5d757d0b1479f3a9a00608ccc2b50e0914fa6c69bc4fe1"
+    },
+    {
+      "path": "backend/CareerGap.Api/Recruitment/CompanyJobEndpoints.cs",
+      "bytes": 28603,
+      "sha256": "5d3a95678e262178a81477153203a3eccd7cc122863630ce8f1f5322844b060d"
+    },
+    {
+      "path": "backend/CareerGap.Api/Recruitment/JobRevisionEndpoints.cs",
+      "bytes": 6751,
+      "sha256": "44a79d6c53f1b70a76be110f9b9791b4df45e0a7f57fdfa91aca870106a7145e"
+    },
+    {
+      "path": "backend/CareerGap.Api/Recruitment/JobRevisionFactory.cs",
+      "bytes": 15069,
+      "sha256": "c846f55064e98cce8c703a03a355ae919aed98acfdf669c8c069f5a10d114d56"
+    },
+    {
+      "path": "backend/CareerGap.Api/Writing/WritingContract.cs",
+      "bytes": 6640,
+      "sha256": "6efbc85e49a60c6050861cf8272d8fdbdbb3411721faf3ddb124b8c31eda2b87"
+    },
+    {
+      "path": "backend/CareerGap.Api/Writing/WritingService.cs",
+      "bytes": 9018,
+      "sha256": "f8199bbe0262f7ef7fe3e9c50417e5a54d95c5d29805260107ae36687c496740"
+    },
+    {
+      "path": "backend/CareerGap.Api/Writing/WritingWorker.cs",
+      "bytes": 2696,
+      "sha256": "145df291aa0cc32fa0720ffd9b9d6373464c8f23aa3a4576d00d6ee5e6d020ec"
+    },
+    {
+      "path": "Directory.Build.props",
+      "bytes": 258,
+      "sha256": "e9e5c2f32dcaa5e6eee688d6cf90bc6445384177e82f99deef88c91839b3cbd4"
+    },
+    {
+      "path": "Dockerfile",
+      "bytes": 935,
+      "sha256": "ecbf23c7ddf0a766015a7b14d19f84ff763c2c446827348d09c44a354480b5f6"
+    },
+    {
+      "path": "frontend/e2e/account-deletion.spec.ts",
+      "bytes": 3020,
+      "sha256": "2535160c16744dfbc2cce8dabd38e5828c66bdda9e3d55ecc4f1a6528d3a4f74"
+    },
+    {
+      "path": "frontend/e2e/accounts.spec.ts",
+      "bytes": 6967,
+      "sha256": "46749ff1292b360e49d12fde0afa1d286e98f6f73a98834b8af7dedfc3c11f32"
+    },
+    {
+      "path": "frontend/e2e/applications.spec.ts",
+      "bytes": 10089,
+      "sha256": "1f9b995f9e391e3e9c97763a97e04e4f7013ff84165ea585223318fdadd8822c"
+    },
+    {
+      "path": "frontend/e2e/cv-builder.spec.ts",
+      "bytes": 6588,
+      "sha256": "c37ed2a1b850bf0af82461518adbb2b24772b8c9dc39f38492c3ca6bc58dc50b"
+    },
+    {
+      "path": "frontend/e2e/design-guide.spec.ts",
+      "bytes": 17829,
+      "sha256": "94c27fe30cb84e13a37a731361eaa409f9df6c29455b2018ec988f84c5fe9c27"
+    },
+    {
+      "path": "frontend/e2e/foundation.spec.ts",
+      "bytes": 3366,
+      "sha256": "13482c0273fa3b050ba00c49ccc56b902d9f349a014455f6b292d77d346ef454"
+    },
+    {
+      "path": "frontend/e2e/helpers.ts",
+      "bytes": 1856,
+      "sha256": "0ea9f2a2505c33aa218e04650ec6cebce32fd7949f98c787dfd307500975e01b"
+    },
+    {
+      "path": "frontend/e2e/jobs.spec.ts",
+      "bytes": 4875,
+      "sha256": "aeaaba538a00548b03ec9b82bfe1e06c0db39f026f568cb68ea65575cac9e3b1"
+    },
+    {
+      "path": "frontend/e2e/resumes.spec.ts",
+      "bytes": 4344,
+      "sha256": "3a2b99c56621d1eaac5934a0c9017b1bc75807d49678e7e64529e1c4327ee610"
+    },
+    {
+      "path": "frontend/e2e/stage-b.spec.ts",
+      "bytes": 10612,
+      "sha256": "56248d186ad8cfe6d3edfea4d37deac9dcda19c2b268246bc8ed4b9f5aade3d8"
+    },
+    {
+      "path": "frontend/e2e/ui-states.spec.ts",
+      "bytes": 3725,
+      "sha256": "cb73a2be9447a08cf7a35306c206f68411bf5ec5c5e0ed5d67a3f08edc08b416"
+    },
+    {
+      "path": "frontend/e2e/workspace.spec.ts",
+      "bytes": 6063,
+      "sha256": "412cea80e5c4ae58a070fbb472a93d726c56a09567c8241c555987a6dd90912d"
+    },
+    {
+      "path": "frontend/e2e/writing-matching.spec.ts",
+      "bytes": 9289,
+      "sha256": "cdf2116668756f63fecfcc256718cf8473770ef21e64536782198166ba84e603"
+    },
+    {
+      "path": "frontend/eslint.config.js",
+      "bytes": 152,
+      "sha256": "9d3061c56ba1b10718119352abff016c6bd0af3dd0108dbdf8c890ed91b4724a"
+    },
+    {
+      "path": "frontend/index.html",
+      "bytes": 502,
+      "sha256": "17d7ceb3a23bdb01bb027397cf0325cf8f282ac2af74698aeb22cbb1fa2e7221"
+    },
+    {
+      "path": "frontend/package-lock.json",
+      "bytes": 138011,
+      "sha256": "be2aede5687c51663024f77dee7921746b5fe33fbbfb0c91aa9faf1eadddf0ab"
+    },
+    {
+      "path": "frontend/package.json",
+      "bytes": 924,
+      "sha256": "fa0529bcbe3c0bb9bed1c0e742a7b2b2b95aa0a393569d28bb262abbb6c21298"
+    },
+    {
+      "path": "frontend/playwright.config.ts",
+      "bytes": 429,
+      "sha256": "0597a50b7d42776e68a15936880be39885fc2bdb75a845dd0a80cf4bd3b0f43c"
+    },
+    {
+      "path": "frontend/postcss.config.js",
+      "bytes": 60,
+      "sha256": "a1a188221f064d964dd9958c3d48b0c23252fabbeb6099d95ee8e15c764718b0"
+    },
+    {
+      "path": "frontend/public/favicon.svg",
+      "bytes": 280,
+      "sha256": "c30f1d38e0757dd347d5048ad6bc7b2269143506e8eec4b97e39d52eab030c6a"
+    },
+    {
+      "path": "frontend/public/fonts/NotoSans-Regular.ttf",
+      "bytes": 569208,
+      "sha256": "b85c38ecea8a7cfb39c24e395a4007474fa5a4fc864f6ee33309eb4948d232d5"
+    },
+    {
+      "path": "frontend/public/fonts/OFL.txt",
+      "bytes": 4377,
+      "sha256": "0dab92d0544f7b233403f14b84a663bdbfa746982eda629e7f4f9ffe1b036feb"
+    },
+    {
+      "path": "frontend/src/administration.tsx",
+      "bytes": 8642,
+      "sha256": "8d3aa274bcc3cabfbc1e4ca725d9c3dc90d619f292cd0d86049350ecae8c4e54"
+    },
+    {
+      "path": "frontend/src/api.test.ts",
+      "bytes": 2726,
+      "sha256": "b9bb89a8675a5616c28caccab48ffcb72bd8ab702f9b0f0e78692ba03d70c4b2"
+    },
+    {
+      "path": "frontend/src/api.ts",
+      "bytes": 9634,
+      "sha256": "e8f3707cf934105fcb973f1bd591df0001fcff46c63b84513f6ce026f53e3ec6"
+    },
+    {
+      "path": "frontend/src/fullCvReview.tsx",
+      "bytes": 6749,
+      "sha256": "2338f42bdea1df3f3f9df6ef2efe779558933e5f6e072dc28879f0a6d66863bf"
+    },
+    {
+      "path": "frontend/src/jobDiscoveryWorkspace.tsx",
+      "bytes": 1223,
+      "sha256": "e5a87c2af8bf69039bfb8106dd96c5ab147f6e39f5cfe870d81efa8a86a93dd1"
+    },
+    {
+      "path": "frontend/src/jobs.tsx",
+      "bytes": 51530,
+      "sha256": "952bcd252a1c4f91527c5b766e245240d6852252d0c9a08d19c1b6e8d5f7ddfb"
+    },
+    {
+      "path": "frontend/src/learning.tsx",
+      "bytes": 3401,
+      "sha256": "dabb29514f383978ea375777d420d01cf0d6de27873bd5bd11348cdb7995b91d"
+    },
+    {
+      "path": "frontend/src/main.tsx",
+      "bytes": 39997,
+      "sha256": "d159d6b0482367f8a678934661a3b933028f18fc5aa734d379d9844da3c0fe8f"
+    },
+    {
+      "path": "frontend/src/matching.tsx",
+      "bytes": 10190,
+      "sha256": "42c8846e8ca8089a4c707fc38931da1381fc9cab195901e311c29d715fe6fa3c"
+    },
+    {
+      "path": "frontend/src/navigation.test.ts",
+      "bytes": 2599,
+      "sha256": "c0d8f5a95d789b79f9b0ba01cc7ddb49ea3ca08b0cddea5a6f36b9a2e1991385"
+    },
+    {
+      "path": "frontend/src/navigation.ts",
+      "bytes": 3340,
+      "sha256": "3d60c54c26fd3aa6fac3cb6988c662a7b29601275725dc3be42dc6d79d6dd767"
+    },
+    {
+      "path": "frontend/src/onboarding.tsx",
+      "bytes": 4496,
+      "sha256": "aa5fa99f431e0010927bb5e32b421d9f3adb7ebb6405cf073cfbf3ca62e494e1"
+    },
+    {
+      "path": "frontend/src/pairMatching.tsx",
+      "bytes": 13253,
+      "sha256": "6db90bb2c3356a4ade62465dbab59ce7529ca62ee7c36329ab2c28392faa3be5"
+    },
+    {
+      "path": "frontend/src/pdfGeneration.ts",
+      "bytes": 1063,
+      "sha256": "c38930bf35366a9e3c794c607a8ceb0a414bd58782bf1fbef08af9f39a5b96a4"
+    },
+    {
+      "path": "frontend/src/pdfProbe.tsx",
+      "bytes": 1062,
+      "sha256": "0553830d860a019deb2e571b2b9323eaebad63d5b64eaab0c327fedc475a6cf3"
+    },
+    {
+      "path": "frontend/src/persistentView.tsx",
+      "bytes": 1245,
+      "sha256": "12c45219e273804d13848ce34d07af0c79c180aa64a919bd74cb43671fd2cc2c"
+    },
+    {
+      "path": "frontend/src/publicResumes.tsx",
+      "bytes": 6288,
+      "sha256": "ac6d2b1a69ead66d1a78b11850eba52f535fa4b67c9920fb7d258374d1e24cf7"
+    },
+    {
+      "path": "frontend/src/resultPlacement.tsx",
+      "bytes": 378,
+      "sha256": "159913456f3f8dc9803436a6dd457866a38d99231e2279152a54d0589d5c1aae"
+    },
+    {
+      "path": "frontend/src/resumeBuilder.tsx",
+      "bytes": 29700,
+      "sha256": "162ed615aeef07c3f3a4fcdaae1b7828f87a048b24ae93c7faa8a23db1491ff1"
+    },
+    {
+      "path": "frontend/src/resumeBuilderPdf.tsx",
+      "bytes": 5569,
+      "sha256": "e74a1afc70fd317c76925beace5b626a1dffe5bd09b8441d0c119a9636dd11f2"
+    },
+    {
+      "path": "frontend/src/resumePdf.worker.tsx",
+      "bytes": 755,
+      "sha256": "18a7efac93840e7c6a1bec87ecc25fffdb66dbc00d466c0d62d9c7005b7d5312"
+    },
+    {
+      "path": "frontend/src/style.css",
+      "bytes": 39018,
+      "sha256": "494f73a5025361e39ac8c22a93e08d41fe81fd6b8344144654b190ef853fd1b4"
+    },
+    {
+      "path": "frontend/src/ui.tsx",
+      "bytes": 6937,
+      "sha256": "a580de0919321015c47f90d4b63e8d90c91f509bade7b35dc0e9bacbd4f42cda"
+    },
+    {
+      "path": "frontend/src/useStickyFit.ts",
+      "bytes": 1179,
+      "sha256": "7f6b75635d2aa26a0030a1b9ff9416d76cca12cdd351ce282e8e2ba73fa3c75e"
+    },
+    {
+      "path": "frontend/src/vite-env.d.ts",
+      "bytes": 38,
+      "sha256": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5"
+    },
+    {
+      "path": "frontend/src/workspace.tsx",
+      "bytes": 12752,
+      "sha256": "6ea82fb598b70521a9b6a1849cb683ffcf4cfd167e08f4b805578327ec16a514"
+    },
+    {
+      "path": "frontend/src/writing.tsx",
+      "bytes": 7698,
+      "sha256": "216c8970797536957cb1660430b80cd715959d896c9e9c6629447a23c395750a"
+    },
+    {
+      "path": "frontend/topcv-design/CLAUDE.md",
+      "bytes": 696,
+      "sha256": "2c1a553056380dc54575e188a4129275af72530f2da68e52ec6c39a557e10c0e"
+    },
+    {
+      "path": "frontend/topcv-design/CODEX.md",
+      "bytes": 696,
+      "sha256": "2c1a553056380dc54575e188a4129275af72530f2da68e52ec6c39a557e10c0e"
+    },
+    {
+      "path": "frontend/topcv-design/DESIGN.md",
+      "bytes": 7469,
+      "sha256": "e30f59183a424cb9598ddc040cc59d5d903f1719cf77fec910d1dfc288a1c2fb"
+    },
+    {
+      "path": "frontend/topcv-design/references/DESIGN.md",
+      "bytes": 7469,
+      "sha256": "e30f59183a424cb9598ddc040cc59d5d903f1719cf77fec910d1dfc288a1c2fb"
+    },
+    {
+      "path": "frontend/topcv-design/screenshots/homepage.png",
+      "bytes": 126337,
+      "sha256": "5dd8f168e80bd1c1651f6800e4ecf08032b0215e06b6aa4f9a461cfcd5240a08"
+    },
+    {
+      "path": "frontend/topcv-design/SKILL.md",
+      "bytes": 17863,
+      "sha256": "855facefe00eb752148d5f7c566daa32caa11e779029535bd18135b0365c06f4"
+    },
+    {
+      "path": "frontend/topcv-design/tokens.json",
+      "bytes": 2644,
+      "sha256": "72cff2cb377e23538022627008e5d7b1634bd276b4671ed25700350dc680ae29"
+    },
+    {
+      "path": "frontend/tsconfig.json",
+      "bytes": 332,
+      "sha256": "7bd76491ecd3fa740762282c139904eda65e385e1106994a612b200d938824d8"
+    },
+    {
+      "path": "frontend/vite.config.ts",
+      "bytes": 188,
+      "sha256": "c0c7f7a462c962b35c79852ef0408f89ec25a3027a49850452bc1b0651c6035e"
+    },
+    {
+      "path": "frontend/vitest.config.ts",
+      "bytes": 120,
+      "sha256": "f8012a9ae34afd896db23ef7de41089fa4f1b7ed51997d68a65e026691c3f5a1"
+    },
+    {
+      "path": "global.json",
+      "bytes": 59,
+      "sha256": "a0dcc4ee0c1b8044f9498734741bd764d5c2585f4d0d8e31e27e26e9662f751f"
+    },
+    {
+      "path": "scripts/assemble-cv-captures.py",
+      "bytes": 3228,
+      "sha256": "e7aac5aaa5d6684e3a9034cf403aca10ab9a00b27939795496cb9de622b453f1"
+    },
+    {
+      "path": "scripts/backup-local.ps1",
+      "bytes": 8344,
+      "sha256": "fd0d1c639d2f9569abd6ab68aee9dcf8fa5c49aba870a5483e210ec45a9361b2"
+    },
+    {
+      "path": "scripts/check-deepseek-readiness.ps1",
+      "bytes": 4833,
+      "sha256": "b8f349cbe57a62c82b4dc3b7291ca7ccde5e1cd5109c713d13926398198d2576"
+    },
+    {
+      "path": "scripts/check-generated-cv-pdfs.py",
+      "bytes": 1525,
+      "sha256": "031c639e3397095d51915f20922bfa6c98349baf2986405b75dd8cd75b1d32b0"
+    },
+    {
+      "path": "scripts/check-stage-d-freeze.py",
+      "bytes": 19902,
+      "sha256": "e605fae3a0fd7235446449a470eb521194812a81d33c8e4e545c076cf1e0af64"
+    },
+    {
+      "path": "scripts/check-stage-d-readiness.py",
+      "bytes": 3903,
+      "sha256": "d2eb0001f666b0ff8c0a9b7e976b77074bc933f38d27a6dcf06370900abbea53"
+    },
+    {
+      "path": "scripts/dev-env.ps1",
+      "bytes": 627,
+      "sha256": "db189b5208b0fda40ff436e672a9aafffde592ef20028684349e06f470970948"
+    },
+    {
+      "path": "scripts/evaluate-cv-captures.ps1",
+      "bytes": 666,
+      "sha256": "faa9c66a0c36e7012fdd6d7280b0a3c566b4047206a71950cd250b85624251eb"
+    },
+    {
+      "path": "scripts/evaluate-cv-extraction.ps1",
+      "bytes": 819,
+      "sha256": "2e748e1901616098c86f5daf4d0f5f4b95cf57c4917a6fb36f26cb9218c99daa"
+    },
+    {
+      "path": "scripts/evaluate-final-pair-captures.py",
+      "bytes": 23731,
+      "sha256": "75561c0573ab2d5d4d36e4a806f386c431585218e031e360a8e52bea8af214b4"
+    },
+    {
+      "path": "scripts/evaluate-matching-baseline.ps1",
+      "bytes": 1773,
+      "sha256": "1801e0c38ffb015b0b7968ab7f7b521a2090d00a36ba94990be87908b3a9cd65"
+    },
+    {
+      "path": "scripts/evaluate-pair-captures.py",
+      "bytes": 8394,
+      "sha256": "a49cea9eb38dfabc93f6f9bf7da870271b888f0e34736ccee9fa18b839e5c6aa"
+    },
+    {
+      "path": "scripts/expire-local-backups.ps1",
+      "bytes": 2723,
+      "sha256": "a7ac4653eb5071bfa0f3d47991cd633d664f37ed3c2f0057553b81e40e67c772"
+    },
+    {
+      "path": "scripts/export-deletion-ledger.ps1",
+      "bytes": 2727,
+      "sha256": "d0e6a10b29815078b9d5e4e20b4e2a2801e4884bce49aca159a54cf9dd3e1df4"
+    },
+    {
+      "path": "scripts/generate-cv-extraction-fixtures.py",
+      "bytes": 4684,
+      "sha256": "530557f2bc9ec4aac07838aa0a2c68458faa8332b542c12da0e5f9f09680397e"
+    },
+    {
+      "path": "scripts/generate-fixtures.py",
+      "bytes": 2787,
+      "sha256": "594a3fc31a88d752debf127b8d61a0cb5b1a1d2d8e597bac2809695c969685c6"
+    },
+    {
+      "path": "scripts/handoff-backup.py",
+      "bytes": 4076,
+      "sha256": "ff3117b834e2bb7e96851b874b865749883395271039d7a5b7c686e7d43a0d2c"
+    },
+    {
+      "path": "scripts/handoff-demo.py",
+      "bytes": 7939,
+      "sha256": "0199c3afc0e2b3dc6db0295fda17f11ed45b095355c8cf34cce93b60c8db2222"
+    },
+    {
+      "path": "scripts/prepare-cv-capture-dataset.py",
+      "bytes": 4650,
+      "sha256": "e75703abe175846376057c4b218e666bac03dc1b60169584a31fc18edde60374"
+    },
+    {
+      "path": "scripts/prepare-cv-capture-smoke.py",
+      "bytes": 4431,
+      "sha256": "abe6877e0ec28e8a65cd19c2d3330f4391c5ed07807131acedba4e56cd57e993"
+    },
+    {
+      "path": "scripts/prepare-synthetic-corpus.py",
+      "bytes": 3425,
+      "sha256": "78156b73326ce2589c5759b2a852d0b0081963b47164ad6fd45980dd6dedbf2a"
+    },
+    {
+      "path": "scripts/queue-expired-failed-files.ps1",
+      "bytes": 2263,
+      "sha256": "9d7df6ccf7cab6e8298d7bffbbb3d386692497d271d6f2c0f79bda2a5cae47e0"
+    },
+    {
+      "path": "scripts/restore-local-backup.ps1",
+      "bytes": 8526,
+      "sha256": "cf41b3e1142c7f4c8570ae0ad3b59968c1bffe3f329610da65e4d365a339aa9c"
+    },
+    {
+      "path": "scripts/test-frontend-regression.py",
+      "bytes": 17630,
+      "sha256": "5dfd91109b8ba19322daa56ba26f6a15f3179b5594c3323b0a8f334d276e64e9"
+    },
+    {
+      "path": "scripts/test.ps1",
+      "bytes": 762,
+      "sha256": "0e11c4bea69fb0bb9b05d7d7b7f8e75d2b9e0e5bf054c6ded22650dff714dd66"
+    },
+    {
+      "path": "scripts/test_frontend_regression.py",
+      "bytes": 3895,
+      "sha256": "2d0b47b4a815593325d65e973d0fd399578f39f94c0e6b3b9f9d6df89f46c05a"
+    },
+    {
+      "path": "scripts/test_pair_evaluator.py",
+      "bytes": 1504,
+      "sha256": "848f6827441a7c7a7ddfbdc978e67359b8fbc7ebc27b0db543ddcf63f07a2385"
+    },
+    {
+      "path": "scripts/test_stage_d_readiness.py",
+      "bytes": 3047,
+      "sha256": "d2f45602b97ee4ad3ee0cabcae4e2acb04110a5565514171f5806bf6a81315d2"
+    },
+    {
+      "path": "scripts/validate-evaluation-corpus.py",
+      "bytes": 10107,
+      "sha256": "60608dad94ddc8b7ab00922e910a95ddbb9374225e18be70215d90856d41b073"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/AccountDeletionTests.cs",
+      "bytes": 22989,
+      "sha256": "cd689404de29accfa13c1c87520d70529e69c314ad49fe5c64f2fa95ba1a3cc8"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/AdministrationTests.cs",
+      "bytes": 4000,
+      "sha256": "b50afe3a72a47169297ed71661a076085842e1097f39b1cdc9e430639c115709"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/AiDispatchTests.cs",
+      "bytes": 3295,
+      "sha256": "eacbcbd094a513ad1deeece00f03139c7467f27318b7418f8440c6833230211a"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/ApplicationTests.cs",
+      "bytes": 32519,
+      "sha256": "c72ee0db0a0bafc3de30176e5e042d82c0808aebf9ab49e109c2330bee5688b6"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/CareerGap.Api.Tests.csproj",
+      "bytes": 636,
+      "sha256": "b63f4bbdb514c1c92b156b430d4a6efdc9e3aa5614d4720f9e6c54a418ae94fe"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/CompanyJobTests.cs",
+      "bytes": 10251,
+      "sha256": "4628000806d1c48838d63858cdff22d5f369bde03ec860f688a5b586d2ca045f"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/CompletionTests.cs",
+      "bytes": 4193,
+      "sha256": "6b70eb054f7a8126885b4af7df26516a66bd8bb2e68d669ac68263855a3d19ee"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/CvCaptureEvaluationTests.cs",
+      "bytes": 6910,
+      "sha256": "60485688dc039daeb0533feb875188aaff8419057cd012e53f5c6f20342e8dd4"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/EmailAdapterTests.cs",
+      "bytes": 3026,
+      "sha256": "8880f1b837871fc4678633bbf4039ff8d111278b0522547a80de9a89c61457ad"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/FoundationFixture.cs",
+      "bytes": 9950,
+      "sha256": "2487ba9257559a713246c1b2cb1f613edea96a5cd790a3f148e09252d572a8f8"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/FoundationTests.cs",
+      "bytes": 31460,
+      "sha256": "0ac14c571b757969122bad6046a543d900ec03269d7020eacb89b0f7bf16252d"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/FullCvTests.cs",
+      "bytes": 17547,
+      "sha256": "8569673965dc1fc114aac01de9b98c2eec01f64895fcee3b4713651d358f67e2"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/JobRequirementParsingTests.cs",
+      "bytes": 4849,
+      "sha256": "da9681324d23e8f471aa1a0463ecfaf35b9d0ccb5daa1e542256f724f406eb56"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/JobRevisionTests.cs",
+      "bytes": 7218,
+      "sha256": "b23cd2afeb71f6b96cf55713298fb7e956d3196d80f8a2b3cdaa075d50947c0e"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/LearningTests.cs",
+      "bytes": 8258,
+      "sha256": "4d632ceeecd62e8d0f93bee5091de7432e78abfcefe309e42fae6a02e97078cd"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/LearningTopicTests.cs",
+      "bytes": 1259,
+      "sha256": "907a9f6f7ca5746b0e21281dfbe2c208f4754c6fda6c87527acfcc8e75598ccf"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/MatchingEvaluationTests.cs",
+      "bytes": 10495,
+      "sha256": "838f03e0c5b522737e4e337c65b7fd84ee1687902f44c0e3ee5c02f05f68a718"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/MatchingTests.cs",
+      "bytes": 24601,
+      "sha256": "97c31c9ff412fe2a27c56f68de89500fb5bf9e1c92ff760a1df48c243b2175ca"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/OrphanFileCleanupTests.cs",
+      "bytes": 3422,
+      "sha256": "ea57ac2a891f065ca1b84c841c1c696c2f1ce3e17874fe3d2e172a4405b82336"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/packages.lock.json",
+      "bytes": 28533,
+      "sha256": "b67a6e25adbb9fade80a1d9f14993108182f7040c1f891ed7422f02b9235f319"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/PairMatchingTests.cs",
+      "bytes": 36648,
+      "sha256": "305741be06bfdca3c37adc66618088e58b982591af96610ecf69b49bd5926e49"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/PairMigrationTests.cs",
+      "bytes": 3693,
+      "sha256": "b01bec5b897b06424285ee20917cfb5ea9663bfbeb883c9bf6957ec2b34f2198"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/PairRecommendationAccessTests.cs",
+      "bytes": 8838,
+      "sha256": "4e74c6ec4a91f4f12f87843ab781bdb5bdb6e78fb553f6310d0d5363b87a8e7e"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/PrivateAiDiagnosticsTests.cs",
+      "bytes": 2888,
+      "sha256": "dc128f4aeb9390c08e7fe7a50af69b61059e96f9745663e17827e3e6c8982b99"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/PublicResumeTests.cs",
+      "bytes": 15511,
+      "sha256": "d9e9492b480ca11d4c023b26b461e18ba141183eaab8e3fe7821c794daebd7a9"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/ResumeBuilderRevisionTests.cs",
+      "bytes": 5423,
+      "sha256": "f329984e16c02371bccbceeaf7cf79eb006f2cf3ff3a35f1334817a81d59b715"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/ResumeRevisionTests.cs",
+      "bytes": 5625,
+      "sha256": "545fd2acc1888d945a126e63633f234b75ddc73af752d08eb5274c958a2eddbb"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/ResumeVersionTests.cs",
+      "bytes": 5638,
+      "sha256": "7a1c0f40470ea01905bba02c6ea523cd87d98f14d5782e1539eb06c0dc875377"
+    },
+    {
+      "path": "tests/CareerGap.Api.Tests/WritingTests.cs",
+      "bytes": 11859,
+      "sha256": "0bdca3e4cf9692c43d7c25ad10481fdc5dcfa29b01cff13da570448b1edfddea"
+    },
+    {
+      "path": "tests/evaluation/test-provider-readiness.ps1",
+      "bytes": 4491,
+      "sha256": "be485b8ac8e21d60b449c6ded8e66c93173a91243336b1b55767023e799ae9a3"
+    },
+    {
+      "path": "tests/evaluation/test_capture_tools.py",
+      "bytes": 6469,
+      "sha256": "80fa13a4a6e45b2f64c40c2a890e2a14d8b077d337d4b60aea8492c735c92d12"
+    },
+    {
+      "path": "tests/evaluation/test_corpus_validation.py",
+      "bytes": 4194,
+      "sha256": "07ee3751acb1beb06370351e6fda4711913a78498a930abb08a56b9f9f2f32d8"
+    },
+    {
+      "path": "tests/evaluation/test_final_pair_evaluation.py",
+      "bytes": 27065,
+      "sha256": "124e650a0b0af4d14d5d70a7d40318b99340f6f5fec4c8a316dfd5ad351f18d2"
+    },
+    {
+      "path": "tests/evaluation/test_stage_d_freeze.py",
+      "bytes": 16669,
+      "sha256": "f394b851f53739c8dffbbd26adeac1d1b41faf54f16fa3a1f36351dd5e69d76b"
+    }
+  ],
+  "source_archive_path": "project-docs/handoff/stage-e-20261031/CareerGapAI-source-20261031.zip",
+  "source_archive_sha256": "0d966516f3b032f99708c079243be67619852004657f11779b55caed03665175",
+  "application_runtime_path": ".local/handoff-demo-20261029/releases/20261031/runtime",
+  "runtime_dll_sha256": "21b449d8110bbda1bf007cd1f18c74b8e16410ccb811de7253ce5b6cee270387",
+  "new_code_build": false,
+  "change_control": "Any future code change creates a new revision with its own verification; preserve this baseline. No read-only filesystem attribute or automatic commit applied.",
+  "unverified_workspace_material_excluded": [
+    "frontend/topcv-design/",
+    ".agents/",
+    "frontend/logo_careergapai.jpg",
+    "output/",
+    ".local/ outside recorded runtime proofs"
+  ],
+  "documentation_addendum": "Owner acceptance dated2026-11-01 supersedes historical M6 status without rewriting old archive contents."
+}

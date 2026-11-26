@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-31",
+  "auditor": "Codex (Authorized by Project Owner)",
+  "approved_by": "Lê Hoàng Lịch (Project Owner)",
+  "approval_basis": "owner instruction authorizing audit, not claim of owner viewing videos",
+  "review_scope": "stage_e_vietnamese_learning_resources_5_criteria",
+  "status": "verified",
+  "status_scope": "audit completion and evidence, not all criteria passing",
+  "human_authorized": true,
+  "external_api_calls": 0,
+  "direct_public_webpage_gets_only": true,
+  "new_search_credits": 0,
+  "cost_usd": 0,
+  "historical_E_credits_used": 2,
+  "historical_D_plus_E_total_credits_used": 4,
+  "all_five_criteria_reviewed": true,
+  "vietnamese_content_confirmed_count": 0,
+  "full_video_playback_verified_count": 0,
+  "preservation": {
+    "files_checked": 130,
+    "changed": []
+  },
+  "retention_policy_changed": false,
+  "M6_changed": false,
+  "results": [
+    {
+      "url": "https://www.youtube.com/watch?v=ZyWBs0CU2wk",
+      "criteria": {
+        "language": {
+          "reviewed": true,
+          "result": "English title/description and en ASR caption metadata; Vietnamese content not established"
+        },
+        "relevance": {
+          "reviewed": true,
+          "result": "Docker relevant by description; not full video review"
+        },
+        "level": {
+          "reviewed": true,
+          "result": "beginner-oriented outline; teaching effectiveness not measured"
+        },
+        "accessibility": {
+          "reviewed": true,
+          "http_status": 200,
+          "player_status": "OK",
+          "actual_playback_verified": false
+        },
+        "paywall_login": {
+          "reviewed": true,
+          "result": "No mandatory gate in anonymous HTML/player response; playback and linked courses not verified"
+        }
+      }
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=b0HMimUb4f0",
+      "criteria": {
+        "language": {
+          "reviewed": true,
+          "result": "English title/description and en ASR caption metadata; Vietnamese content not established"
+        },
+        "relevance": {
+          "reviewed": true,
+          "result": "Docker relevant by description; not full video review"
+        },
+        "level": {
+          "reviewed": true,
+          "result": "beginner-oriented outline; teaching effectiveness not measured"
+        },
+        "accessibility": {
+          "reviewed": true,
+          "http_status": 200,
+          "player_status": "OK",
+          "actual_playback_verified": false
+        },
+        "paywall_login": {
+          "reviewed": true,
+          "result": "No mandatory gate in anonymous HTML/player response; playback and linked courses not verified"
+        }
+      }
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=pg19Z8LL06w",
+      "criteria": {
+        "language": {
+          "reviewed": true,
+          "result": "English title/description and en ASR caption metadata; Vietnamese content not established"
+        },
+        "relevance": {
+          "reviewed": true,
+          "result": "Docker relevant by description; not full video review"
+        },
+        "level": {
+          "reviewed": true,
+          "result": "beginner-oriented outline; teaching effectiveness not measured"
+        },
+        "accessibility": {
+          "reviewed": true,
+          "http_status": 200,
+          "player_status": "OK",
+          "actual_playback_verified": false
+        },
+        "paywall_login": {
+          "reviewed": true,
+          "result": "No mandatory gate in anonymous HTML/player response; playback and linked courses not verified"
+        }
+      }
+    }
+  ],
+  "receipt_sha256": "94ae23f79e5e2ac617d8d69c9f623f94531afff4794035e2a991bee9d333593f",
+  "report": "project-docs/report/stage-e-learning-source-review-2026-10-31.md"
+}
