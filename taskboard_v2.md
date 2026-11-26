@@ -221,43 +221,43 @@
   - **Kiểm chứng:** `npm run build` sạch sẽ, kiểm tra trực quan mọi view không bị vỡ layout do ưu tiên CSS.
   - **Trạng thái:** Đã nghiệm thu (21/11/2026) — chuẩn hóa thứ tự import CSS tại `main.tsx` trước `community.css`, hợp nhất `style.css` & `community.css` vào `@layer components`, gộp `.social-live-status`/`.social-count`, gỡ toàn bộ `!important`; pass kiểm tra tĩnh CSS (`0` `!important`), bundle `dist/`, Vitest 47/47, Playwright E2E 8/8 & computed style trên `#community`.
 
-- [ ] **UI-02 (P1)** — **Sửa biến CSS chưa định nghĩa & thay thế ~75 mã hex cứng bằng Design Tokens**
+- [x] **UI-02 (P1)** *(Đã hoàn thành 27/11/2026)* — **Sửa biến CSS chưa định nghĩa & thay thế ~75 mã hex cứng bằng Design Tokens**
   - **Vị trí:** `frontend/src/style.css:582` (`--border`), `frontend/src/community.css:18-19` (`--surface-alt`, 32 mã hex), `frontend/src/workspace.tsx` (Tailwind arbitrary hex `bg-[#245c48]`, `text-[#303b34]`...)
   - **Mô tả vấn đề:** `--border` và `--surface-alt` chưa từng được khai báo ở `:root`, làm block code cộng đồng fallback sang xanh xám lạnh `#f1f5f9` lạc tông với nền sage ấm `#f4f6f1`. Khoảng 43 mã hex ở `style.css` và 32 mã hex ở `community.css` đi vòng qua hệ token `:root`.
   - **Yêu cầu tinh chỉnh:** Bổ sung đầy đủ semantic tokens trong `:root` (bảng màu Warm Sand / Pine Forest / Neutral Border / AI Accent / Status / Code surface) và thay toàn bộ biến sai + hex cứng ở `style.css`, `community.css`, `workspace.tsx`.
   - **Kiểm chứng:** Quét regex không còn hex cứng ngoài `:root` (ngoại trừ `resumeBuilderPdf.tsx` vốn dùng stylesheet riêng của `@react-pdf/renderer`, đồng bộ bảng màu tương ứng).
 
-- [ ] **UI-03 (P1)** — **Sửa lỗi media query trùng lặp làm chữ bảng Admin mobile to hơn desktop**
+- [x] **UI-03 (P1)** *(Đã hoàn thành 27/11/2026)* — **Sửa lỗi media query trùng lặp làm chữ bảng Admin mobile to hơn desktop**
   - **Vị trí:** `frontend/src/style.css:404` vs `frontend/src/style.css:561`
   - **Mô tả vấn đề:** Hai khối `@media (max-width: 639px)` đặt nối tiếp cho `.admin-panel th, .admin-panel td`: dòng 404 đặt `font-size: var(--font-size-sm)` (`12px`), nhưng dòng 561 ghi đè thành `var(--font-size-md)` (`14px`) to hơn cả desktop (`12px` ở dòng 342).
   - **Yêu cầu tinh chỉnh:** Xóa rule trùng, giữ 1 quy tắc responsive chuẩn cho bảng Admin kèm wrapper `.table-scroll` (`overflow-x: auto`) để bảng không bị nén chữ trên màn 320–375px.
   - **Kiểm chứng:** Chụp/kiểm thử responsive 375px của tab Quản trị không tràn ngang và cỡ chữ đồng bộ.
 
-- [ ] **UI-04 (P1)** — **Đồng bộ hệ thống Typography, Bo góc, Shadow, Focus Ring & Breakpoints trên toàn ứng dụng**
+- [x] **UI-04 (P1)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ hệ thống Typography, Bo góc, Shadow, Focus Ring & Breakpoints trên toàn ứng dụng**
   - **Vị trí:** `frontend/src/style.css`, `frontend/src/community.css`
   - **Mô tả vấn đề:** App chính dùng hệ `px` (`13px` body, bo góc `8px`/`6px`, card phẳng không shadow, focus ring `2px #397558`, breakpoints `1440/1279/1023/639`), các phần thêm sau dùng bo góc `12px` (`.weekly-roadmap`, `.skill-picker`), còn Cộng đồng dùng `rem` (`14.4px` body, H1 lên tới `42.4px`, card có `box-shadow`, focus ring `3px #72a68a`, breakpoints `1500/1250/700`).
   - **Yêu cầu tinh chỉnh:** Thống nhất một Design System duy nhất cho cả App chính & Cộng đồng: nâng cỡ chữ body/input lên `14px–15px` (theo tinh thần đề xuất `ui-unification-2026-11-01.md`), chuẩn hóa radius (`8px` card, `6px` input/button, `999px` pill), dùng `--shadow-sm` chỉ cho thành phần nổi/sticky, 1 focus ring (`2px solid var(--color-focus)`), và 1 bộ breakpoint (`1280px / 1024px / 640px`).
   - **Kiểm chứng:** Chuyển qua lại giữa `#home`, `#jobs`, `#cv-builder`, `#community`, `#admin` giữ nguyên nhịp chữ, bo góc và độ cao nút.
 
-- [ ] **UI-05 (P1)** — **Sửa lỗi lệch cột `.form-columns` + `.card + .card` & lỗi giãn dòng chip/tag**
+- [x] **UI-05 (P1)** *(Đã hoàn thành 27/11/2026)* — **Sửa lỗi lệch cột `.form-columns` + `.card + .card` & lỗi giãn dòng chip/tag**
   - **Vị trí:** `frontend/src/style.css:155,179`, `frontend/src/publicHome.tsx:81,85,98,118,131`, `frontend/src/administration.tsx:90-99`, `frontend/src/community.tsx:96`
   - **Mô tả vấn đề:** `PublicHome` và `AdminPanel` đặt các `<article className="card">` vào trong `.form-columns`, kích hoạt rule `.card + .card { margin-top: 28px; }` khiến **cột bên phải bị tụt xuống 28px so với cột bên trái**; `PublicHome` còn nhét 3 thẻ hướng dẫn vào lưới 2 cột (lẻ 1 thẻ). Các hàng pill (`Tag phổ biến`, `Địa điểm`, `.social-trending-searches`) dùng `.row` (`justify-content: space-between`) làm nút bị kéo giãn rời rạc.
   - **Yêu cầu tinh chỉnh:** Bổ sung class lưới chuyên dụng `.card-grid-2` / `.card-grid-3` (reset `margin-top: 0` cho con trực tiếp, đặt `gap: 20px`) và `.chip-row` (`display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start;`) thay thế ở mọi nơi hiển thị tag/địa điểm/từ khóa xu hướng.
   - **Kiểm chứng:** Kiểm tra trên desktop (1280px+) các card trong một hàng ngang bằng đỉnh trên tuyệt đối, 3 bước hướng dẫn trên `#home` nằm trên 1 hàng 3 cột.
 
-- [ ] **UI-06 (P2)** — **Thống nhất kích thước Logo công ty & Avatar người dùng**
+- [x] **UI-06 (P2)** *(Đã hoàn thành 27/11/2026)* — **Thống nhất kích thước Logo công ty & Avatar người dùng**
   - **Vị trí:** `frontend/src/style.css:195,587`, `frontend/src/companyLogo.tsx`, `frontend/src/communityCareer.tsx:9`, `frontend/src/community.css`
   - **Mô tả vấn đề:** Đang tồn tại 3 kích thước/bo góc khác nhau không rõ chuẩn (`CompanyLogo` `52×52px` radius `10px`, `.company-mark` `42×42px` radius `6px`, `.social-avatar` `38×38px` tròn).
   - **Yêu cầu tinh chỉnh:** Định nghĩa token kích thước avatar/logo (`sm: 32px`, `md: 40px`, `lg: 52px`) và chuẩn bo góc phân biệt rõ Avatar cá nhân (tròn) vs Logo doanh nghiệp (bo góc `8px` có viền nhạt).
   - **Kiểm chứng:** Logo trên `#home`, `#jobs`, `#recruiter-company` và thẻ nghề nghiệp `#community` đồng đều.
 
-- [ ] **UI-07 (P2)** — **Áp dụng `useStickyFit` cho sidebar Cộng đồng & sửa lỗi breakpoint cột CV Builder**
+- [x] **UI-07 (P2)** *(Đã hoàn thành 27/11/2026)* — **Áp dụng `useStickyFit` cho sidebar Cộng đồng & sửa lỗi breakpoint cột CV Builder**
   - **Vị trí:** `frontend/src/community.css:1`, `frontend/src/useStickyFit.ts`, `frontend/src/style.css:474-516`
   - **Mô tả vấn đề:** `.social-sidebar` đặt `position: sticky; top: 24px` không qua `useStickyFit`, dễ bị cắt nội dung phía dưới trên màn hình laptop thấp (768px). Ở CV Builder, `.builder-editing .form-columns` lại nhảy thành 2 cột ở `<= 1023px` trong khi ở `1024px–1439px` chỉ có 1 cột.
   - **Yêu cầu tinh chỉnh:** Gắn `useStickyFit` cho sidebar Cộng đồng và sửa lại thứ tự media query của `.builder-editing .form-columns` cho nhất quán từ desktop → tablet → mobile.
   - **Kiểm chứng:** Kiểm thử ở viewport `1280×720`, `1024×768`, `768×1024`, `375×812`.
 
-- [ ] **UI-08 (P2)** — **Chuẩn hóa HTML ngữ nghĩa cho `CommunityMarkdown` & sửa rung nút tương tác Cộng đồng**
+- [x] **UI-08 (P2)** *(Đã hoàn thành 27/11/2026)* — **Chuẩn hóa HTML ngữ nghĩa cho `CommunityMarkdown` & sửa rung nút tương tác Cộng đồng**
   - **Vị trí:** `frontend/src/communityMarkdown.tsx:57-62`, `frontend/src/community.tsx:121`, `frontend/src/community.css:1`
   - **Mô tả vấn đề:** Danh sách không thứ tự trong Markdown đang render `<p className="community-bullet">` thay vì `<ul><li>` (dù `community.css` có style `.community-markdown ul`). Nút Vote/Bookmark khi chuyển `aria-pressed="true"` thay đổi border/padding từ `4px 0` sang pill có padding ngang làm xô lệch các nút bên cạnh.
   - **Yêu cầu tinh chỉnh:** Render `<ul><li>` và `<ol><li>` chuẩn cho Markdown; đặt sẵn padding/border trong suốt cố định cho nút `.social-actions .link-button` để chuyển trạng thái không bị giật layout.
@@ -267,85 +267,85 @@
 
 ## Nhóm 4 — Đồng bộ Component & Trải nghiệm ở TẤT CẢ cửa sổ (`SYNC-01` .. `SYNC-14`)
 
-- [ ] **SYNC-01 (P1)** — **Chuẩn hóa `PageHeader` duy nhất cho toàn bộ 15+ cửa sổ & gỡ tiêu đề trùng lặp**
+- [x] **SYNC-01 (P1)** *(Đã hoàn thành 27/11/2026)* — **Chuẩn hóa `PageHeader` duy nhất cho toàn bộ 15+ cửa sổ & gỡ tiêu đề trùng lặp**
   - **Vị trí:** `frontend/src/workspace.tsx:290-304`, `frontend/src/publicHome.tsx:74`, `frontend/src/jobs.tsx:288,670`, `frontend/src/publicResumes.tsx:63`, `frontend/src/community.tsx:82`, `frontend/src/administration.tsx:82`, `frontend/src/analysisHistory.tsx:40`, `frontend/src/recruitmentNotifications.tsx:59`, `frontend/src/main.tsx:65,141,358`
   - **Mô tả vấn đề:** Hiện 4 view lấy `<h1>` từ `workspace.tsx`, trong khi 8+ view còn lại tự render `<h1>` bên trong `.card` với cỡ chữ và khoảng cách khác nhau; riêng 3 tab Recruiter lặp cùng lúc 2 heading tĩnh (`Tài khoản nhà tuyển dụng` + `Công ty và tin tuyển dụng`) ở phía trên nội dung tab. Mục `#applications` vẫn mang tên cũ `"Đơn ứng tuyển & Thông báo"`.
   - **Yêu cầu tinh chỉnh:** Xây dựng `<PageHeader eyebrow title description actions />` dùng chung ở đầu vùng nội dung chính cho **tất cả** cửa sổ; bỏ 2 khối tiêu đề tĩnh dư thừa của Recruiter; đổi tên `#applications` thành `"Đơn ứng tuyển của tôi"`.
   - **Kiểm chứng:** Mọi cửa sổ đều chỉ có đúng 1 `<h1>` thống nhất kích thước, vị trí và ngữ cấp heading (`h1` → `h2` → `h3`).
 
-- [ ] **SYNC-02 (P1)** — **Xử lý tình trạng 2 sidebar song song ở cửa sổ Cộng đồng (`#community`)**
+- [x] **SYNC-02 (P1)** *(Đã hoàn thành 27/11/2026)* — **Xử lý tình trạng 2 sidebar song song ở cửa sổ Cộng đồng (`#community`)**
   - **Vị trí:** `frontend/src/workspace.tsx`, `frontend/src/community.tsx`, `frontend/src/community.css`, `frontend/src/communityTagFilter.tsx:9-10`
   - **Mô tả vấn đề:** Trên desktop, người dùng mở Cộng đồng thấy cùng lúc `.workspace-sidebar` (232px) bên cạnh `.social-sidebar` (175px) + 3 thanh lọc xếp chồng phía trên feed (`.social-filters` + `.social-trending-searches` + `CommunityTagFilter`), thu hẹp diện tích đọc bài và sụp đổ ở 2 breakpoint khác nhau (`1023px` vs `700px`).
   - **Yêu cầu tinh chỉnh:** Chuyển điều hướng con của Cộng đồng (Bảng tin / Đã lưu / Theo dõi / Bài viết của tôi / Thông báo / Hồ sơ / Kiểm duyệt) thành thanh sub-tabs ngang thống nhất theo mẫu sub-nav của Trung tâm CV & Tuyển dụng; gộp thanh tìm kiếm + lọc tag + chip từ khóa xu hướng vào 1 khối lọc gọn.
   - **Kiểm chứng:** Cửa sổ `#community` sử dụng đúng khung `WorkspaceShell` 1 sidebar chung như mọi cửa sổ khác; bảng tin rộng rãi trên laptop 1280px.
 
-- [ ] **SYNC-03 (P1)** — **Đồng bộ `ConfirmDialog` cho mọi thao tác xóa, ẩn, khóa, duyệt trên toàn web**
+- [x] **SYNC-03 (P1)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ `ConfirmDialog` cho mọi thao tác xóa, ẩn, khóa, duyệt trên toàn web**
   - **Vị trí:** `frontend/src/ui.tsx:5-53`, `frontend/src/community.tsx:122,167`, `frontend/src/analysisHistory.tsx:15`, `frontend/src/jobs.tsx:572`, `frontend/src/administration.tsx:81,86,103`, `frontend/src/businessIdentity.tsx:27`, `frontend/src/resumeBuilder.tsx:287,294,300`, `frontend/src/publicResumes.tsx:42`
   - **Mô tả vấn đề:** Có nơi dùng `<Dialog>` (`main.tsx`, `reportModeration.tsx`, `communityReports.tsx`), có nơi bật `window.confirm()` gốc trình duyệt (`community.tsx`, `analysisHistory.tsx`, `jobs.tsx`), có nơi bấm 1 phát mất/khóa ngay không hỏi (`administration.tsx`, `businessIdentity.tsx`, `resumeBuilder.tsx`, `publicResumes.tsx`). Ở Admin và BusinessAdmin, ô `"Lý do xử lý"` nằm tách tuốt trên đầu trang làm nút ở dưới bị vô hiệu hóa khó hiểu.
   - **Yêu cầu tinh chỉnh:** Tạo `<ConfirmDialog>` dùng chung (mở rộng từ `<Dialog>`, hỗ trợ tùy chọn ô nhập lý do bắt buộc ngay bên trong modal cho thao tác Admin/BusinessAdmin); thay thế toàn bộ `window.confirm()` và thêm xác nhận cho các hành động hủy/khóa/xóa mục/ẩn CV còn thiếu.
   - **Kiểm chứng:** Không còn `confirm(` gốc trình duyệt trong `frontend/src/`; Admin/BusinessAdmin nhập lý do trực tiếp trong modal khi khóa tài khoản/lưu trữ tin/duyệt doanh nghiệp.
 
-- [ ] **SYNC-04 (P1)** — **Đồng bộ component `Pagination` duy nhất trên mọi danh sách**
+- [x] **SYNC-04 (P1)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ component `Pagination` duy nhất trên mọi danh sách**
   - **Vị trí:** `frontend/src/businessIdentity.tsx:27`, `frontend/src/recruitmentNotifications.tsx:53,69,78`, `frontend/src/publicResumes.tsx:74`, `frontend/src/main.tsx:315`, `frontend/src/community.tsx:112`, `frontend/src/reportModeration.tsx:53`, `frontend/src/communityReports.tsx:25`, `frontend/src/jobs.tsx:283,513,617`, `frontend/src/analysisHistory.tsx:51`
   - **Mô tả vấn đề:** `BusinessAdmin` thiếu `className="secondary"` nên nút phân trang thành màu xanh primary nổi bật; `RecruitmentNotifications` hiện 2 thanh phân trang trên/dưới kể cả khi có 0 mục; mỗi trang đặt tên nút một kiểu (`Trước/Sau`, `Trang trước`, `Trang thông báo trước`, `Trang doanh nghiệp trước`).
   - **Yêu cầu tinh chỉnh:** Tạo component `<Pagination page totalPages totalItems onPageChange />` đặt thống nhất dưới danh sách, tự ẩn khi `totalPages <= 1`, dùng nút `.secondary`, nhãn thống nhất `"Trang trước"` / `"Trang {page} / {totalPages} ({totalItems} mục)"` / `"Trang sau"`.
   - **Kiểm chứng:** Toàn bộ danh sách dùng chung `<Pagination>` và đồng nhất vị trí/màu sắc.
 
-- [ ] **SYNC-05 (P1)** — **Đồng bộ `<Alert>`, `<EmptyState>` và `<StaticLoading>` ở tất cả các cửa sổ**
+- [x] **SYNC-05 (P1)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ `<Alert>`, `<EmptyState>` và `<StaticLoading>` ở tất cả các cửa sổ**
   - **Vị trí:** `frontend/src/pairMatching.tsx:99,134`, `frontend/src/fullCvReview.tsx:54,74`, `frontend/src/writing.tsx:53`, `frontend/src/learning.tsx:13`, `frontend/src/weeklyRoadmap.tsx:40`, `frontend/src/analysisHistory.tsx:42,47`, `frontend/src/jobs.tsx:704`, `frontend/src/recruitmentNotifications.tsx:101`, `frontend/src/community.tsx:104,134,169-175`, `frontend/src/publicResumes.tsx:47-75`, `frontend/src/businessIdentity.tsx:12-27`, `frontend/src/publicHome.tsx:96`, `frontend/src/main.tsx:114`
   - **Mô tả vấn đề:** Hàng loạt `<p role="alert">` và `<div role="alert">` thiếu class `.error` nên không có khung/màu báo lỗi; `PublicResumes`, `BusinessIdentity`, `BusinessAdmin`, `CommunityNotifications` thiếu trạng thái loading (làm nháy dòng "Chưa có dữ liệu" trước khi API trả về) và thiếu `.empty-state`; `Community` đặt thông báo đang tải ở tít dưới cùng ngoài tầm mắt.
   - **Yêu cầu tinh chỉnh:** Tạo primitive `<Alert tone="error|warning|info|success" />` và `<EmptyState icon title description action />`; thay thế toàn bộ alert trần, `<p>` rỗng và bổ sung `<StaticLoading>` nhất quán.
   - **Kiểm chứng:** Mọi màn hình khi loading đều hiện skeleton/trạng thái tải trước khi hiện empty state; mọi lỗi đều hiển thị khối `.error` rõ ràng.
 
-- [ ] **SYNC-06 (P1)** — **Đồng bộ Từ điển Nhãn trạng thái & Enum tiếng Việt toàn hệ thống**
+- [x] **SYNC-06 (P1)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ Từ điển Nhãn trạng thái & Enum tiếng Việt toàn hệ thống**
   - **Vị trí:** `frontend/src/pairMatching.tsx:13,44`, `frontend/src/weeklyRoadmap.tsx:7`, `frontend/src/jobs.tsx:45`, `frontend/src/analysisHistory.tsx`, `frontend/src/administration.tsx`, `frontend/src/ui.tsx`
   - **Mô tả vấn đề:** Cùng một enum hiển thị 2 cách khác nhau giữa các cửa sổ (`career_start`: `"Bắt đầu nghề (Career Start)"` vs `"Bắt đầu nghề"`; `importance`: `"Tùy chọn"`/`"Chưa xác định"` vs `"Ưu tiên"`/`"Chưa phân loại"`). Màu badge trạng thái chưa thống nhất qua bảng tra cứu chung.
   - **Yêu cầu tinh chỉnh:** Tạo module `frontend/src/statusDictionary.ts` chuẩn hóa nhãn tiếng Việt + tone badge cho: Hồ sơ/CV, Dữ liệu trích xuất (`AI đề xuất` vs `Đã xác nhận`), Đơn ứng tuyển, Tin tuyển dụng, Báo cáo, Doanh nghiệp, `careerContext`, `importance`.
   - **Kiểm chứng:** Không còn bất kỳ nhãn enum trùng lặp/lệch tên giữa `#jobs`, `#matching`, `#weekly-roadmap`, `#analysis-history`, `#admin`.
 
-- [ ] **SYNC-07 (P1)** — **Tinh gọn thẻ tin tuyển dụng ở `#jobs` & cải thiện điểm vào `QuickMatch`**
+- [x] **SYNC-07 (P1)** *(Đã hoàn thành 27/11/2026)* — **Tinh gọn thẻ tin tuyển dụng ở `#jobs` & cải thiện điểm vào `QuickMatch`**
   - **Vị trí:** `frontend/src/jobs.tsx:81-113,287-310`, `frontend/src/publicHome.tsx:99-109,123`, `frontend/src/quickMatch.tsx:10`
   - **Mô tả vấn đề:** Mỗi thẻ tin ở trang tìm kiếm `#jobs` bung sẵn cả `<select>` CV, `<textarea>` Cover Letter 5 dòng và nút `"Nộp hồ sơ"`, làm danh sách quá dài và rối mắt (khác hẳn thẻ gọn ở `#home`). Nút `"Thử đối chiếu CV–JD"` ở `#home` dẫn sang `#jobs` nhưng `QuickMatchPanel` lại mặc định đóng.
   - **Yêu cầu tinh chỉnh:** Rút gọn thẻ tin ở `#jobs` thành thẻ tóm tắt đồng bộ với `#home` (tiêu đề, công ty/logo, lương, địa điểm, tag, trạng thái đã lưu/ứng tuyển, 2 nút `"Xem chi tiết"` / `"Ứng tuyển"` mở `#job?id=...` hoặc modal ứng tuyển nhanh); nếu vào `#jobs?quickMatch=1` từ `#home`, tự động mở rộng `QuickMatchPanel`.
   - **Kiểm chứng:** Danh sách `#jobs` gọn gàng, thao tác ứng tuyển ở `#job?id=...` hoạt động mượt mà với đầy đủ tính năng Cover Letter/idempotency.
 
-- [ ] **SYNC-08 (P1)** — **Tinh gọn trang Quản lý tin của Nhà tuyển dụng (`#recruiter-jobs`)**
+- [x] **SYNC-08 (P1)** *(Đã hoàn thành 27/11/2026)* — **Tinh gọn trang Quản lý tin của Nhà tuyển dụng (`#recruiter-jobs`)**
   - **Vị trí:** `frontend/src/jobs.tsx:685-748`
   - **Mô tả vấn đề:** Form `"Tạo tin nháp"` hơn 15 trường luôn mở sẵn đè lên đầu trang đẩy danh sách tin xuống rất sâu; mỗi thẻ tin lại bung toàn bộ bảng duyệt yêu cầu JD (`JobRequirementReview`) và công cụ tìm CV (`RecruiterKeywordResumeSearch`) ngay trong danh sách.
   - **Yêu cầu tinh chỉnh:** Đặt nút chính `"+ Tạo tin tuyển dụng mới"` ở đầu danh sách (mở drawer/modal hoặc form thu gọn có nút đóng); gom `"Rà soát yêu cầu JD"`, `"Tìm ứng viên phù hợp"`, `"AI viết lại JD"` vào các vùng/tab thu gọn theo từng tin.
   - **Kiểm chứng:** Nhà tuyển dụng vào `#recruiter-jobs` thấy ngay danh sách tin của mình và bộ lọc trạng thái trong 1 màn hình đầu tiên.
 
-- [ ] **SYNC-09 (P2)** — **Đồng bộ giao diện Trung tâm Thông báo Tuyển dụng và Thông báo Cộng đồng**
+- [x] **SYNC-09 (P2)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ giao diện Trung tâm Thông báo Tuyển dụng và Thông báo Cộng đồng**
   - **Vị trí:** `frontend/src/recruitmentNotifications.tsx`, `frontend/src/community.tsx:169-175`
   - **Mô tả vấn đề:** Hai trang thông báo dùng 2 cách hiển thị khác nhau: Tuyển dụng dùng `.notification-unread` viền trái, 2 bộ lọc select, nút `"Đọc tất cả thông báo"` / `"Đánh dấu đã đọc"`, icon `Bell`; Cộng đồng dùng `.social-notice.is-read` mờ dần, bộ lọc checkbox, nút `"Đánh dấu tất cả đã đọc"` / `"Đã đọc"`, không icon/loading.
   - **Yêu cầu tinh chỉnh:** Thống nhất một mẫu thẻ thông báo (viền trái cho mục chưa đọc, nhãn `"Đánh dấu đã đọc"` & `"Đánh dấu tất cả đã đọc"`, trạng thái kết nối SSE, bộ lọc select `"Tất cả / Chưa đọc"` và empty/loading state đồng bộ).
   - **Kiểm chứng:** Chuyển qua lại giữa thông báo Tuyển dụng và Cộng đồng có trải nghiệm nhất quán.
 
-- [ ] **SYNC-10 (P2)** — **Đồng bộ mô hình Kiểm duyệt Báo cáo Tuyển dụng & Cộng đồng**
+- [x] **SYNC-10 (P2)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ mô hình Kiểm duyệt Báo cáo Tuyển dụng & Cộng đồng**
   - **Vị trí:** `frontend/src/reportModeration.tsx`, `frontend/src/communityReports.tsx`
   - **Mô tả vấn đề:** Báo cáo tuyển dụng dùng state cục bộ, mở chi tiết ở bên dưới danh sách và dùng `pageSize = 10`; báo cáo cộng đồng dùng hash URL (`?report=...`), thay thế danh sách bằng màn chi tiết có nút `"Quay lại"`, và dùng `pageSize = 20`.
   - **Yêu cầu tinh chỉnh:** Chuẩn hóa 1 mẫu master-detail thống nhất (dùng hash query `?report=...` hoặc drawer chi tiết đồng bộ, `pageSize` thống nhất, cùng bộ lọc trạng thái và nút thao tác trong `ConfirmDialog`).
   - **Kiểm chứng:** Admin thao tác kiểm duyệt cả 2 loại báo cáo theo cùng quy trình.
 
-- [ ] **SYNC-11 (P2)** — **Đồng bộ bộ điều khiển Form (`LocationInput`, `SkillPicker`, Ngôn ngữ PDF, Checkbox)**
+- [x] **SYNC-11 (P2)** *(Đã hoàn thành 27/11/2026)* — **Đồng bộ bộ điều khiển Form (`LocationInput`, `SkillPicker`, Ngôn ngữ PDF, Checkbox)**
   - **Vị trí:** `frontend/src/locationInput.tsx`, `frontend/src/skillPicker.tsx`, `frontend/src/main.tsx:126-128`, `frontend/src/resumeBuilder.tsx:265,277,282-283`, `frontend/src/writing.tsx:47`, `frontend/src/community.tsx:143,169-175`
   - **Mô tả vấn đề:** `LocationInput` mới dùng ở tìm việc, chưa dùng ở Hồ sơ ứng viên và CV Builder; nhập kỹ năng ở Hồ sơ dùng dấu phẩy trong `<input>`, ở Builder lại hiện cả `<textarea>` lẫn `SkillPicker` không có nút gỡ chip; chọn ngôn ngữ PDF bị lặp 2 lần giữa `resumeBuilder.tsx` và `writing.tsx`; checkbox ở Cộng đồng dùng `.row` đẩy chữ ra xa ô tick thay vì `.check-option`.
   - **Yêu cầu tinh chỉnh:** Áp dụng `LocationInput` và một `SkillTagInput` (chip có nút `×` xóa + gợi ý từ `SkillCatalog`) thống nhất cho cả Hồ sơ & CV Builder; giữ 1 bộ chọn ngôn ngữ PDF duy nhất trên thanh đầu của CV Builder; chuẩn hóa mọi checkbox về `.check-option`.
   - **Kiểm chứng:** Nhập địa điểm/kỹ năng ở mọi form cho trải nghiệm giống nhau; checkbox căn trái gọn gàng.
 
-- [ ] **SYNC-12 (P2)** — **Đơn giản hóa thao tác Đọc/Xác nhận CV trong `#private-resumes` & `FullCvReview`**
+- [x] **SYNC-12 (P2)** *(Đã hoàn thành 27/11/2026)* — **Đơn giản hóa thao tác Đọc/Xác nhận CV trong `#private-resumes` & `FullCvReview`**
   - **Vị trí:** `frontend/src/main.tsx:296-311`, `frontend/src/fullCvReview.tsx:20-21,68`
   - **Mô tả vấn đề:** Mỗi phiên bản CV có 2 nút `"Thử trích xuất vX"` (schema v1) và `"Đọc đầy đủ vX"` (schema v3) gây khó hiểu cho người dùng; trong `FullCvReview`, dropdown `"Trường cần bổ sung"` xổ ra danh sách phẳng **166 dòng**.
   - **Yêu cầu tinh chỉnh:** Ẩn/gom `"Thử trích xuất v1"` vào menu nâng cao hoặc giải thích rõ nút chính `"Phân tích nội dung CV"` (v3); gom 166 trường trong `FullCvReview` thành `<optgroup>` theo nhóm (Thông tin chung, Kỹ năng, Kinh nghiệm, Dự án, Học vấn, Chứng chỉ) hoặc chọn nhóm trước rồi chọn mục.
   - **Kiểm chứng:** Người dùng mới dễ dàng nhận biết cần bấm nút nào sau khi tải CV lên.
 
-- [ ] **SYNC-13 (P1)** — **Gỡ/ẩn giao diện Debug & nhãn "Thử nghiệm / Localhost" khỏi trải nghiệm người dùng**
+- [x] **SYNC-13 (P1)** *(Đã hoàn thành 27/11/2026)* — **Gỡ/ẩn giao diện Debug & nhãn "Thử nghiệm / Localhost" khỏi trải nghiệm người dùng**
   - **Vị trí:** `frontend/src/pdfProbe.tsx`, `frontend/src/main.tsx:65,80-83,277,316`, `frontend/src/workspace.tsx:212`, `frontend/src/resumeBuilder.tsx:71,257,327`, `frontend/src/learning.tsx:12`, `frontend/src/businessIdentity.tsx:17`, `frontend/src/administration.tsx:104`
   - **Mô tả vấn đề:** Card QA `"Kiểm tra PDF tiếng Việt — Xuất tài liệu giả"` (`PdfProbe`) hiển thị trực tiếp trong CV Builder của mọi ứng viên; footer ghi `"Bản thử nghiệm · Localhost"`; màn đăng nhập ghi `"Đăng nhập thử nghiệm"`; thông báo hộp thư giả local hiện câu chữ ngay cả khi `localMailbox = false`.
   - **Yêu cầu tinh chỉnh:** Chỉ hiển thị `PdfProbe` và hướng dẫn hộp thư giả khi cờ môi trường dev/test (`import.meta.env.DEV` / flag từ API `/api/auth/recovery-options`) bật; đổi nhãn giao diện thành sản phẩm hoàn chỉnh (`"Đăng nhập"`, `"CareerGap AI · Đồ án Web Tuyển Dụng"`, `"Tạo CV theo mẫu"`).
   - **Kiểm chứng:** Build production (`npm run build`) không hiển thị nút `"Xuất PDF mẫu giả"` hoặc dòng chữ `"Đăng nhập thử nghiệm"` trên giao diện thường.
 
-- [ ] **SYNC-14 (P1)** — **Dọn sạch thuật ngữ kỹ thuật, UUID thô và ngôn ngữ pha trộn Anh–Việt**
+- [x] **SYNC-14 (P1)** *(Đã hoàn thành 27/11/2026)* — **Dọn sạch thuật ngữ kỹ thuật, UUID thô và ngôn ngữ pha trộn Anh–Việt**
   - **Vị trí:** `frontend/src/matching.tsx:16-66,91-98`, `frontend/src/pairMatching.tsx:38,46,128`, `frontend/src/main.tsx:70,181,320-358`, `frontend/src/jobs.tsx:407-431`, `frontend/src/publicResumes.tsx:24-71`, `frontend/src/community.tsx:167`, `frontend/src/communityReports.tsx:25`, `frontend/src/api.ts:56-58`
   - **Mô tả vấn đề:** Nhiều chỗ rò rỉ `BASELINE L09`, `retrieval_score`, `term overlap`, `provenance`, `parserVersion`, `methodVersion`, `segmentId`, `simple-v1`, `revision`, `purge`, `rubric thử nghiệm`, `Candidate`/`Recruiter`, `#{c.parentId.slice(0,6)}`, `Mã: {detail.report.id}`.
   - **Yêu cầu tinh chỉnh:** Việt hóa hoàn toàn câu chữ giao diện người dùng (`Candidate` → `Ứng viên`, `Recruiter` → `Nhà tuyển dụng`, `BASELINE L09` → `Gợi ý theo từ khóa`, `purge` → `xóa vĩnh viễn`, `#{c.parentId.slice(0,6)}` → `Trả lời @tên_tác_giả`); gom toàn bộ mã kỹ thuật (`methodVersion`, `parserVersion`, `UUID`, `errorCode`) vào khối thu gọn `<details><summary>Thông tin kỹ thuật</summary>...</details>` chỉ dùng khi cần tra cứu.
@@ -355,11 +355,11 @@
 
 ## Nhóm 5 — Hạn chế hệ thống, Dữ liệu đánh giá AI, Kiểm thử & Vận hành (`LIM-01` .. `LIM-07`)
 
-- [ ] **LIM-01 (P1)** — **Chạy lại toàn bộ Playwright E2E và bổ sung test cho các tính năng P1–P3 mới**
+- [x] **LIM-01 (P1)** *(Đã hoàn thành 27/11/2026)* — **Chạy lại toàn bộ Playwright E2E và bổ sung test cho các tính năng P1–P3 mới**
   - **Vị trí:** `frontend/e2e/`, `scripts/test-frontend-regression.py`
   - **Mô tả vấn đề:** Sau khi đồng bộ nhánh `feat/post-freeze-p1-p3-20261121` (231 backend tests, 42 FE unit tests), bộ E2E (`22` bài cũ) **chưa được chạy lại** và chưa có spec E2E cho các tính năng mới (`#home`, `#community`, `BusinessIdentity`, `QuickMatch`, `AnalysisHistory`, `WeeklyRoadmap`).
   - **Yêu cầu tinh chỉnh:** Cập nhật các spec E2E bị ảnh hưởng sau khi tinh chỉnh giao diện (`SYNC-*`, `FE-*`) và bổ sung spec E2E cho luồng mới; chạy trọn bộ qua `python scripts/test-frontend-regression.py`.
-  - **Kiểm chứng:** 100% backend PG + FE unit + Playwright E2E pass trên môi trường sạch.
+  - **Kiểm chứng:** Run `20261127-032340-8554` đạt `completed: true`: `240/240` backend PG tests, `12 files / 47/47` Vitest unit tests, `lint/typecheck/build` exit 0, và `26/26` Playwright E2E pass trên môi trường sạch (bao gồm `e2e/p1-p3-flows.spec.ts` và helper xác minh `BusinessIdentity` qua Admin seed).
 
 - [ ] **LIM-02 (P3)** — **Mở rộng dữ liệu đánh giá AI vượt phạm vi pilot hẹp `pilot_2cv_4jd_limited`**
   - **Vị trí:** `project-docs/evaluation/`, `project-docs/report/quality-acceptance-2026-10-30.md`
@@ -391,8 +391,8 @@
   - **Kết quả thực hiện:** Đã untrack `frontend/%SystemDrive%` qua `git rm -r --cached` và xóa toàn bộ các mục Nhóm A, Nhóm B (giữ `.local/frontend-step3-20261101-141707-55ce`) và Nhóm C (giữ `output/design-guide-20261029` và cặp `test-frontend-regression.py` / `test_frontend_regression.py`) theo phê duyệt của chủ dự án; giữ nguyên toàn bộ Nhóm D.
   - **Kiểm chứng:** Tất cả đường dẫn Nhóm A/B/C đã xóa khỏi đĩa, toàn bộ Nhóm D vẫn còn nguyên vẹn.
 
-- [ ] **LIM-07 (P2)** — **Chốt hồ sơ phát hành riêng cho nhánh sau tinh chỉnh (giữ nguyên Defense Baseline `release20261031`)**
+- [x] **LIM-07 (P2)** *(Đã hoàn thành 27/11/2026)* — **Chốt hồ sơ phát hành riêng cho nhánh sau tinh chỉnh (giữ nguyên Defense Baseline `release20261031`)**
   - **Vị trí:** `project-docs/evaluation/`, `project-docs/report/`
   - **Mô tả vấn đề:** Hiện các file `project-docs/evaluation/current-status.json` và `source-freeze-2026-11-01.json` chỉ phản ánh bản đóng băng 01/11 (`release20261031`), chưa có manifest đánh dấu riêng cho bản nâng cấp sau khi hoàn tất `taskboard_v2.md`.
   - **Yêu cầu tinh chỉnh:** Giữ nguyên các file đóng băng lịch sử của `release20261031`; tạo file báo cáo/manifest kiểm chứng mới cho bản nhánh mở rộng sau khi hoàn tất các task P0–P2 trong tài liệu này.
-  - **Kiểm chứng:** Hai mốc phiên bản (`release20261031` và bản mở rộng sau tinh chỉnh) phân biệt rõ ràng, không gây nhầm lẫn khi bảo vệ đồ án.
+  - **Kiểm chứng:** Đã tạo hồ sơ riêng [post-freeze-ui-sync-2026-11-27.md](project-docs/report/post-freeze-ui-sync-2026-11-27.md) và [post-freeze-ui-sync-2026-11-27.json](project-docs/evaluation/post-freeze-ui-sync-2026-11-27.json); các tệp Defense Baseline `release20261031` (`41b82c6`, 222 file đóng băng) giữ nguyên hoàn toàn.

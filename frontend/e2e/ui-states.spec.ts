@@ -13,7 +13,10 @@ async function mockWorkspace(page: Page, applications: () => Promise<{ status?: 
       const result = await applications();
       await route.fulfill({ status: result.status ?? 200, json: result.body }); return;
     } else if (['/api/resumes', '/api/public/resumes'].includes(path)) json = { items: [], total: 0, page: 1, pageSize: 20 };
-    else if (path === '/api/notifications') json = [];
+    else if (path === '/api/community/events') { await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }); return; }
+    else if (path === '/api/notifications' || path === '/api/community/people' || path === '/api/community/suggestions' || path === '/api/community/trending-searches') json = [];
+    else if (path === '/api/locations') json = { items: [] };
+    else if (path === '/api/community/posts') json = { items: [], page: 1, pageSize: 12, total: 0 };
     else if (path === '/api/resumes/public/me') json = null;
     else { unexpected.push(path); await route.fulfill({ status: 501, json: { title: 'unexpected_mock_request' } }); return; }
     await route.fulfill({ json });
@@ -30,15 +33,14 @@ test('[mock] loading and failed application reads never masquerade as empty list
     return fail ? { status: 503, body: { title: 'synthetic_read_failure' } } : { body: { items: [], page: 1, pageSize: 50, total: 0 } };
   });
   await page.goto('/#applications');
-  await expect(page.getByText('Đang tải đơn và thông báo…', { exact: true })).toBeVisible();
-  await expect(page.locator('.application-empty, .notification-empty')).toHaveCount(0);
+  await expect(page.getByText('Đang tải đơn ứng tuyển…', { exact: true })).toBeVisible();
+  await expect(page.locator('.application-empty')).toHaveCount(0);
   unblock();
-  await expect(page.getByRole('button', { name: 'Tải lại đơn và thông báo', exact: true })).toBeVisible();
-  await expect(page.locator('.application-empty, .notification-empty')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Tải lại đơn ứng tuyển', exact: true })).toBeVisible();
+  await expect(page.locator('.application-empty')).toHaveCount(0);
   fail = false;
-  await page.getByRole('button', { name: 'Tải lại đơn và thông báo', exact: true }).click();
+  await page.getByRole('button', { name: 'Tải lại đơn ứng tuyển', exact: true }).click();
   await expect(page.locator('.application-empty')).toBeVisible();
-  await expect(page.locator('.notification-empty')).toBeVisible();
   await expect(page.getByRole('alert')).toHaveCount(0);
   expect(unexpected).toEqual([]);
 });

@@ -1,18 +1,20 @@
-import { openView } from './helpers';
+import { openView, verifyRecruiterBusiness } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
 async function register(page: Page, role = 'Candidate') {
+  const email = `stage-b-${randomUUID()}@example.invalid`;
   await page.goto('/#access');
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
-  await page.getByLabel('Email', { exact: true }).fill(`stage-b-${randomUUID()}@example.invalid`);
+  await page.getByLabel('Email', { exact: true }).fill(email);
   await page.getByLabel('Mật khẩu', { exact: true }).fill(`${randomBytes(24).toString('base64')}Aa1!`);
   await page.locator('select[name="role"]').selectOption(role);
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
   await expect(page.getByRole('button', { name: 'Đăng xuất', exact: true })).toBeVisible();
+  return { email };
 }
 
 test('full CV review survives reload, preserves source, and supplies builder draft', async ({ page }) => {
@@ -25,7 +27,7 @@ test('full CV review survives reload, preserves source, and supplies builder dra
   await page.getByRole('button', { name: 'Tạo CV riêng tư', exact: true }).click();
   const resume = page.locator('.resumes > li').first();
   const admitted = page.waitForResponse(response => new URL(response.url()).pathname === '/api/ai/jobs' && response.request().method() === 'POST');
-  await resume.getByRole('button', { name: 'Đọc đầy đủ v1', exact: true }).click();
+  await resume.getByRole('button', { name: 'Phân tích nội dung CV v1', exact: true }).click();
   expect((await admitted).status()).toBe(202);
   await page.reload();
   const review = page.locator('.full-cv-review');
@@ -64,15 +66,18 @@ test('builder resumes a failed revision save after reload and recruiter download
     }
   });
   try {
-    await register(recruiterPage, 'Recruiter');
+    const { email: recruiterEmail } = await register(recruiterPage, 'Recruiter');
     await openView(recruiterPage, 'recruiter-jobs');
     const manager = recruiterPage.locator('.recruiter-jobs');
     const title = `Builder snapshot ${randomUUID()}`;
     await openView(recruiterPage, 'recruiter-company');
     await manager.getByLabel('Tên công ty', { exact: true }).fill(`Synthetic ${randomUUID()}`);
+    await manager.getByLabel('Website HTTPS', { exact: true }).fill('https://example.invalid');
     await manager.getByRole('button', { name: 'Tạo công ty', exact: true }).click();
     await expect(manager.getByRole('status')).toContainText('Hồ sơ công ty đã được lưu.');
+    await verifyRecruiterBusiness(recruiterPage, recruiterEmail, baseURL);
     await openView(recruiterPage, 'recruiter-jobs');
+    await manager.getByRole('button', { name: '+ Tạo tin tuyển dụng mới', exact: true }).click();
     const editor = manager.locator('.editor-form').last();
     await editor.getByLabel('Chức danh', { exact: true }).fill(title);
     await editor.getByLabel('Mô tả công việc', { exact: true }).fill('Synthetic PDF snapshot verification.');
@@ -120,7 +125,8 @@ test('builder resumes a failed revision save after reload and recruiter download
     await jobs.getByLabel('Từ khóa', { exact: true }).fill(title);
     await jobs.getByRole('button', { name: 'Tìm việc', exact: true }).click();
     const job = jobs.locator('.job-card').filter({ hasText: title });
-    await job.getByRole('button', { name: 'Nộp hồ sơ', exact: true }).click();
+    await job.getByRole('link', { name: /Xem chi tiết/ }).click();
+    await page.locator('.job-detail .job-card').getByRole('button', { name: 'Nộp hồ sơ', exact: true }).click();
     await expect(page.getByText(`Đã nộp hồ sơ cho “${title}”.`, { exact: true })).toBeVisible();
     await openView(page, 'cv-builder');
     await builder.getByLabel('Giới thiệu').fill('Phiên bản ngắn mới. Snapshot đơn vẫn giữ bản PDF dài.');

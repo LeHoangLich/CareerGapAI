@@ -56,7 +56,7 @@ test('candidate registers, controls profile sharing, changes password, and recov
   await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Đã đổi mật khẩu.' })).toBeVisible();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Đăng nhập thử nghiệm' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
 
   await page.getByRole('button', { name: 'Quên mật khẩu?', exact: true }).click();
   await page.getByLabel('Email', { exact: true }).fill(email);

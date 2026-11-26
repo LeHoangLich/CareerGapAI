@@ -98,6 +98,7 @@ def main():
         CAREERGAP_E2E_OUTPUT_DIRECTORY=str(out / 'playwright'),
         CAREERGAP_E2E_JSON=str(out / 'e2e.json'),
         DEMO_EMAIL='foundation-' + stamp + '@example.invalid', DEMO_PASSWORD=secrets.token_urlsafe(24) + 'Aa1!',
+        DEMO_ADMIN_EMAIL='admin-' + stamp + '@example.invalid', DEMO_ADMIN_PASSWORD=secrets.token_urlsafe(24) + 'Aa1!',
         POSTGRES_USER='ui_test', POSTGRES_PASSWORD=password, POSTGRES_DB=database)
     results = {'run': stamp, 'directory': str(out), 'providers': 'Fake', 'dotenvLoaded': False, 'checks': {}, 'completed': False, 'cleanup': False}
     inventory = {}
@@ -195,6 +196,13 @@ def main():
         dll = runtime / 'CareerGap.Api.dll'
         results['apiAssemblySha256'] = hashlib.sha256(dll.read_bytes()).hexdigest()
         run('seed', ['dotnet', str(dll), '--create-demo-user'], runtime)
+        admin_seed_env = {
+            **env,
+            'DEMO_EMAIL': env['DEMO_ADMIN_EMAIL'],
+            'DEMO_PASSWORD': env['DEMO_ADMIN_PASSWORD'],
+            'DEMO_ROLE': 'Admin',
+        }
+        run('seed-admin', ['dotnet', str(dll), '--create-demo-user'], runtime, command_env=admin_seed_env)
         api = start('api', ['dotnet', str(dll), '--urls', api_url], runtime)
         ready(api_url + '/api/health', api)
         vite_config = out / 'vite.config.mjs'

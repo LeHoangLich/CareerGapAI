@@ -19,8 +19,15 @@ export function fieldLabel(path: string) {
   const match = /^(\w+)\[(\d+)\](?:\.(\w+))?$/.exec(path);
   return match ? `${groupLabels[match[1]]} ${Number(match[2]) + 1}${match[3] ? ` · ${groups[match[1]][match[3]]}` : ''}` : path;
 }
-const allPaths = [...Object.keys(scalars), ...['skills', 'certifications'].flatMap(key => Array.from({ length: 20 }, (_, i) => `${key}[${i}]`)),
-  ...Object.entries(groups).flatMap(([group, fields]) => Array.from({ length: 10 }, (_, i) => Object.keys(fields).map(field => `${group}[${i}].${field}`)).flat())];
+const pathGroups: { label: string; paths: string[] }[] = [
+  { label: 'Thông tin chung', paths: Object.keys(scalars) },
+  { label: 'Kỹ năng', paths: Array.from({ length: 20 }, (_, i) => `skills[${i}]`) },
+  { label: 'Chứng chỉ', paths: Array.from({ length: 20 }, (_, i) => `certifications[${i}]`) },
+  ...Object.entries(groups).map(([group, fields]) => ({
+    label: groupLabels[group],
+    paths: Array.from({ length: 10 }, (_, i) => Object.keys(fields).map(field => `${group}[${i}].${field}`)).flat(),
+  })),
+];
 
 export function FullCvReview({ versionId, refreshKey, parentPolling = false }: { versionId: string; refreshKey: string; parentPolling?: boolean }) {
   const active = useViewActive();
@@ -64,18 +71,22 @@ export function FullCvReview({ versionId, refreshKey, parentPolling = false }: {
   if (!revision) return <>{displayMessage && <p role="status">{displayMessage}</p>}{error && <p role="alert">{error}{timedOut && <> <button type="button" className="secondary" onClick={() => { setError(''); retryPolling(); }}>Kiểm tra lại</button></>}</p>}</>;
   return <section className="card full-cv-review"><h2>Rà soát toàn bộ dữ liệu CV</h2>
     <AiBadge accepted={revision.origin !== 'ai_extracted'}/>
-    <p>{revision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'} · revision {revision.revisionNo}. Trường thiếu được để trống. Nội dung sửa hoặc thêm là thông tin bạn tự xác nhận.</p>
+    <p>{revision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'} · Phiên bản rà soát {revision.revisionNo}. Trường thiếu được để trống. Nội dung sửa hoặc thêm là thông tin bạn tự xác nhận.</p>
     {fields.map(field => {
       const original = revision.structuredData.fields.find(item => item.path === field.path);
       const evidence = revision.evidence.find(item => item.path === field.path);
       const documentSource = original?.value === field.value && evidence?.sourceType === 'document_span';
       return <fieldset key={field.path}><legend>{fieldLabel(field.path)}</legend>
         <label>{fieldLabel(field.path)}<textarea aria-label={fieldLabel(field.path)} value={field.value} maxLength={3000} onChange={e => { const next = e.target.value; setFields(current => current.map(item => item.path === field.path ? { ...item, value: next } : item)); }}/></label>
-        {documentSource ? <p>“{evidence.quote}” · {evidence.segmentId}</p> : <p>Bạn tự xác nhận; không phải trích dẫn từ CV.</p>}
+        {documentSource ? <p>Trích dẫn từ CV: “{evidence.quote}”</p> : <p>Bạn tự xác nhận; không phải trích dẫn từ CV.</p>}
         <button type="button" className="secondary" onClick={() => setFields(current => current.filter(item => item.path !== field.path))}>Bỏ {fieldLabel(field.path)}</button>
       </fieldset>;
     })}
-    <div><label>Trường cần bổ sung<select value={path} onChange={e => setPath(e.target.value)}><option value="">Chọn trường cần bổ sung</option>{allPaths.filter(item => fields.every(field => field.path !== item)).map(item => <option key={item} value={item}>{fieldLabel(item)}</option>)}</select></label>
+    <div><label>Trường cần bổ sung<select value={path} onChange={e => setPath(e.target.value)}><option value="">Chọn trường cần bổ sung</option>{pathGroups.map(group => {
+      const available = group.paths.filter(item => fields.every(field => field.path !== item));
+      if (!available.length) return null;
+      return <optgroup key={group.label} label={group.label}>{available.map(item => <option key={item} value={item}>{fieldLabel(item)}</option>)}</optgroup>;
+    })}</select></label>
       <label>Nội dung tự bổ sung<textarea value={value} maxLength={3000} onChange={e => setValue(e.target.value)}/></label>
       <button type="button" disabled={!path || !value.trim() || fields.some(field => field.path === path)} onClick={() => { setFields(current => [...current, { path, value: value.trim() }]); setValue(''); setPath(''); }}>Thêm thông tin</button></div>
     <button type="button" disabled={busy} onClick={() => { setBusy(true); setError(''); void api<Revision>(`/api/resume-versions/${versionId}/revisions/${revision.id}/confirm-full`, {

@@ -4,7 +4,7 @@ import { JobTagPicker } from './jobTags';
 import { SkillPicker } from './skillPicker';
 import { CompanyLogo, CompanyLogoEditor } from './companyLogo';
 import { salaryLabel, salaryPayload, salaryPeriods } from './salary';
-import { Dialog, ValidatedForm } from './ui';
+import { Alert, ConfirmDialog, Dialog, EmptyState, Pagination, StaticLoading, ValidatedForm } from './ui';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, type PagedResponse } from './api';
 import { jobHref, jobIdFromHash, jobShareUrl, jobSignInHref } from './jobLinks';
@@ -14,7 +14,6 @@ import { JobDiscoveryWorkspace } from './jobDiscoveryWorkspace';
 import { PairAnalysisButton, PairRecommendations } from './pairMatching';
 import { ReportButton } from './administration';
 import { Briefcase, MagnifyingGlass, MapPin, SlidersHorizontal, ArrowRight } from '@phosphor-icons/react';
-import { StaticLoading } from './workspace';
 import { PersistentView } from './persistentView';
 import type { WorkspaceView } from './navigation';
 import {RecruitmentNotifications,NotificationApplicationDetail} from './recruitmentNotifications';
@@ -127,17 +126,17 @@ function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, res
         <dl className="job-company-facts"><div><dt>Địa điểm</dt><dd>{job.company.location||'Chưa cập nhật'}</dd></div><div><dt>Ngành</dt><dd>{job.company.industry||'Chưa cập nhật'}</dd></div><div><dt>Quy mô</dt><dd>{job.company.sizeLabel||'Chưa cập nhật'}</dd></div></dl>
         {job.company.websiteUrl?.startsWith('https://')&&<a href={job.company.websiteUrl} target="_blank" rel="noopener noreferrer">Website doanh nghiệp (mở tab mới)</a>}
       </section>
-    </div>:<><p className="job-description">{version.description}</p>
-      <details><summary>Yêu cầu và quyền lợi</summary><p><strong>Yêu cầu</strong><br/>{version.requirementsText}</p>{version.benefitsText && <p><strong>Quyền lợi</strong><br/>{version.benefitsText}</p>}</details>
-      <a href={jobHref(job.id)}>Xem chi tiết việc làm</a>
-    </>}
+    </div>:<p className="job-description">{version.description.length > 220 ? `${version.description.slice(0, 220)}…` : version.description}</p>}
     {job.applicationDeadline && <small>Hạn nhận hồ sơ: {new Date(job.applicationDeadline).toLocaleString('vi-VN')}</small>}
     {job.maxApplications != null && <small className="job-capacity">{job.remainingSlots === 0 ? `Đã đủ ${job.maxApplications}/${job.maxApplications} hồ sơ đang xử lý` : `Còn ${job.remainingSlots ?? job.maxApplications}/${job.maxApplications} chỗ nhận hồ sơ`}</small>}
-    {candidate && <button type="button" className="secondary save-job" disabled={saving} aria-pressed={saved} onClick={() => onToggleSaved(job)}>{saving?'Đang lưu…':saved ? 'Bỏ lưu việc' : 'Lưu việc'}</button>}
-    {(candidate || reportable) && <ReportButton targetType="job" targetId={job.id}/>}
+    <div className="row">
+      {!detail && <a className="button-link" href={jobHref(job.id)}>{candidate && !application && job.acceptingApplications ? 'Xem chi tiết & Ứng tuyển' : 'Xem chi tiết việc làm'}</a>}
+      {candidate && <button type="button" className="secondary save-job" disabled={saving} aria-pressed={saved} onClick={() => onToggleSaved(job)}>{saving?'Đang lưu…':saved ? 'Bỏ lưu việc' : 'Lưu việc'}</button>}
+      {(candidate || reportable) && <ReportButton targetType="job" targetId={job.id}/>}
+    </div>
     {candidate && application && <p className="hint" role="status">Bạn đã nộp hồ sơ · {statusLabel(application.status)} · CV phiên bản {application.resumeVersionNo}</p>}
-    {candidate && application && <SubmittedCoverLetter value={application.coverLetter}/>}
-    {candidate && !application && job.acceptingApplications && <div className="apply-row">
+    {detail && candidate && application && <SubmittedCoverLetter value={application.coverLetter}/>}
+    {detail && candidate && !application && job.acceptingApplications && <div className="apply-row">
       {resumeVersions.length ? <><label>CV gửi<select aria-label={`CV gửi cho ${version.title}`} disabled={applying} value={selectedVersionId ?? resumeVersions[0].id} onChange={e => onSelectVersion(job.id, e.target.value)}>
         {resumeVersions.map(item => <option key={item.id} value={item.id}>{item.resumeTitle} · v{item.versionNo}</option>)}
       </select></label><label className="cover-letter-input">Thư ứng tuyển (không bắt buộc)<textarea aria-label={`Thư ứng tuyển cho ${version.title}`} rows={5} maxLength={coverLetterLimit} disabled={applying} value={coverLetter} onChange={event=>onCoverLetter(job.id,event.target.value)} placeholder="Giới thiệu ngắn về bạn và lý do quan tâm đến vị trí này."/><small>{coverLetter.length.toLocaleString('vi-VN')} / 5.000 ký tự · Thư được gửi cùng CV và không thể sửa sau khi nộp.</small></label><button type="button" disabled={applying} onClick={() => onApply(job)}>{applying ? 'Đang nộp…' : 'Nộp hồ sơ'}</button></>
@@ -314,12 +313,12 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
   }
   const items = results?.items ?? [];
   const jobResults = <>
-    {error && <p role="alert" className="error">{error}</p>}
-    {applicationMessage && <p role="status">{applicationMessage}</p>}
+    {error && <Alert tone="error">{error}</Alert>}
+    {applicationMessage && <Alert tone="success">{applicationMessage}</Alert>}
     {busy && <StaticLoading label="Đang tìm tin…"/>}
-    {!busy && !items.length && !error && <div className="empty-state"><Briefcase size={28} aria-hidden="true"/><h3>Chưa có tin công khai phù hợp.</h3><p>Thử thay đổi từ khóa hoặc mở rộng bộ lọc để tìm cơ hội khác.</p></div>}
+    {!busy && !items.length && !error && <EmptyState icon={<Briefcase size={28} aria-hidden="true"/>} title="Chưa có tin công khai phù hợp." description="Thử thay đổi từ khóa hoặc mở rộng bộ lọc để tìm cơ hội khác."/>}
     <div className="job-list">{items.map(job => <JobCard key={job.id} coverLetter={coverLettersByJob[job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} job={job} candidate={candidate} reportable={session?.roles.includes('Recruiter')} saved={savedIds.has(job.id)} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(job.id)} selectedVersionId={selectedVersionByJob[job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === job.id}/>)}</div>
-    {results && results.total > results.pageSize && <div className="row job-pages"><button type="button" className="secondary" disabled={page <= 1 || busy} onClick={() => { const nextPage = page - 1; setPage(nextPage); const nextHash = buildJobsHash(appliedFilters, nextPage); if (window.location.hash !== nextHash) window.location.hash = nextHash; }}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(results.total / results.pageSize))}</span><button type="button" className="secondary" disabled={page * results.pageSize >= results.total || busy} onClick={() => { const nextPage = page + 1; setPage(nextPage); const nextHash = buildJobsHash(appliedFilters, nextPage); if (window.location.hash !== nextHash) window.location.hash = nextHash; }}>Sau</button></div>}
+    {results && <Pagination page={page} totalItems={results.total} pageSize={results.pageSize} busy={busy} ariaLabel="Phân trang việc làm" onPageChange={nextPage => { setPage(nextPage); const nextHash = buildJobsHash(appliedFilters, nextPage); if (window.location.hash !== nextHash) window.location.hash = nextHash; }}/>}
     {candidate && saved.length > 0 && <details className="saved-jobs"><summary>Việc đã lưu ({saved.length})</summary><div className="job-list">{saved.map(x => <JobCard key={x.job.id} coverLetter={coverLettersByJob[x.job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} job={x.job} candidate={true} saved={true} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(x.job.id)} selectedVersionId={selectedVersionByJob[x.job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === x.job.id}/>)}</div></details>}
     {!candidate && <p className="hint">Đăng nhập bằng tài khoản ứng viên để lưu tin quan tâm.</p>}
   </>;
@@ -530,6 +529,8 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
   const [deadline, setDeadline] = useState('');
   const [maxApplications, setMaxApplications] = useState('');
   const [editingJob, setEditingJob] = useState<Job>();
+  const [composerOpen, setComposerOpen] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<Job | null>(null);
   const [rewriteProposal, setRewriteProposal] = useState<{ id: string; status: string; errorCode?: string | null; provider?: string; sections?: { description: string; requirementsText: string; benefitsText: string | null } | null }>();
   const [rewriteBusy, setRewriteBusy] = useState(false);
   const rewriteAbortRef = useRef<AbortController | null>(null);
@@ -651,10 +652,10 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
   }
 
   async function changeState(job: Job, action: 'publish' | 'close' | 'archive' | 'restore') {
-    if (action === 'archive' && !confirm(`Ẩn tin "${job.version.title}" khỏi danh sách công khai? Các hồ sơ ứng tuyển đã nộp vẫn được giữ nguyên.`)) return;
     setBusy(true); setError(''); setMessage('');
     try {
       await api<Job>(`/api/jobs/${job.id}/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rowVersion: job.rowVersion }) });
+      setArchiveTarget(null);
       await refresh();
       setMessage(action === 'publish' ? 'Tin đã được công khai.' : action === 'close' ? 'Tin đã được đóng.' : action === 'archive' ? 'Tin đã được ẩn khỏi danh sách công khai.' : 'Tin đã được khôi phục.');
     }
@@ -749,14 +750,13 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
   }
 
   return <section className="card recruiter-jobs" id="recruiter-jobs">
-    <div className="section-heading"><div><p className="eyebrow">NHÀ TUYỂN DỤNG</p><h2>Công ty và tin tuyển dụng</h2></div></div>
-    {error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
+    {error && <Alert tone="error">{error}</Alert>}{message && <Alert tone="success">{message}</Alert>}
     {business?.status!=='verified'&&<p className="hint">Để công khai tin, hãy vào <a href="#recruiter-company">Hồ sơ công ty</a>, gắn công ty chính và hoàn tất xác minh doanh nghiệp.</p>}
     <div hidden={activeView !== 'recruiter-company'}>
     <BusinessIdentityPanel companies={companies} onChange={refresh}/>
     <div className="company-row"><strong>Công ty của tôi</strong>{companies.map(company => <div className="company-chip" key={company.id}><span>{company.name}</span><button type="button" className="link-button" disabled={business?.companyId!==company.id} onClick={() => { setEditingCompany(company); setCompanyForm({ name: company.name, description: company.description ?? '', websiteUrl: company.websiteUrl ?? '', location: company.location ?? '', industry: company.industry ?? '', sizeLabel: company.sizeLabel ?? '' }); }}>Sửa</button></div>)}</div>
     {companies.filter(company=>company.id===business?.companyId).map(company=><CompanyLogoEditor key={company.id} company={company} onUpdated={refresh}/>)}
-    {!editingCompany&&companies.length>0&&business?.status!=='verified'&&<p role="status">Tài khoản đã có hồ sơ doanh nghiệp. Hãy chọn công ty chính ở trên (nếu chưa chọn), rồi nhấn Sửa để cập nhật; không tạo thêm công ty.</p>}
+    {!editingCompany&&companies.length>0&&business?.status!=='verified'&&<p className="hint">Tài khoản đã có hồ sơ doanh nghiệp. Hãy chọn công ty chính ở trên (nếu chưa chọn), rồi nhấn Sửa để cập nhật; không tạo thêm công ty.</p>}
     {(editingCompany || business?.status!=='verified') && <ValidatedForm className="editor-form" onSubmit={saveCompany}><h3>{editingCompany ? 'Cập nhật công ty' : 'Tạo hồ sơ công ty'}</h3>
       <label>Tên công ty<input required maxLength={200} value={companyForm.name} onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}/></label>
       <label>Giới thiệu<textarea maxLength={4000} value={companyForm.description} onChange={e => setCompanyForm({ ...companyForm, description: e.target.value })}/></label>
@@ -765,7 +765,8 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     </ValidatedForm>}
     </div>
     <div hidden={activeView !== 'recruiter-jobs'}>
-    <ValidatedForm className="editor-form" onSubmit={saveJob}><h3>{editingJob ? `Sửa JD · bản mới từ v${editingJob.version.versionNo}` : 'Tạo tin nháp'}</h3>
+    {!composerOpen && !editingJob && <div className="row" style={{ marginBottom: 16 }}><button type="button" onClick={() => setComposerOpen(true)}>+ Tạo tin tuyển dụng mới</button></div>}
+    {(composerOpen || editingJob) && <ValidatedForm className="editor-form" onSubmit={saveJob}><div className="section-heading"><h3>{editingJob ? `Sửa JD · bản mới từ v${editingJob.version.versionNo}` : 'Tạo tin nháp'}</h3><button type="button" className="secondary" onClick={() => { rewriteAbortRef.current?.abort(); setRewriteBusy(false); setComposerOpen(false); setEditingJob(undefined); setRewriteProposal(undefined); setJobTags([]); setJobForm(emptyJob); setDeadline(''); setMaxApplications(''); }}>Đóng biểu mẫu</button></div>
       {!editingJob && <label>Công ty<select required value={companyId} onChange={e => setCompanyId(e.target.value)}><option value="">Chọn công ty</option>{companies.filter(c=>c.id===business?.companyId).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>}
       <label>Chức danh<input required maxLength={200} value={jobForm.title} onChange={e => setJobForm({ ...jobForm, title: e.target.value })}/></label>
       <label>Mô tả công việc<textarea required maxLength={12000} value={jobForm.description} onChange={e => setJobForm({ ...jobForm, description: e.target.value })}/></label>
@@ -783,8 +784,8 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
         {rewriteProposal.sections.benefitsText && <><p><strong>Quyền lợi đề xuất:</strong></p><pre style={{ whiteSpace: 'pre-wrap' }}>{rewriteProposal.sections.benefitsText}</pre></>}
         <button type="button" className="secondary" onClick={() => { setJobForm(current => ({ ...current, description: rewriteProposal.sections!.description, requirementsText: rewriteProposal.sections!.requirementsText, benefitsText: rewriteProposal.sections!.benefitsText ?? current.benefitsText })); setMessage('Đã áp dụng đề xuất vào bản nháp. Hãy kiểm tra lại rồi bấm Lưu phiên bản mới.'); }}>Áp dụng vào bản nháp</button>
       </section>}
-      {rewriteProposal && (rewriteProposal.status === 'failed' || rewriteProposal.status === 'cancelled') && <p role="alert">Không tạo được gợi ý viết lại JD ({rewriteProposal.errorCode ?? 'lỗi xử lý'}).</p>}
-    </ValidatedForm>
+      {rewriteProposal && (rewriteProposal.status === 'failed' || rewriteProposal.status === 'cancelled') && <Alert tone="error">Không tạo được gợi ý viết lại JD ({rewriteProposal.errorCode ?? 'lỗi xử lý'}).</Alert>}
+    </ValidatedForm>}
     </div>
     <div hidden={activeView === 'recruiter-company'}>
     <h3>{activeView === 'recruiter-applicants' ? 'Ứng viên theo tin tuyển dụng' : 'Tin của tôi'}</h3>
@@ -796,10 +797,10 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     {!jobsLoading&&currentJobPage&&!jobs.length&&<p>{jobQuery.status?'Không có tin nào khớp trạng thái đã chọn.':'Chưa có tin. Hãy tạo công ty rồi bắt đầu bằng một tin nháp.'}</p>}
     <div className="job-list" aria-busy={jobsLoading}>{jobs.map(job => {
       const applicationPage=applicationsByJob[job.id];
-      return <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{['published','closed'].includes(job.status)?<a href={jobHref(job.id)}>{job.version.title}</a>:job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo} · {(job.viewCount ?? 0).toLocaleString('vi-VN')} lượt xem{job.maxApplications != null ? ` · ${job.activeApplicationCount ?? 0}/${job.maxApplications} hồ sơ đang xử lý` : ''}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><p className="job-salary"><strong>{salaryLabel(job.version)}</strong></p>{job.status === 'archived' && <p className="hint">{job.archivedByRole === 'recruiter' ? 'Tin do bạn tự ẩn. Bạn có thể khôi phục thành tin đã đóng hoặc bản nháp.' : 'Tin đã bị quản trị viên ẩn.'}</p>}<div className="row" hidden={activeView !== 'recruiter-jobs'}><button type="button" className="secondary" disabled={busy || business?.companyId!==job.companyId || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button type="button" disabled={busy||business?.status!=='verified'||business.companyId!==job.companyId} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}{job.status !== 'archived' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'archive')}>Ẩn tin</button>}{job.status === 'archived' && job.archivedByRole === 'recruiter' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'restore')}>Khôi phục tin</button>}<a href="#recruiter-applicants">Xem ứng viên</a></div>
-      <div hidden={activeView !== 'recruiter-jobs'||business?.companyId!==job.companyId}><JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
+      return <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{['published','closed'].includes(job.status)?<a href={jobHref(job.id)}>{job.version.title}</a>:job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo} · {(job.viewCount ?? 0).toLocaleString('vi-VN')} lượt xem{job.maxApplications != null ? ` · ${job.activeApplicationCount ?? 0}/${job.maxApplications} hồ sơ đang xử lý` : ''}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><p className="job-salary"><strong>{salaryLabel(job.version)}</strong></p>{job.status === 'archived' && <p className="hint">{job.archivedByRole === 'recruiter' ? 'Tin do bạn tự ẩn. Bạn có thể khôi phục thành tin đã đóng hoặc bản nháp.' : 'Tin đã bị quản trị viên ẩn.'}</p>}<div className="row" hidden={activeView !== 'recruiter-jobs'}><button type="button" className="secondary" disabled={busy || business?.companyId!==job.companyId || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button type="button" disabled={busy||business?.status!=='verified'||business.companyId!==job.companyId} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}{job.status !== 'archived' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => setArchiveTarget(job)}>Ẩn tin</button>}{job.status === 'archived' && job.archivedByRole === 'recruiter' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'restore')}>Khôi phục tin</button>}<a href="#recruiter-applicants">Xem ứng viên</a></div>
+      <details hidden={activeView !== 'recruiter-jobs'||business?.companyId!==job.companyId} className="recruiter-job-tools"><summary>Rà soát yêu cầu JD &amp; Tìm ứng viên phù hợp</summary><JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
       <RecruiterKeywordResumeSearch jobId={job.id} enabled={job.status === 'published' && job.acceptingApplications}/>
-      </div>
+      </details>
       <div hidden={activeView !== 'recruiter-applicants'}><button type="button" className="secondary" onClick={() => void toggleApplications(job)}>{expandedApplications[job.id] ? 'Ẩn hồ sơ' : 'Hồ sơ ứng tuyển'}</button>
       <PairRecommendations key={`applications:${job.id}`} direction="applications" jobId={job.id}/>
       {expandedApplications[job.id] && <div className="job-applications" aria-busy={!!loadingApplications[job.id]}><h4>Hồ sơ ứng tuyển</h4>
@@ -828,5 +829,15 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     </article>;})}</div>
     {jobPagination('dưới')}
     </div>
+    <ConfirmDialog
+      open={!!archiveTarget}
+      title="Ẩn tin tuyển dụng"
+      message={archiveTarget ? `Ẩn tin "${archiveTarget.version.title}" khỏi danh sách công khai? Các hồ sơ ứng tuyển đã nộp vẫn được giữ nguyên.` : ''}
+      confirmLabel="Ẩn tin"
+      danger
+      busy={busy}
+      onClose={() => setArchiveTarget(null)}
+      onConfirm={async () => { if (archiveTarget) await changeState(archiveTarget, 'archive'); }}
+    />
   </section>;
 }

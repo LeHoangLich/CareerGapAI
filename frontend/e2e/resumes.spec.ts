@@ -30,7 +30,8 @@ test('candidate names a private resume, appends a version, and selects the inten
   await expect(resume.getByRole('radio')).toHaveCount(1);
   await expect(resume.getByRole('radio')).toBeChecked();
 
-  await resume.getByRole('button', { name: 'Thử trích xuất v1', exact: true }).click();
+  await resume.getByText('Tùy chọn nâng cao', { exact: true }).click();
+  await resume.getByRole('button', { name: 'Trích xuất nhanh kỹ năng v1', exact: true }).click();
   const revisionReview = page.locator('.revision-review');
   await expect(revisionReview).toContainText('Chờ bạn xác nhận', { timeout: 20000 });
   await expect(revisionReview.getByLabel('TypeScript', { exact: true })).toBeChecked();
@@ -55,6 +56,7 @@ test('candidate names a private resume, appends a version, and selects the inten
   await expect(page.locator('.public-resume-controls')).toContainText('CV đã công khai');
   await expect(page.locator('.public-resume-controls')).toContainText('Đang công khai phiên bản 2');
   await page.getByRole('button', { name: 'Ẩn CV công khai', exact: true }).click();
+  await page.getByRole('button', { name: 'Ẩn CV', exact: true }).click();
   await expect(page.locator('.public-resume-controls')).toContainText('CV đã được ẩn');
 
   await resume.getByRole('button', { name: 'Đổi tên', exact: true }).click();

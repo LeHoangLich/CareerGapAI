@@ -8,9 +8,9 @@ import { useAiJobPolling } from './useAiJobPolling';
 type Resume = { id: string; title: string; versions: { id: string; versionNo: number }[] };
 type PublicJobOption = { id: string; version: { id: string; title: string }; company: { name: string } };
 
-export function QuickMatchPanel({ resumes, preselectedJob }: { resumes: Resume[]; preselectedJob?: PublicJobOption }) {
+export function QuickMatchPanel({ resumes, preselectedJob, defaultOpen = false }: { resumes: Resume[]; preselectedJob?: PublicJobOption; defaultOpen?: boolean }) {
   const active = useViewActive();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen || !!preselectedJob);
   const [cvSource, setCvSource] = useState<'existing' | 'paste'>('existing');
   const [resumeVersionId, setResumeVersionId] = useState('');
   const [cvText, setCvText] = useState('');

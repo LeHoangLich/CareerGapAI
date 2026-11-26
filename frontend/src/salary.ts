@@ -1,9 +1,9 @@
 export type Salary = { salaryMin: number | null; salaryMax: number | null; salaryCurrency: string | null; salaryPeriod: string | null };
 export const salaryPeriods: Record<string,string> = { hour:'giờ', day:'ngày', month:'tháng', year:'năm', project:'dự án' };
 export function salaryLabel(s: Salary): string {
-  if(s.salaryMin===null&&s.salaryMax===null)return 'Lương chưa công bố';
+  if(s.salaryMin==null&&s.salaryMax==null)return 'Lương chưa công bố';
   const n=(value:number)=>value.toLocaleString('vi-VN',{maximumFractionDigits:2});
-  const amount=s.salaryMin===null?`Đến ${n(s.salaryMax!)}`:s.salaryMax===null?`Từ ${n(s.salaryMin)}`:s.salaryMin===s.salaryMax?n(s.salaryMin):`${n(s.salaryMin)}–${n(s.salaryMax)}`;
+  const amount=s.salaryMin==null?`Đến ${n(s.salaryMax!)}`:s.salaryMax==null?`Từ ${n(s.salaryMin)}`:s.salaryMin===s.salaryMax?n(s.salaryMin):`${n(s.salaryMin)}–${n(s.salaryMax)}`;
   return `${amount} ${s.salaryCurrency??''}${s.salaryPeriod?` / ${salaryPeriods[s.salaryPeriod]??s.salaryPeriod}`:''}`.trim();
 }
 export function salaryPayload(form:{salaryMin:string;salaryMax:string;salaryCurrency:string;salaryPeriod:string}):Salary {

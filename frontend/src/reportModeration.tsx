@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, ApiError } from './api';
-import { Dialog, ValidatedForm } from './ui';
+import { Alert, Dialog, EmptyState, Pagination, StaticLoading, ValidatedForm } from './ui';
 
 type Report = { id:string; targetType:string; targetId:string|null; reason:string; status:string; rowVersion:number; createdAt:string; title?:string|null };
 type ReportPage = {items:Report[];total:number;page:number;pageSize:number};
@@ -40,18 +40,17 @@ export function ReportModeration() {
       if(e instanceof ApiError&&e.status===409)setDetail(undefined);
     } finally {setBusy(false)}
   }
-  const pages=Math.max(1,Math.ceil((data?.total??0)/10));
   const changeFilter=()=>{setPage(1);setSelected(undefined);setMessage('')};
   return <section className="report-moderation" aria-label="Xử lý báo cáo nội dung">
     <h2>Báo cáo tin tuyển dụng</h2><p>Xem nội dung và lịch sử trước khi quyết định. Gỡ tin giữ lại hồ sơ đã nộp; cảnh cáo được gửi qua thông báo tuyển dụng.</p>
     <div className="row report-filters"><label>Trạng thái báo cáo<select disabled={busy} value={status} onChange={e=>{setStatus(e.target.value);changeFilter()}}><option value="all">Tất cả trạng thái</option>{['open','reviewed','resolved','dismissed'].map(s=><option key={s} value={s}>{states[s]}</option>)}</select></label>
       <label>Loại nội dung<select disabled={busy} value={type} onChange={e=>{setType(e.target.value);changeFilter()}}><option value="job">Tin tuyển dụng</option><option value="public_resume">CV công khai</option><option value="all">Tất cả loại</option></select></label>
       <button type="button" className="secondary" disabled={busy||loading} onClick={()=>setRevision(n=>n+1)}>Tải lại báo cáo</button></div>
-    {message&&<p role="status">{message}</p>}{loading&&<p role="status">Đang tải báo cáo…</p>}{error&&<p role="alert">{error} <button type="button" className="secondary" onClick={()=>setRevision(n=>n+1)}>Thử lại danh sách</button></p>}
-    {data&&<><p>{data.total} báo cáo · {data.total?(page-1)*10+1:0}–{Math.min(page*10,data.total)}</p>{!data.total&&<p>Không có báo cáo khớp bộ lọc.</p>}
+    {message&&<Alert tone="success">{message}</Alert>}{loading&&<StaticLoading message="Đang tải báo cáo…"/>}{error&&<Alert tone="error" actions={<button type="button" className="secondary" onClick={()=>setRevision(n=>n+1)}>Thử lại danh sách</button>}>{error}</Alert>}
+    {data&&<><p>{data.total} báo cáo · {data.total?(page-1)*data.pageSize+1:0}–{Math.min(page*data.pageSize,data.total)}</p>{!data.total&&<EmptyState title="Không có báo cáo khớp bộ lọc."/>}
       <ul className="admin-list">{data.items.map(r=><li key={r.id}><strong>{r.title??(r.targetType==='job'?'Tin không còn tồn tại':'Báo cáo CV công khai')}</strong><p>{states[r.status]} · {date(r.createdAt)}</p><p className="report-text">{r.reason}</p><button type="button" className="secondary" disabled={busy} aria-pressed={selected===r.id} onClick={()=>{setSelected(r.id);setMessage('')}}>Xem chi tiết báo cáo</button></li>)}</ul>
-      <div className="row"><button type="button" className="secondary" disabled={busy||page===1} onClick={()=>setPage(p=>p-1)}>Trang báo cáo trước</button><span>Trang {page} / {pages}</span><button type="button" className="secondary" disabled={busy||page===pages} onClick={()=>setPage(p=>p+1)}>Trang báo cáo sau</button></div></>}
-    {selected&&<section className="card report-detail" aria-label="Chi tiết báo cáo"><h2>Chi tiết báo cáo</h2>{detailLoading&&<p role="status">Đang tải chi tiết…</p>}{detailError&&<p role="alert">{detailError} <button type="button" className="secondary" disabled={busy} onClick={()=>setRevision(n=>n+1)}>Tải lại chi tiết</button></p>}
+      <Pagination page={page} totalItems={data.total} pageSize={data.pageSize} busy={busy} ariaLabel="Phân trang báo cáo tuyển dụng" onPageChange={setPage}/></>}
+    {selected&&<section className="card report-detail" aria-label="Chi tiết báo cáo"><h2>Chi tiết báo cáo</h2>{detailLoading&&<StaticLoading message="Đang tải chi tiết…"/>}{detailError&&<Alert tone="error" actions={<button type="button" className="secondary" disabled={busy} onClick={()=>setRevision(n=>n+1)}>Tải lại chi tiết</button>}>{detailError}</Alert>}
       {detail&&<><p><strong>Trạng thái:</strong> {states[detail.report.status]} · {date(detail.report.createdAt)}</p><p className="report-text"><strong>Lý do báo cáo:</strong> {detail.report.reason}</p>
         {detail.job?<><h3>{detail.job.title}</h3><p>{detail.job.company} · {detail.job.location} · {states[detail.job.status]??detail.job.status}</p><p className="hint">Nội dung hiện tại của tin, có thể đã thay đổi kể từ lúc báo cáo.</p>{['published','closed'].includes(detail.job.status)&&<a href={`#job?id=${detail.job.id}`}>Mở trang tin tuyển dụng</a>}
           <details open><summary>Nội dung tin để kiểm duyệt</summary><h4>Mô tả</h4><p className="report-text">{detail.job.description}</p><h4>Yêu cầu</h4><p className="report-text">{detail.job.requirements}</p>{detail.job.benefits&&<><h4>Quyền lợi</h4><p className="report-text">{detail.job.benefits}</p></>}</details></>:<p>{detail.report.targetType==='job'?'Tin không còn tồn tại. Bạn vẫn có thể kết luận hoặc bỏ qua báo cáo.':'Báo cáo CV chỉ hỗ trợ ghi kết luận; quyền admin không mở quyền đọc CV riêng tư.'}</p>}

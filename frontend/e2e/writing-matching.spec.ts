@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
-import { openView, register } from './helpers';
+import { openView, register, verifyRecruiterBusiness } from './helpers';
 
 test('Fake writing and matching run through workers; private CV application preserves exact PDF snapshot', async ({ browser, baseURL }) => {
   test.setTimeout(150000);
@@ -9,20 +9,24 @@ test('Fake writing and matching run through workers; private CV application pres
   const recruiter = await recruiterContext.newPage(), candidate = await candidateContext.newPage();
   try {
     const title = `UI worker React ${randomUUID()}`;
-    await register(recruiter, 'Recruiter');
+    const { email: recruiterEmail } = await register(recruiter, 'Recruiter');
     await openView(recruiter, 'recruiter-jobs');
     const manager = recruiter.locator('.recruiter-jobs');
     await openView(recruiter, 'recruiter-company');
     await manager.getByLabel('Tên công ty', { exact: true }).fill(`UI synthetic ${randomUUID()}`);
+    await manager.getByLabel('Website HTTPS', { exact: true }).fill('https://example.invalid');
     await manager.getByRole('button', { name: 'Tạo công ty', exact: true }).click();
     await expect(manager.getByRole('status')).toContainText('Hồ sơ công ty đã được lưu.');
+    await verifyRecruiterBusiness(recruiter, recruiterEmail, baseURL);
     await openView(recruiter, 'recruiter-jobs');
+    await manager.getByRole('button', { name: '+ Tạo tin tuyển dụng mới', exact: true }).click();
     const editor = manager.locator('.editor-form').last();
     await editor.getByLabel('Chức danh', { exact: true }).fill(title);
     await editor.getByLabel('Mô tả công việc', { exact: true }).fill('Build React tools.');
     await editor.getByLabel('Yêu cầu và kỹ năng', { exact: true }).fill('Bắt buộc: React\nƯu tiên: TypeScript');
     await editor.getByRole('button', { name: 'Tạo tin nháp', exact: true }).click();
     const job = manager.locator('.job-card').filter({ hasText: title });
+    await job.getByText('Rà soát yêu cầu JD & Tìm ứng viên phù hợp', { exact: true }).click();
     const requirements = job.locator('.job-revision-review');
     await requirements.getByRole('button', { name: 'Tách yêu cầu từ JD (local)', exact: true }).click();
     await expect(requirements.getByRole('checkbox')).toHaveCount(2);
@@ -65,7 +69,7 @@ test('Fake writing and matching run through workers; private CV application pres
     await candidate.getByLabel('CV dùng để gợi ý việc', { exact: true }).selectOption(version.id);
     await candidate.getByRole('button', { name: 'Tìm việc theo CV', exact: true }).click();
     const baseline = candidate.locator('.job-discovery-results .matching-results');
-    await expect(baseline).toContainText('retrieval_score');
+    await expect(baseline).toContainText('Độ khớp từ khóa');
     const admission = candidate.waitForResponse(response => new URL(response.url()).pathname === '/api/matching/recommendations' && response.request().method() === 'POST');
     await candidate.getByRole('button', { name: 'Gợi ý và phân tích tối đa 3 cặp', exact: true }).click();
     const admitted = await admission;
@@ -101,7 +105,8 @@ test('Fake writing and matching run through workers; private CV application pres
     await candidate.getByLabel('Từ khóa', { exact: true }).fill(title);
     await candidate.getByRole('button', { name: 'Tìm việc', exact: true }).click();
     const publicJob = candidate.locator('.job-list > .job-card').filter({ hasText: title });
-    await publicJob.getByRole('button', { name: 'Nộp hồ sơ', exact: true }).click();
+    await publicJob.getByRole('link', { name: /Xem chi tiết/ }).click();
+    await candidate.locator('.job-detail .job-card').getByRole('button', { name: 'Nộp hồ sơ', exact: true }).click();
     await expect(candidate.getByText(`Đã nộp hồ sơ cho “${title}”.`, { exact: true })).toBeVisible();
     await openView(candidate, 'applications');
     await expect(candidate.locator('#applications')).toContainText(title);

@@ -9,7 +9,7 @@ export const resumeViews: WorkspaceView[] = ['private-resumes', 'cv-builder', 'p
 export const viewLabels: Record<WorkspaceView, string> = {
   home: 'Trang chủ tổng hợp',
   'analysis-history': 'Lịch sử phân tích',
-  community: 'Cộng đồng nghề nghiệp', jobs: 'Khám phá việc làm', job: 'Chi tiết việc làm', applications: 'Đơn ứng tuyển & Thông báo', application: 'Chi tiết hồ sơ ứng tuyển', notifications: 'Thông báo tuyển dụng',
+  community: 'Cộng đồng nghề nghiệp', jobs: 'Khám phá việc làm', job: 'Chi tiết việc làm', applications: 'Đơn ứng tuyển của tôi', application: 'Chi tiết hồ sơ ứng tuyển', notifications: 'Thông báo tuyển dụng',
   'private-resumes': 'Quản lý CV riêng', 'cv-builder': 'Soạn & Cải thiện CV',
   profile: 'Hồ sơ & Quyền chia sẻ', 'public-resumes': 'Kho CV công khai',
   account: 'Tài khoản', access: 'Đăng nhập', 'recruiter-jobs': 'Tin & hồ sơ ứng tuyển',

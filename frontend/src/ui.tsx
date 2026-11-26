@@ -1,5 +1,91 @@
-import { useEffect, useId, useRef, type ComponentProps, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { X } from '@phosphor-icons/react';
+
+export function PageHeader({ eyebrow, title, description, actions }: {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
+  return (
+    <header className="page-header">
+      <div className="page-header-text">
+        {eyebrow && <p className="eyebrow">{eyebrow}</p>}
+        <h1>{title}</h1>
+        {description && <p className="page-header-description">{description}</p>}
+      </div>
+      {actions && <div className="page-header-actions">{actions}</div>}
+    </header>
+  );
+}
+
+export function Alert({ tone = 'info', title, children, actions }: {
+  tone?: 'error' | 'warning' | 'info' | 'success';
+  title?: string;
+  children: ReactNode;
+  actions?: ReactNode;
+}) {
+  const role = tone === 'error' || tone === 'warning' ? 'alert' : 'status';
+  return (
+    <div className={`alert-box alert-${tone}`} role={role}>
+      <div className="alert-content">
+        {title && <strong>{title}</strong>}
+        <div>{children}</div>
+      </div>
+      {actions && <div className="alert-actions">{actions}</div>}
+    </div>
+  );
+}
+
+export function EmptyState({ icon, title, description, action }: {
+  icon?: ReactNode;
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="empty-state">
+      {icon}
+      <h3>{title}</h3>
+      {description && <p>{description}</p>}
+      {action && <div className="empty-state-action">{action}</div>}
+    </div>
+  );
+}
+
+export function StaticLoading({ message, label }: { message?: string; label?: string }) {
+  return (
+    <div className="loading-state" role="status" aria-live="polite">
+      <p>{message ?? label ?? 'Đang tải dữ liệu…'}</p>
+    </div>
+  );
+}
+
+export function Pagination({ page, totalItems, pageSize = 20, totalPages: explicitTotalPages, busy = false, onPageChange, ariaLabel = 'Phân trang' }: {
+  page: number;
+  totalItems?: number;
+  pageSize?: number;
+  totalPages?: number;
+  busy?: boolean;
+  onPageChange: (nextPage: number) => void;
+  ariaLabel?: string;
+}) {
+  const totalPages = explicitTotalPages ?? Math.max(1, Math.ceil((totalItems ?? 0) / pageSize));
+  if (totalPages <= 1) return null;
+  return (
+    <nav className="pagination-bar" aria-label={ariaLabel}>
+      <button type="button" className="secondary" disabled={busy || page <= 1} onClick={() => onPageChange(page - 1)}>
+        Trang trước
+      </button>
+      <span className="pagination-info">
+        Trang {page} / {totalPages}{totalItems !== undefined ? ` (${totalItems.toLocaleString('vi-VN')} mục)` : ''}
+      </span>
+      <button type="button" className="secondary" disabled={busy || page >= totalPages} onClick={() => onPageChange(page + 1)}>
+        Trang sau
+      </button>
+    </nav>
+  );
+}
 
 /** Native modal semantics provide focus containment and make the background inert. */
 export function Dialog({ open, title, children, onClose, busy = false, className = '', id }: {
@@ -50,6 +136,70 @@ export function Dialog({ open, title, children, onClose, busy = false, className
     </div>
     {open && children}
   </dialog>;
+}
+
+export function ConfirmDialog({
+  open,
+  title,
+  message,
+  confirmLabel = 'Xác nhận',
+  cancelLabel = 'Hủy',
+  danger = false,
+  busy = false,
+  requireReason = false,
+  reasonLabel = 'Lý do thực hiện',
+  reasonPlaceholder = 'Nhập lý do (ít nhất 3 ký tự)…',
+  onConfirm,
+  onClose,
+}: {
+  open: boolean;
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  danger?: boolean;
+  busy?: boolean;
+  requireReason?: boolean;
+  reasonLabel?: string;
+  reasonPlaceholder?: string;
+  onConfirm: (reason: string) => void | Promise<void>;
+  onClose: () => void;
+}) {
+  const [reason, setReason] = useState('');
+  useEffect(() => {
+    if (!open) setReason('');
+  }, [open]);
+  const invalidReason = requireReason && reason.trim().length < 3;
+  return (
+    <Dialog open={open} title={title} busy={busy} onClose={onClose}>
+      <p>{message}</p>
+      {requireReason && (
+        <label>
+          {reasonLabel}
+          <textarea
+            value={reason}
+            minLength={3}
+            maxLength={500}
+            placeholder={reasonPlaceholder}
+            onChange={e => setReason(e.target.value)}
+          />
+        </label>
+      )}
+      <div className="dialog-actions">
+        <button type="button" className="secondary" disabled={busy} onClick={onClose}>
+          {cancelLabel}
+        </button>
+        <button
+          type="button"
+          className={danger ? 'danger' : undefined}
+          disabled={busy || invalidReason}
+          onClick={() => void onConfirm(reason.trim())}
+        >
+          {busy ? 'Đang xử lý…' : confirmLabel}
+        </button>
+      </div>
+    </Dialog>
+  );
 }
 
 export function AiBadge({ accepted = false, children }: { accepted?: boolean; children?: ReactNode }) {

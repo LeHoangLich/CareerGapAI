@@ -1,8 +1,8 @@
-import { openView } from './helpers';
+import { openView, verifyRecruiterBusiness } from './helpers';
 import { expect, test } from '@playwright/test';
 import { randomBytes, randomUUID } from 'node:crypto';
 
-test('recruiter creates company and job versions; only published current jobs are public', async ({ page }) => {
+test('recruiter creates company and job versions; only published current jobs are public', async ({ page, baseURL }) => {
   test.setTimeout(30000);
   const suffix = randomUUID();
   const email = `recruiter-${suffix}@example.invalid`;
@@ -17,13 +17,15 @@ test('recruiter creates company and job versions; only published current jobs ar
   await page.getByRole('button', { name: 'Tạo tài khoản', exact: true }).click();
   await page.locator('input[name="password"]').evaluateAll(inputs => inputs.forEach(input => { (input as HTMLInputElement).value = ''; }));
   await openView(page, 'recruiter-jobs');
-  await expect(page.getByRole('heading', { name: 'Công ty và tin tuyển dụng' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Trung tâm tuyển dụng' })).toBeVisible();
 
   const manager = page.locator('.recruiter-jobs');
   await openView(page, 'recruiter-company');
-    await manager.getByLabel('Tên công ty', { exact: true }).fill(`E2E Company ${suffix}`);
+  await manager.getByLabel('Tên công ty', { exact: true }).fill(`E2E Company ${suffix}`);
+  await manager.getByLabel('Website HTTPS', { exact: true }).fill('https://example.invalid');
   await manager.getByRole('button', { name: 'Tạo công ty', exact: true }).click();
   await expect(manager.getByRole('status').filter({ hasText: 'Hồ sơ công ty đã được lưu.' })).toBeVisible();
+  await verifyRecruiterBusiness(page, email, baseURL);
 
   await openView(page, 'jobs');
   const browser = page.locator('.job-browser');
@@ -33,6 +35,7 @@ test('recruiter creates company and job versions; only published current jobs ar
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 
   await openView(page, 'recruiter-jobs');
+  await manager.getByRole('button', { name: '+ Tạo tin tuyển dụng mới', exact: true }).click();
   const jobEditor = manager.locator('.editor-form').last();
   await jobEditor.getByLabel('Chức danh', { exact: true }).fill(title);
   await jobEditor.getByLabel('Mô tả công việc', { exact: true }).fill('Xây dựng API tuyển dụng bằng C# và PostgreSQL.');
@@ -44,6 +47,7 @@ test('recruiter creates company and job versions; only published current jobs ar
   await expect(browser.getByText('Chưa có tin công khai phù hợp.')).toBeVisible();
 
   await openView(page, 'recruiter-jobs');
+  await managedJob.getByText('Rà soát yêu cầu JD & Tìm ứng viên phù hợp', { exact: true }).click();
   const jdReview = managedJob.locator('.job-revision-review');
   await jdReview.getByRole('button', { name: 'Tách yêu cầu từ JD (local)' }).click();
   await expect(jdReview.getByRole('checkbox')).toHaveCount(3);

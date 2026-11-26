@@ -58,7 +58,14 @@ export function CommunityMarkdown({ text }: { text: string }) {
     else if (line.startsWith('## ')) nodes.push(<h4 key={i}>{inline(line.slice(3))}</h4>);
     else if (line.startsWith('# ')) nodes.push(<h3 key={i}>{inline(line.slice(2))}</h3>);
     else if (line.startsWith('> ')) nodes.push(<blockquote key={i}>{inline(line.slice(2))}</blockquote>);
-    else if (line.startsWith('- ')) nodes.push(<p className="community-bullet" key={i}><span aria-hidden="true">• </span>{inline(line.slice(2))}</p>);
+    else if (line.startsWith('- ')) {
+      const items: string[] = [line.slice(2)];
+      while (i + 1 < lines.length && lines[i + 1].startsWith('- ')) {
+        items.push(lines[i + 1].slice(2));
+        i++;
+      }
+      nodes.push(<ul key={`ul-${i}`} className="community-unordered">{items.map((item, idx) => <li key={idx}>{inline(item)}</li>)}</ul>);
+    }
     else nodes.push(line ? <p key={i}>{inline(line)}</p> : <Fragment key={i}><br/></Fragment>);
   }
   return <div className="community-markdown">{nodes}</div>;

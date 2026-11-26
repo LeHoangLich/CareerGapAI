@@ -14,19 +14,19 @@ type ResumeRecommendation = { candidateId: string; resumeVersionId: string; vers
 
 function revisionDiagnosticText(value: ConfirmedRevisionMatch, audience: 'candidate' | 'recruiter') {
   if (value.status === 'ready') {
-    return `Revision xác nhận · ${value.matchedRequirementCount}/${value.requirementCount} yêu cầu có term overlap · required ${value.matchedRequiredRequirementCount}/${value.requiredRequirementCount}. Đây là chẩn đoán riêng, không thay điểm hoặc thứ tự retrieval.`;
+    return `Hồ sơ đã xác nhận · ${value.matchedRequirementCount}/${value.requirementCount} yêu cầu trùng khớp từ khóa · Bắt buộc ${value.matchedRequiredRequirementCount}/${value.requiredRequirementCount}. Đây là thông tin tham khảo riêng, không thay đổi thứ tự gợi ý.`;
   }
   const statusText: Record<string, string> = {
-    resume_and_job_revision_unconfirmed: 'CV và JD chưa có revision xác nhận; chỉ dùng baseline retrieval.',
-    resume_revision_unconfirmed: 'CV chưa có revision xác nhận; chỉ dùng baseline retrieval.',
-    job_revision_unconfirmed: 'JD chưa có revision xác nhận; chỉ dùng baseline retrieval.',
-    no_public_document_skills: 'CV công khai chưa có kỹ năng xác nhận từ nội dung tài liệu; không dùng kỹ năng tự khai báo cho recruiter.',
-    resume_revision_empty: 'Revision CV đã xác nhận không có kỹ năng để đối chiếu.',
-    job_revision_empty: 'Revision JD đã xác nhận không có yêu cầu để đối chiếu.',
-    resume_revision_data_unavailable: 'Revision CV không đủ dữ liệu/provenance hợp lệ để đối chiếu.',
-    job_revision_data_unavailable: 'Revision JD không đủ dữ liệu/provenance hợp lệ để đối chiếu.'
+    resume_and_job_revision_unconfirmed: 'CV và JD chưa xác nhận thông tin; chỉ dùng gợi ý theo từ khóa.',
+    resume_revision_unconfirmed: 'CV chưa xác nhận thông tin; chỉ dùng gợi ý theo từ khóa.',
+    job_revision_unconfirmed: 'JD chưa xác nhận thông tin; chỉ dùng gợi ý theo từ khóa.',
+    no_public_document_skills: 'CV công khai chưa có kỹ năng xác nhận từ nội dung tài liệu; không dùng kỹ năng tự khai báo cho nhà tuyển dụng.',
+    resume_revision_empty: 'Bản CV đã xác nhận không có kỹ năng để đối chiếu.',
+    job_revision_empty: 'Bản JD đã xác nhận không có yêu cầu để đối chiếu.',
+    resume_revision_data_unavailable: 'Dữ liệu CV chưa đủ thông tin hợp lệ để đối chiếu.',
+    job_revision_data_unavailable: 'Dữ liệu JD chưa đủ thông tin hợp lệ để đối chiếu.'
   };
-  return statusText[value.status] ?? `${audience === 'candidate' ? 'Chẩn đoán CV–JD' : 'Chẩn đoán revision'} chưa khả dụng (${value.status}); baseline retrieval vẫn độc lập.`;
+  return statusText[value.status] ?? `${audience === 'candidate' ? 'Đối chiếu CV–JD' : 'Đối chiếu hồ sơ'} chưa khả dụng; gợi ý theo từ khóa vẫn hoạt động độc lập.`;
 }
 
 export function CandidateKeywordRecommendations({ resumes, resultTargets }: {
@@ -47,8 +47,8 @@ export function CandidateKeywordRecommendations({ resumes, resultTargets }: {
     finally { setBusy(false); }
   }
   return <section className="matching-panel" aria-label="Gợi ý việc bằng từ khóa">
-    <div className="section-heading"><div><p className="eyebrow">BASELINE L09</p><h3>Gợi ý việc theo CV</h3></div><span className="badge">Điểm từ khóa</span></div>
-    <p>Dùng một CV riêng của bạn để xếp hạng JD đang nhận hồ sơ. Chỉ từ khóa trùng; đây là retrieval score 0–1, không phải điểm phù hợp AI hay kết luận năng lực.</p>
+    <div className="section-heading"><div><p className="eyebrow">GỢI Ý THEO TỪ KHÓA</p><h3>Gợi ý việc theo CV</h3></div><span className="badge">Điểm từ khóa</span></div>
+    <p>Dùng một CV riêng của bạn để xếp hạng JD đang nhận hồ sơ theo từ khóa trùng khớp (thang 0–1), không phải đánh giá năng lực của AI.</p>
     <div className="row matching-controls"><label>CV dùng để tìm<select aria-label="CV dùng để gợi ý việc" value={selected?.id ?? ''} onChange={event => { setResumeVersionId(event.target.value); setRun(undefined); }} disabled={!versions.length}>
       {!versions.length && <option value="">Chưa có CV</option>}
       {versions.map(version => <option key={version.id} value={version.id}>{version.title} · v{version.versionNo}</option>)}
@@ -57,14 +57,15 @@ export function CandidateKeywordRecommendations({ resumes, resultTargets }: {
     <PairRecommendations key={selected?.id ?? 'empty'} direction="jobs" resumeVersionId={selected?.id} resultsTarget={resultTargets?.ai}/>
     <ResultPlacement target={resultTargets?.keyword}>
     {(busy || error || run) && <section className={resultTargets ? 'matching-output' : undefined} aria-label="Kết quả gợi ý bằng từ khóa">
-    {resultTargets && <div className="section-heading"><div><p className="eyebrow">GỢI Ý THEO CV</p><h3>Kết quả từ khóa</h3></div><span className="badge">Baseline</span></div>}
+    {resultTargets && <div className="section-heading"><div><p className="eyebrow">GỢI Ý THEO CV</p><h3>Kết quả từ khóa</h3></div><span className="badge">Theo từ khóa</span></div>}
     {busy && <StaticLoading label="Đang xếp hạng theo từ khóa…"/>}
     {error && <p role="alert" className="error">{error}</p>}
     {run && <>
-      <p className="hint" role="status">Đã xét {run.assessedCount}/{run.searchSpaceCount} JD · {run.zeroOverlapCount} JD không trùng từ khóa · {run.noQueryTermsCount} JD chưa có từ khóa để tìm · phương pháp {run.methodVersion}.</p>
+      <p className="hint" role="status">Đã xét {run.assessedCount}/{run.searchSpaceCount} JD · {run.zeroOverlapCount} JD không trùng từ khóa · {run.noQueryTermsCount} JD chưa có từ khóa để tìm.</p>
+      <details><summary>Thông tin kỹ thuật</summary><small>Phương pháp: {run.methodVersion}</small></details>
       {run.items.length ? <ol className="matching-results">{run.items.map(item => <li key={`${item.jobId}:${item.jobVersionId}`}>
         <div><strong>{item.title}</strong><small>{item.companyName} · {item.location ?? 'Chưa có địa điểm'} · {item.workMode}</small>
-          <small>retrieval_score {item.retrievalScore.toFixed(3)} · trùng {item.keywordOverlap.count}/{item.keywordOverlap.queryTermCount} từ khóa JD</small>
+          <small>Độ khớp từ khóa {item.retrievalScore.toFixed(3)} · trùng {item.keywordOverlap.count}/{item.keywordOverlap.queryTermCount} từ khóa JD</small>
           {item.keywordOverlap.terms.length > 0 && <small>Từ khóa trùng: {item.keywordOverlap.terms.join(', ')}</small>}
           <small>{revisionDiagnosticText(item.confirmedRevisionMatch, 'candidate')}</small>
         </div><a className="secondary" href={jobHref(item.jobId)}>Xem chi tiết tin</a>
@@ -89,14 +90,15 @@ export function RecruiterKeywordResumeSearch({ jobId, enabled }: { jobId: string
   if (!enabled) return null;
   return <section className="matching-panel recruiter-matching" aria-label="Tìm CV công khai theo JD">
     <div className="row"><strong>CV công khai theo JD</strong><button type="button" className="secondary" disabled={busy} onClick={() => void search()}>{busy ? 'Đang xếp hạng…' : 'Tìm ứng viên bằng từ khóa'}</button></div>
-    <p className="hint">Chỉ xét CV đang được candidate công khai và file gốc sẵn sàng; CV riêng đã nộp nhưng không công khai không nằm trong kho này.</p>
+    <p className="hint">Chỉ xét CV đang được ứng viên công khai và file gốc sẵn sàng; CV riêng đã nộp nhưng không công khai không nằm trong kho này.</p>
     <PairRecommendations key={jobId} direction="public_resumes" jobId={jobId}/>
     {error && <p role="alert" className="error">{error}</p>}
     {run && <>
-      <p className="hint" role="status">Đã đọc được {run.assessedCount}/{run.searchSpaceCount} CV công khai · {run.unreadableCount} CV không đọc được đã bỏ qua · {run.noQueryTermsCount > 0 ? 'JD chưa có từ khóa để tìm · ' : ''}phương pháp {run.methodVersion}.</p>
+      <p className="hint" role="status">Đã đọc được {run.assessedCount}/{run.searchSpaceCount} CV công khai · {run.unreadableCount} CV không đọc được đã bỏ qua{run.noQueryTermsCount > 0 ? ' · JD chưa có từ khóa để tìm' : ''}.</p>
+      <details><summary>Thông tin kỹ thuật</summary><small>Phương pháp: {run.methodVersion}</small></details>
       {run.items.length ? <ol className="matching-results">{run.items.map(item => <li key={`${item.candidateId}:${item.resumeVersionId}`}>
         <div><strong>{item.displayName}</strong>{item.headline && <small>{item.headline}</small>}
-          <small>CV v{item.versionNo} · retrieval_score {item.retrievalScore.toFixed(3)} · trùng {item.keywordOverlap.count}/{item.keywordOverlap.queryTermCount} từ khóa JD</small>
+          <small>CV v{item.versionNo} · Độ khớp từ khóa {item.retrievalScore.toFixed(3)} · trùng {item.keywordOverlap.count}/{item.keywordOverlap.queryTermCount} từ khóa JD</small>
           {item.keywordOverlap.terms.length > 0 && <small>Từ khóa trùng: {item.keywordOverlap.terms.join(', ')}</small>}
           <small>{revisionDiagnosticText(item.confirmedRevisionMatch, 'recruiter')}</small>
         </div><a href={`/api/public/resumes/${item.candidateId}/${item.resumeVersionId}/file`} target="_blank" rel="noreferrer">Mở CV công khai</a>

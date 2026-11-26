@@ -27,12 +27,13 @@ test('login → private CV → fake job → PDF → logout', async ({ page }, te
   const privateFile = await page.request.get(href!);
   expect(privateFile.status()).toBe(200);
   expect(privateFile.headers()['cache-control']).toContain('no-store');
-  await item.getByRole('button', { name: 'Thử trích xuất v1', exact: true }).click();
+  await item.getByText('Tùy chọn nâng cao', { exact: true }).click();
+  await item.getByRole('button', { name: 'Trích xuất nhanh kỹ năng v1', exact: true }).click();
   await expect(page.getByText('Đã xử lý', { exact: true })).toBeVisible({ timeout: 30000 });
   await expect(page.getByText('Mô phỏng bằng từ khóa · không gọi AI thật')).toBeVisible();
   await openView(page, 'cv-builder');
   const download = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Xuất PDF mẫu giả' }).click();
+  await page.getByRole('button', { name: 'Xuất PDF mẫu', exact: true }).click();
   const pdf = await download;
   const output = path.resolve(process.env.CAREERGAP_E2E_EVIDENCE_DIRECTORY ?? testInfo.outputPath('evidence')); fs.mkdirSync(output, { recursive: true });
   await pdf.saveAs(path.join(output, 'synthetic-vietnamese-probe.pdf'));
@@ -41,6 +42,6 @@ test('login → private CV → fake job → PDF → logout', async ({ page }, te
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({ path: path.join(output, 'browser-mobile.png'), fullPage: true });
   await page.getByRole('button', { name: 'Đăng xuất' }).click();
-  await expect(page.getByRole('heading', { name: 'Đăng nhập thử nghiệm' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
   expect((await page.request.get(href!)).status()).toBe(401);
 });

@@ -42,7 +42,7 @@ function Brand() {
       aria-label="CareerGap AI — về trang chủ"
     >
       <span
-        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#245c48] text-white"
+        className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)] text-white"
         aria-hidden="true"
       >
         <svg viewBox="0 0 24 24" width="23" height="23" fill="none">
@@ -56,7 +56,7 @@ function Brand() {
         </svg>
       </span>
       <span>
-        CareerGap<span className="ml-1 text-[#245c48]">AI</span>
+        CareerGap<span className="ml-1 text-[var(--color-primary)]">AI</span>
         <small className="brand-caption">HỒ SƠ & CƠ HỘI</small>
       </span>
     </a>
@@ -108,7 +108,7 @@ export function Workspace({
                 label: "Trung tâm CV & Hồ sơ",
                 icon: FileText,
               },
-              { id: "applications", label: "Đơn ứng tuyển & Thông báo", icon: SquaresFour },
+              { id: "applications", label: "Đơn ứng tuyển của tôi", icon: SquaresFour },
             ]
           : []),
         ...(recruiter
@@ -170,17 +170,17 @@ export function Workspace({
             <div className="sidebar-note mx-6 mt-auto pt-16 pb-7">
               <LockKey
                 size={21}
-                className="mb-3 text-[#245c48]"
+                className="mb-3 text-[var(--color-primary)]"
                 aria-hidden="true"
               />
-              <p className="mb-1 text-[13px] font-semibold text-[#303b34]">
+              <p className="mb-1 text-[13px] font-semibold text-[var(--color-text-primary)]">
                 Hồ sơ của bạn, quyền của bạn.
               </p>
               <p className="m-0 text-xs leading-relaxed text-[var(--color-text-secondary)]">
                 Bạn chọn phiên bản CV và quyết định khi nào công khai.
               </p>
             </div>
-            <div className="border-t border-[#e6e9e5] p-4">
+            <div className="border-t border-[var(--color-border)] p-4">
               {authenticated ? (
                 <a
                   href="#account"
@@ -188,7 +188,7 @@ export function Workspace({
                   className="account-link flex items-center gap-3 rounded-md p-2"
                 >
                   <span
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#edf1eb] text-xs font-semibold text-[#245c48]"
+                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-badge-bg)] text-xs font-semibold text-[var(--color-primary)]"
                     aria-hidden="true"
                   >
                     {session.email?.slice(0, 2).toUpperCase() || "CG"}
@@ -209,10 +209,10 @@ export function Workspace({
               ) : (
                 <span className="flex items-center gap-2 px-2 py-2 text-xs text-[var(--color-text-secondary)]">
                   <span
-                    className="size-1.5 rounded-full bg-[#60816d]"
+                    className="size-1.5 rounded-full bg-[var(--color-focus)]"
                     aria-hidden="true"
                   />
-                  Bản thử nghiệm · Localhost
+                  Chế độ khách · CareerGap AI
                 </span>
               )}
             </div>
@@ -248,16 +248,16 @@ export function Workspace({
           </Dialog>
         </aside>
         <div className="workspace-body min-w-0">
-          <header className="workspace-topbar flex items-center justify-between gap-4 border-b border-[#e6e9e5] bg-white px-5 py-4 lg:px-10">
+          <header className="workspace-topbar flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-[var(--color-border)] bg-white px-5 py-4 lg:px-10">
             <div className="flex min-w-0 items-center gap-2 text-xs text-[var(--color-text-secondary)]">
               <span>CareerGap AI</span>
               <span aria-hidden="true">/</span>
-              <span className="font-medium text-[#303b34]">
+              <span className="font-medium text-[var(--color-text-primary)]">
                 {viewLabels[activeView]}
               </span>
             </div>
             {authenticated ? (
-              <div className="flex shrink-0 items-center gap-3"><CommunityBadge key={session?.userId??'guest'} session={session}/>
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3"><CommunityBadge key={session?.userId??'guest'} session={session}/>
                 <a href="#account" className="badge account-settings inline-flex items-center gap-2" aria-label="Cài đặt tài khoản" aria-current={activeView === 'account' ? 'page' : undefined}>
                   <GearSix size={16} aria-hidden="true"/>
                   {recruiter

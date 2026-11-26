@@ -270,7 +270,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
   }
 
   return <section className="card resume-builder" id="cv-builder">
-    <div className="section-heading"><div><p className="eyebrow">CV THEO MẪU · BẢN THỬ NGHIỆM</p><h2>Tạo CV từ thông tin bạn cung cấp</h2></div><span className="job-status">simple-v1</span></div>
+    <div className="section-heading"><div><p className="eyebrow">CV THEO MẪU</p><h2>Tạo CV từ thông tin bạn cung cấp</h2></div><span className="job-status">Mẫu chuẩn</span></div>
     <details className="builder-explanation"><summary>Về bản nháp, đề xuất AI và phiên bản CV</summary>
       <p>Nhập và rà soát nội dung trước khi xuất PDF. Đề xuất AI chỉ được đưa vào bản nháp sau khi bạn duyệt. Lưu sẽ tạo file PDF riêng tư và revision bất biến gắn với đúng version.</p>
     <p>Bản lưu dang dở được giữ tạm trong phiên trình duyệt của tài khoản này và xóa sau khi hoàn tất, bỏ bản nháp hoặc đăng xuất.</p>
@@ -296,7 +296,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
 
       <div className="builder-section-heading"><h3>Kỹ năng</h3><small>Tối đa 20 dòng; đây là thông tin bạn tự khai báo.</small></div>
       <label>Kỹ năng, mỗi dòng một mục<textarea aria-invalid={skillsError ? true : undefined} aria-describedby={skillsError ? skillsErrorId : undefined} value={content.skills.join('\n')} maxLength={2200} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, skills: parseLines(value) })); }}/></label>
-      <SkillPicker label="Chọn kỹ năng chuẩn cho CV" values={normalized(content).skills} disabled={busy} onAdd={name=>edit(current=>({...current,skills:[...current.skills,name]}))}/>
+      <SkillPicker label="Chọn kỹ năng chuẩn cho CV" values={normalized(content).skills} disabled={busy} onAdd={name=>edit(current=>({...current,skills:[...current.skills,name]}))} onRemove={name=>edit(current=>({...current,skills:current.skills.filter(s=>s!==name)}))}/>
       <FieldError id={skillsErrorId} message={skillsError}/>
 
       <div className="builder-section-heading"><h3>Kinh nghiệm</h3><button type="button" className="secondary" disabled={busy || content.experience.length >= 10} onClick={() => edit(current => ({ ...current, experience: addItem(current.experience, emptyExperience, 10) }))}>Thêm kinh nghiệm</button></div>

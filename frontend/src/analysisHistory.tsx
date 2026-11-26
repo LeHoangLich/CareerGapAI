@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, ApiError } from './api';
 import { PairDetails, type Pair } from './pairMatching';
 import { useAiJobPolling } from './useAiJobPolling';
+import { Alert, ConfirmDialog, EmptyState, PageHeader, Pagination, StaticLoading } from './ui';
 
 type Entry={id:string;createdAt:string;status:string;context:string;available:boolean;jobTitle:string|null;resumeVersionNo:number|null;score:number|null};
 type Page={items:Entry[];total:number;page:number;pageSize:number};
@@ -12,12 +13,13 @@ export function AnalysisHistory({active}:{active:boolean}) {
   const [data,setData]=useState<Page>();const [error,setError]=useState('');const [loading,setLoading]=useState(false);
   const [pair,setPair]=useState<Pair>();const [detailError,setDetailError]=useState('');const [missing,setMissing]=useState(false);const [detailLoading,setDetailLoading]=useState(false);
   const [hidingId,setHidingId]=useState<string>();
+  const [confirmHideId,setConfirmHideId]=useState<string>();
   const loadedDetailId=useRef<string|undefined>(undefined);
   async function hideEntry(targetId:string){
-    if(!confirm('Ẩn lượt phân tích này khỏi lịch sử cá nhân?'))return;
     setHidingId(targetId);setError('');setDetailError('');
     try{
       await api(`/api/matching/history/${targetId}`,{method:'DELETE'});
+      setConfirmHideId(undefined);
       if(id===targetId){window.location.hash=href({id:null});}
       setListRetry(n=>n+1);
     }catch(e){if(id===targetId)setDetailError((e as Error).message);else setError((e as Error).message);}
@@ -64,18 +66,32 @@ export function AnalysisHistory({active}:{active:boolean}) {
     },
     onError: e => { setDetailLoading(false); setDetailError((e as Error).message); },
   });
-  return <section className="card analysis-history" aria-label="Lịch sử phân tích"><h1>Lịch sử phân tích</h1><p>Các lượt đối chiếu CV–JD do bạn yêu cầu, kể cả lượt chưa hoàn thành. Xem lại không tạo phân tích mới và không sử dụng thêm ngân sách AI.</p>
+  return <section className="card analysis-history" aria-label="Lịch sử phân tích">
+    <PageHeader title="Lịch sử phân tích" description="Các lượt đối chiếu CV–JD do bạn yêu cầu, kể cả lượt chưa hoàn thành. Xem lại không tạo phân tích mới và không sử dụng thêm ngân sách AI."/>
     {id?<section aria-label="Kết quả phân tích đã lưu"><a href={href({id:null})}>← Quay lại danh sách lịch sử</a><h2>Kết quả của lượt đã chọn</h2><p className="hint">Kết quả theo dữ liệu và phương pháp tại lần phân tích đó; không tự thay bằng lượt mới nhất.</p>
-      {(!validId||missing)&&<p role="status">Kết quả không còn khả dụng hoặc bạn không có quyền truy cập.</p>}{detailLoading&&<p role="status">Đang mở kết quả đã lưu…</p>}{detailError&&<p role="alert">{detailError}{timedOut&&<> <button type="button" className="secondary" onClick={()=>{setDetailError('');retryPolling();}}>Kiểm tra lại kết quả</button></>}</p>}
+      {(!validId||missing)&&<Alert tone="warning">Kết quả không còn khả dụng hoặc bạn không có quyền truy cập.</Alert>}
+      {detailLoading&&<StaticLoading message="Đang mở kết quả đã lưu…"/>}
+      {detailError&&<Alert tone="error" actions={timedOut&&<button type="button" className="secondary" onClick={()=>{setDetailError('');retryPolling();}}>Kiểm tra lại kết quả</button>}>{detailError}</Alert>}
       {pair&&pair.id===id&&<><p>{contexts[pair.context]} · {statuses[pair.status]}</p><PairDetails pair={pair}/></>}
-      <div className="row"><button type="button" className="secondary" disabled={detailLoading} onClick={()=>setDetailRetry(n=>n+1)}>Tải lại kết quả</button>{pair&&!['queued','running'].includes(pair.status)&&<button type="button" className="secondary" disabled={hidingId===pair.id} onClick={()=>void hideEntry(pair.id)}>{hidingId===pair.id?'Đang ẩn…':'Ẩn khỏi lịch sử'}</button>}</div>
+      <div className="row"><button type="button" className="secondary" disabled={detailLoading} onClick={()=>setDetailRetry(n=>n+1)}>Tải lại kết quả</button>{pair&&!['queued','running'].includes(pair.status)&&<button type="button" className="secondary" disabled={hidingId===pair.id} onClick={()=>setConfirmHideId(pair.id)}>{hidingId===pair.id?'Đang ẩn…':'Ẩn khỏi lịch sử'}</button>}</div>
     </section>:<><div className="row history-filters"><label>Trạng thái phân tích<select value={status} onChange={e=>{window.location.hash=href({status:e.target.value,page:'1',id:null})}}><option value="all">Tất cả trạng thái</option>{Object.entries(statuses).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label>
       <label>Ngữ cảnh phân tích<select value={context} onChange={e=>{window.location.hash=href({context:e.target.value,page:'1',id:null})}}><option value="all">Tất cả ngữ cảnh</option>{Object.entries(contexts).map(([k,v])=><option key={k} value={k}>{v}</option>)}</select></label><button type="button" className="secondary" disabled={loading} onClick={()=>setListRetry(n=>n+1)}>Tải lại lịch sử</button></div>
-      {loading&&<p role="status">Đang tải lịch sử…</p>}{error&&<p role="alert">{error} <button type="button" onClick={()=>setListRetry(n=>n+1)}>Thử lại lịch sử</button></p>}
+      {loading&&<StaticLoading message="Đang tải lịch sử…"/>}
+      {error&&<Alert tone="error" actions={<button type="button" className="secondary" onClick={()=>setListRetry(n=>n+1)}>Thử lại lịch sử</button>}>{error}</Alert>}
       {data&&<><p role="status">{data.total} lượt phân tích · {data.items.length?(page-1)*data.pageSize+1:0}–{data.items.length?Math.min(page*data.pageSize,data.total):0}</p>
-        {!data.items.length&&<p>Không có lượt phân tích trong trang hoặc bộ lọc này.</p>}<ul className="application-list">{data.items.map(row=><li key={row.id} data-analysis-id={row.id}><div><h3>{row.available?row.jobTitle:'Nội dung không còn khả dụng'}</h3><p>{new Date(row.createdAt).toLocaleString('vi-VN')} · {statuses[row.status]} · {contexts[row.context]}</p>
-          {row.available?<><p>CV phiên bản {row.resumeVersionNo} · {row.score===null?'Chưa có điểm':`Điểm đối chiếu ${row.score.toFixed(2)}/100`}</p><div className="row"><a href={href({id:row.id})}>Mở lượt phân tích đã lưu</a>{!['queued','running'].includes(row.status)&&<button type="button" className="secondary" disabled={hidingId===row.id} onClick={()=>void hideEntry(row.id)}>{hidingId===row.id?'Đang ẩn…':'Ẩn khỏi lịch sử'}</button>}</div></>:<><p>Quyền hoặc trạng thái nguồn đã thay đổi. Nội dung và điểm không được hiển thị.</p>{!['queued','running'].includes(row.status)&&<button type="button" className="secondary" disabled={hidingId===row.id} onClick={()=>void hideEntry(row.id)}>{hidingId===row.id?'Đang ẩn…':'Ẩn khỏi lịch sử'}</button>}</>}</div></li>)}</ul>
-        <nav className="row" aria-label="Phân trang lịch sử"><button type="button" className="secondary" disabled={loading||page===1} onClick={()=>{window.location.hash=href({page:String(page-1)})}}>Trang lịch sử trước</button><span>Trang {page} / {Math.max(1,Math.ceil(data.total/data.pageSize))}</span><button type="button" className="secondary" disabled={loading||page*data.pageSize>=data.total} onClick={()=>{window.location.hash=href({page:String(page+1)})}}>Trang lịch sử sau</button></nav></>}
+        {!data.items.length&&<EmptyState title="Không có lượt phân tích trong trang hoặc bộ lọc này."/>}
+        <ul className="application-list">{data.items.map(row=><li key={row.id} data-analysis-id={row.id}><div><h3>{row.available?row.jobTitle:'Nội dung không còn khả dụng'}</h3><p>{new Date(row.createdAt).toLocaleString('vi-VN')} · {statuses[row.status]} · {contexts[row.context]}</p>
+          {row.available?<><p>CV phiên bản {row.resumeVersionNo} · {row.score===null?'Chưa có điểm':`Điểm đối chiếu ${row.score.toFixed(2)}/100`}</p><div className="row"><a href={href({id:row.id})}>Mở lượt phân tích đã lưu</a>{!['queued','running'].includes(row.status)&&<button type="button" className="secondary" disabled={hidingId===row.id} onClick={()=>setConfirmHideId(row.id)}>{hidingId===row.id?'Đang ẩn…':'Ẩn khỏi lịch sử'}</button>}</div></>:<><p>Quyền hoặc trạng thái nguồn đã thay đổi. Nội dung và điểm không được hiển thị.</p>{!['queued','running'].includes(row.status)&&<button type="button" className="secondary" disabled={hidingId===row.id} onClick={()=>setConfirmHideId(row.id)}>{hidingId===row.id?'Đang ẩn…':'Ẩn khỏi lịch sử'}</button>}</>}</div></li>)}</ul>
+        <Pagination page={page} totalItems={data.total} pageSize={data.pageSize} busy={loading} ariaLabel="Phân trang lịch sử" onPageChange={next=>{window.location.hash=href({page:String(next)})}}/></>}
     </>}
+    <ConfirmDialog
+      open={!!confirmHideId}
+      title="Ẩn khỏi lịch sử phân tích"
+      message="Ẩn lượt phân tích này khỏi lịch sử cá nhân?"
+      confirmLabel="Ẩn khỏi lịch sử"
+      busy={!!hidingId}
+      onClose={()=>setConfirmHideId(undefined)}
+      onConfirm={async ()=>{if(confirmHideId)await hideEntry(confirmHideId);}}
+    />
   </section>;
 }

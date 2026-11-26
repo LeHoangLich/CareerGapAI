@@ -32,9 +32,14 @@ async function mock(page: Page, role: 'Guest' | 'Candidate' | 'Recruiter' | 'Adm
     else if (endpoint === '/api/reports') { expect(request.postDataJSON()).toMatchObject({ targetType: 'job', targetId: jobId, reason: 'Nội dung kiểm thử tổng hợp' }); await route.fulfill({ status: 204 }); return; }
     else if (endpoint === '/api/account/deletion-request') json = { status: 'deletion_pending', purgeAfter: '2026-11-05T00:00:00Z' };
     else if (endpoint === '/api/admin/usage') json = { aiBudgets: [{ service: 'Mô phỏng', unit: 'test', limitAmount: 10, spentAmount: 1, reservedAmount: 0 }], search: [], email: [], aiErrors: [] };
-    else if (endpoint === '/api/resumes/public/me') json = null;
+    else if (endpoint === '/api/admin/dashboard') json = { days: 30, totals: { users: { total: 0, active: 0, suspended: 0, deletionPending: 0, deleted: 0, candidates: 0, recruiters: 0, admins: 0 }, jobs: { total: 0, draft: 0, published: 0, closed: 0, archived: 0 }, applications: { total: 0, active: 0, rejected: 0, withdrawn: 0 }, communityPosts: { total: 0, published: 0, pending: 0, hidden: 0, deleted: 0 }, reportsOpen: { recruitment: 0, community: 0 } }, series: { applicationsByDay: [], jobsPublishedByDay: [], topJobTags: [] } };
+    else if (endpoint === '/api/recruiter/business') json = { identity: { companyId: 'company', legalName: 'Công ty kiểm thử UI', taxCode: '0101010101', domain: 'example.invalid', status: 'draft', reviewReason: '', rowVersion: 1 }, email: 'ui@example.invalid', emailConfirmed: true, corporateEmail: true };
+    else if (endpoint === '/api/resumes/public/me' || endpoint === '/api/community/me') json = null;
     else if (['/api/resumes', '/api/public/resumes', '/api/admin/accounts'].includes(endpoint)) json = { items: [], total: 0, page: 1, pageSize: 20 };
-    else if (endpoint === '/api/notifications' || endpoint.endsWith('/revisions')) json = [];
+    else if (endpoint === '/api/community/posts') json = { items: [], page: 1, pageSize: 12, total: 0 };
+    else if (endpoint === '/api/community/events') { await route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }); return; }
+    else if (endpoint === '/api/notifications' || endpoint === '/api/community/people' || endpoint === '/api/community/suggestions' || endpoint === '/api/community/trending-searches' || endpoint.endsWith('/revisions')) json = [];
+    else if (endpoint === '/api/locations') json = { items: [] };
     else { unexpected.push(endpoint); await route.fulfill({ status: 501, json: { title: 'unexpected_mock_request' } }); return; }
     await route.fulfill({ json });
   });
@@ -45,10 +50,12 @@ test('[mock] guide action, one current menu, field feedback and mobile modal nav
   const { writes, unexpected } = await mock(page, 'Guest');
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/#jobs');
+  await expect(page.getByRole('heading', { name: 'Tìm công việc' })).toBeVisible();
   await expect(page.locator('.workspace-nav a[aria-current]:visible')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Cách CareerGap hoạt động', exact: true }).click();
+  await page.locator('.workspace-sidebar .workspace-guide').first().click();
   await expect(page).toHaveURL(/#jobs$/);
-  await expect(page.getByRole('button', { name: 'Thu gọn', exact: true })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('dialog', { name: 'Cách CareerGap AI hoạt động' })).toBeVisible();
+  await page.getByRole('button', { name: 'Đóng hộp thoại', exact: true }).click();
   await page.getByRole('link', { name: 'Đăng nhập', exact: true }).click();
   await expect(page.locator('main h1')).toHaveCount(1);
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click();
@@ -140,9 +147,11 @@ test('[mock] account deletion dialog cancels safely and validates the password f
 test('[mock] recruiter subviews retain editor state and support keyboard, reload and small screens', async ({ page }, info) => {
   const { writes, unexpected } = await mock(page, 'Recruiter');
   await page.goto('/#recruiter-company');
+  await expect(page.getByLabel('Tên công ty', { exact: true })).toBeVisible();
   await page.getByLabel('Tên công ty', { exact: true }).fill('Nội dung công ty chưa lưu');
   await openView(page, 'recruiter-jobs');
   await expect(page.getByLabel('Tên công ty', { exact: true })).not.toBeVisible();
+  await page.getByRole('button', { name: '+ Tạo tin tuyển dụng mới', exact: true }).click();
   await page.getByLabel('Chức danh', { exact: true }).fill('JD chưa lưu');
   await openView(page, 'recruiter-applicants');
   await expect(page.getByLabel('Chức danh', { exact: true })).not.toBeVisible();
@@ -209,9 +218,11 @@ test('[mock] PDF language invalidates previews, exports both languages, and resp
 test('[mock] computed token contrast, meaningful text sizes and mobile admin table', async ({ page }) => {
   const { writes, unexpected } = await mock(page, 'Admin');
   await page.goto('/#administration');
-  await page.getByRole('button', { name: 'Hạn mức và lỗi', exact: true }).click();
+  const usageBtn = page.getByRole('button', { name: 'Hạn mức và lỗi', exact: true });
+  await expect(usageBtn).toBeEnabled();
+  await usageBtn.click();
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.locator('.admin-panel td').first()).toHaveCSS('font-size', '14px');
+  await expect(page.locator('.admin-panel td').first()).toHaveCSS('font-size', '12px');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   const colors = await page.evaluate(() => {
     const style = getComputedStyle(document.documentElement);
@@ -239,7 +250,7 @@ test('[mock] sticky elevation appears only while pinned and clears on a short vi
   const controls = page.locator('.job-discovery-controls');
   await expect(controls).toHaveAttribute('data-sticky-fits', 'true');
   await expect(controls.locator(':scope > .matching-panel')).toHaveCSS('box-shadow', 'none');
-  await page.mouse.wheel(0, 700);
+  await page.evaluate(() => window.scrollTo(0, 1400));
   await expect(controls).toHaveAttribute('data-sticky-active', 'true');
   await expect(controls.locator(':scope > .matching-panel')).not.toHaveCSS('box-shadow', 'none');
   await page.setViewportSize({ width: 1440, height: 300 });

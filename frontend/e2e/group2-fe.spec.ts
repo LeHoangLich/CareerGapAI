@@ -234,7 +234,7 @@ test('[mock] FE-01..05, FE-07, FE-09, FE-10: Job detail match, CTA links, filter
   await expect(page).toHaveURL(/#jobs\?.*q=Backend.*workMode=remote/);
 
   // FE-01 & FE-02: Open #job?id=..., run PairAnalysis inline, open WeeklyRoadmap, verify CTA links
-  await browser.getByRole('link', { name: 'Xem chi tiết việc làm' }).click();
+  await browser.getByRole('link', { name: /Xem chi tiết/ }).click();
   await expect(page.locator('[data-workspace-view="job"]')).toBeVisible();
   const matchSection = page.locator('.job-pair-match');
   await expect(matchSection.getByRole('heading', { name: 'Đối chiếu CV của bạn với tin tuyển dụng này' })).toBeVisible();

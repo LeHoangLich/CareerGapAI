@@ -1,0 +1,36 @@
+{
+  "releaseId": "post-freeze-ui-sync-2026-11-27",
+  "date": "2026-11-27",
+  "branch": "main",
+  "defenseBaselinePreserved": {
+    "releaseId": "release20261031",
+    "commit": "41b82c6",
+    "frozenFiles": 222,
+    "status": "untouched"
+  },
+  "taskboard": {
+    "path": "taskboard_v2.md",
+    "totalItems": 56,
+    "completedItems": 52,
+    "completedScope": "All P0, P1, P2 items (BE-01..14, FE-01..13, UI-01..08, SYNC-01..14, LIM-01, LIM-06, LIM-07)",
+    "remainingP3Items": ["LIM-02", "LIM-03", "LIM-04", "LIM-05"]
+  },
+  "verification": {
+    "regressionRunId": "20261127-032340-8554",
+    "completed": true,
+    "cleanup": true,
+    "providers": "Fake",
+    "nonFakeMethods": 0,
+    "usdBudgets": 0,
+    "apiAssemblySha256": "80c1c8c8ec01e6ddc11c8986c32984cab2a3c8fa13d27bf1e2fafe7b0886d2f2",
+    "checks": {
+      "backendTests": { "passed": 240, "failed": 0, "skipped": 0 },
+      "frontendLint": "exit 0",
+      "frontendTypecheck": "exit 0",
+      "frontendUnitTests": { "files": 12, "passed": 47, "failed": 0 },
+      "frontendBuild": "exit 0",
+      "playwrightE2E": { "passed": 26, "failed": 0 }
+    }
+  },
+  "reportPath": "project-docs/report/post-freeze-ui-sync-2026-11-27.md"
+}

@@ -21,12 +21,13 @@ describe('community text rendering at the trust boundary', () => {
     expect(html).not.toContain('#community?handle=example');
     expect(html).not.toContain('#community?handle=abcdefghijkl');
   });
-  it('renders code blocks, ordered lists, strike/underline and internal community images safely', () => {
+  it('renders code blocks, lists, strike/underline and internal community images safely', () => {
     const imageId = '11111111-2222-3333-4444-555555555555';
     const html = render(
-      '1. Bước một\n2. Bước hai\n~~cũ~~ ++mới++ `dotnet test`\n```csharp\nvar x = 1 < 2;\n```\n![Minh họa](/api/community/images/' + imageId + ')'
+      '1. Bước một\n2. Bước hai\n- Mục A\n- Mục B\n~~cũ~~ ++mới++ `dotnet test`\n```csharp\nvar x = 1 < 2;\n```\n![Minh họa](/api/community/images/' + imageId + ')'
     );
     expect(html).toContain('<ol start="1" class="community-ordered"><li>Bước một</li><li>Bước hai</li></ol>');
+    expect(html).toContain('<ul class="community-unordered"><li>Mục A</li><li>Mục B</li></ul>');
     expect(html).toContain('<del>cũ</del>');
     expect(html).toContain('<u>mới</u>');
     expect(html).toContain('<code>dotnet test</code>');

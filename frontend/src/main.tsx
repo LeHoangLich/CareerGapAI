@@ -72,12 +72,12 @@ function AccountAccess({ onAuthenticated }: { onAuthenticated: (next: Session) =
   }
   return <section className="card login" id="access">
     <p className="eyebrow">KHÔNG GIAN CỦA BẠN</p>
-    {mode === 'login' && <><h1>Đăng nhập thử nghiệm</h1><p>Dùng tài khoản của bạn để tiếp tục.</p><ValidatedForm onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); void action(() => signIn(String(data.get('email')), String(data.get('password')))); }}>
+    {mode === 'login' && <><h1>Đăng nhập</h1><p>Dùng tài khoản của bạn để tiếp tục.</p><ValidatedForm onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); void action(() => signIn(String(data.get('email')), String(data.get('password')))); }}>
       <label>Email<input name="email" type="email" autoComplete="username" required maxLength={254}/></label>
       <label>Mật khẩu<input name="password" type="password" autoComplete="current-password" required maxLength={256}/></label>
       <button type="submit" disabled={busy}>{busy ? 'Đang đăng nhập…' : 'Đăng nhập'}</button>
     </ValidatedForm><div className="auth-links"><button type="button" className="link-button" onClick={() => switchMode('register')}>Tạo tài khoản</button><button type="button" className="link-button" onClick={() => switchMode('forgot')}>Quên mật khẩu?</button></div></>}
-    {mode === 'register' && <><h1>Tạo tài khoản</h1><p>Chọn Candidate hoặc Recruiter. Vai trò Admin do người phụ trách cấp riêng. Nhà tuyển dụng cần email tên miền doanh nghiệp; email, mã số thuế và pháp nhân phải được xác minh trước khi đăng tin.</p><ValidatedForm onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const email = String(data.get('email')); const password = String(data.get('password')); void action(async () => {
+    {mode === 'register' && <><h1>Tạo tài khoản</h1><p>Chọn Ứng viên hoặc Nhà tuyển dụng. Vai trò Quản trị viên do người phụ trách cấp riêng. Nhà tuyển dụng cần email tên miền doanh nghiệp; email, mã số thuế và pháp nhân phải được xác minh trước khi đăng tin.</p><ValidatedForm onSubmit={e => { e.preventDefault(); const data = new FormData(e.currentTarget); const email = String(data.get('email')); const password = String(data.get('password')); void action(async () => {
       await api('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, role: registerRole, displayName: registerRole === 'Candidate' ? data.get('displayName') : null }) });
       await signIn(email, password);
     }); }}>
@@ -314,7 +314,7 @@ function App() {
     {!loading && !session?.deletionPending && <PersistentView active={activeView === 'public-resumes'} name="public-resumes"><PublicResumeBrowser session={session}/></PersistentView>}
     {loading ? <StaticLoading label="Đang kết nối…"/> : !session?.authenticated ? <PersistentView active={activeView === 'access'} name="access"><AccountAccess onAuthenticated={setAuthenticated}/></PersistentView> : session.deletionPending ? <PersistentView active name="account"><AccountDeletionPendingPanel session={session} onAuthenticated={setAuthenticated}/></PersistentView> : <>
       {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <PersistentView active={activeView === 'analysis-history'} name="analysis-history"><AnalysisHistory active={activeView === 'analysis-history'}/></PersistentView>}
-      {session.roles.includes('Candidate') ? <><PersistentView active={activeView === 'profile'} name="profile"><CandidateProfilePanel/></PersistentView><PersistentView active={activeView === 'cv-builder'} name="cv-builder"><Suspense fallback={<section className="card"><StaticLoading label="Đang mở trình tạo CV…"/></section>}><ResumeBuilderPanel ownerId={session.userId ?? ''} resumes={resumes} onResumesUpdated={next => { setPage(1); setResumes(next); }} pdfProbe={<section className="card probe"><div><h2>Kiểm tra PDF tiếng Việt</h2><p>Xuất tài liệu giả để kiểm tra dấu, phân trang và khả năng chọn/copy văn bản.</p></div><button type="button" disabled={busy} className="secondary" onClick={() => void action(async () => { const { downloadProbe } = await import('./pdfProbe'); await downloadProbe(); })}>Xuất PDF mẫu giả</button></section>}/></Suspense></PersistentView><PersistentView active={activeView === 'private-resumes'} name="private-resumes"><div className="resume-workspace-grid"><section className="card" id="private-resumes"><h2>CV riêng của bạn</h2><p>PDF có văn bản hoặc DOCX, tối đa 4 MB. Mỗi CV có thể giữ nhiều phiên bản; file cũ không bị ghi đè và chỉ chính bạn được tải.</p>
+      {session.roles.includes('Candidate') ? <><PersistentView active={activeView === 'profile'} name="profile"><CandidateProfilePanel/></PersistentView><PersistentView active={activeView === 'cv-builder'} name="cv-builder"><Suspense fallback={<section className="card"><StaticLoading label="Đang mở trình tạo CV…"/></section>}><ResumeBuilderPanel ownerId={session.userId ?? ''} resumes={resumes} onResumesUpdated={next => { setPage(1); setResumes(next); }} pdfProbe={import.meta.env.DEV ? <section className="card probe"><div><h2>Kiểm tra PDF tiếng Việt</h2><p>Xuất tài liệu mẫu để kiểm tra dấu, phân trang và khả năng chọn/copy văn bản.</p></div><button type="button" disabled={busy} className="secondary" onClick={() => void action(async () => { const { downloadProbe } = await import('./pdfProbe'); await downloadProbe(); })}>Xuất PDF mẫu</button></section> : undefined}/></Suspense></PersistentView><PersistentView active={activeView === 'private-resumes'} name="private-resumes"><div className="resume-workspace-grid"><section className="card" id="private-resumes"><h2>CV riêng của bạn</h2><p>PDF có văn bản hoặc DOCX, tối đa 4 MB. Mỗi CV có thể giữ nhiều phiên bản; file cũ không bị ghi đè và chỉ chính bạn được tải.</p>
         <ValidatedForm onSubmit={e => { e.preventDefault(); const form = e.currentTarget; const data = new FormData(form); void action(async () => {
           const path = selectedResumeId ? `/api/resumes/${selectedResumeId}/versions` : '/api/resumes';
           const created = await api<{ id: string; versionId: string }>(path, { method: 'POST', body: data });
@@ -334,7 +334,14 @@ function App() {
           }); }}><label>Tên CV<input value={resumeTitleDraft} maxLength={200} required onChange={e => setResumeTitleDraft(e.target.value)}/></label><button type="submit" disabled={busy}>Lưu tên</button><button type="button" className="secondary" onClick={() => setEditingResumeId(undefined)}>Hủy</button></ValidatedForm>}
           <div className="resume-version-list">{r.versions.map(version => <div className="resume-version row" key={version.id}>
             <label className="resume-version-choice"><input type="radio" name="resume-version" checked={selectedResumeVersionId === version.id} onChange={() => setSelectedResumeVersionId(version.id)}/><span><strong>Phiên bản {version.versionNo}</strong><small>{new Date(version.createdAt).toLocaleString('vi-VN')}</small></span></label>
-            <div className="row"><a href={`/api/files/${version.fileId}`}>Tải file</a><button type="button" className="secondary" disabled={busy} onClick={() => void action(async () => {
+            <div className="row"><a href={`/api/files/${version.fileId}`}>Tải file</a><button type="button" disabled={busy} onClick={() => void action(async () => {
+              setSelectedResumeVersionId(version.id);
+              const keep = pending.current?.contract === 'cv-fields-v3' && pending.current.versionId === version.id && job && ['queued', 'running'].includes(job.status);
+              const fullKey = keep ? pending.current!.key : crypto.randomUUID();
+              pending.current = { versionId: version.id, key: fullKey, contract: 'cv-fields-v3' };
+              const next = await api<Job>('/api/ai/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId: version.id, idempotencyKey: fullKey, contract: 'cv-fields-v3' }) });
+              setPollCount(c => c + 1); setJob(next);
+            })}>Phân tích nội dung CV v{version.versionNo}</button><details><summary>Tùy chọn nâng cao</summary><button type="button" className="secondary" disabled={busy} onClick={() => void action(async () => {
               const keepKey = pending.current?.contract !== 'cv-fields-v3' && pending.current?.versionId === version.id && job?.resumeVersionId === version.id && ['queued', 'running'].includes(job.status);
               const key = keepKey ? pending.current!.key : crypto.randomUUID();
               pending.current = { versionId: version.id, key };
@@ -342,26 +349,20 @@ function App() {
               const next = await api<Job>('/api/ai/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId: version.id, idempotencyKey: key }) });
               if (!['queued', 'running'].includes(next.status)) pending.current = undefined;
               setPollCount(c => c + 1); setJob(next);
-            })}>Thử trích xuất v{version.versionNo}</button><button type="button" className="secondary" disabled={busy} onClick={() => void action(async () => {
-              setSelectedResumeVersionId(version.id);
-              const keep = pending.current?.contract === 'cv-fields-v3' && pending.current.versionId === version.id && job && ['queued', 'running'].includes(job.status);
-              const fullKey = keep ? pending.current!.key : crypto.randomUUID();
-              pending.current = { versionId: version.id, key: fullKey, contract: 'cv-fields-v3' };
-              const next = await api<Job>('/api/ai/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resumeVersionId: version.id, idempotencyKey: fullKey, contract: 'cv-fields-v3' }) });
-              setPollCount(c => c + 1); setJob(next);
-            })}>Đọc đầy đủ v{version.versionNo}</button></div>
+            })}>Trích xuất nhanh kỹ năng v{version.versionNo}</button></details></div>
           </div>)}</div>
         </li>)}</ul>
         {!resumes.length && <p>Chưa có CV trên trang này.</p>}
-        <div className="row"><button type="button" className="secondary" disabled={page === 1 || busy} onClick={() => setPage(p => p - 1)}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(resumesTotal / 20))}</span><button type="button" className="secondary" disabled={page * 20 >= resumesTotal || busy} onClick={() => setPage(p => p + 1)}>Sau</button></div>
-      </section><section className="card"><h2>Kết quả thử nghiệm</h2>{!job ? <p>Chọn “Thử trích xuất” để bắt đầu. Dữ liệu gốc được giữ nguyên.</p> : <>
+        <div className="row"><button type="button" className="secondary" disabled={page === 1 || busy} onClick={() => setPage(p => p - 1)}>Trang trước</button><span>Trang {page} / {Math.max(1, Math.ceil(resumesTotal / 20))}</span><button type="button" className="secondary" disabled={page * 20 >= resumesTotal || busy} onClick={() => setPage(p => p + 1)}>Trang sau</button></div>
+      </section><section className="card"><h2>Kết quả phân tích CV</h2>{!job ? <p>Chọn “Phân tích nội dung CV” để bắt đầu. Dữ liệu gốc được giữ nguyên.</p> : <>
         <p role="status">{({ queued: 'Đang chờ xử lý', running: 'Đang đọc tài liệu', succeeded: 'Đã xử lý', failed: 'Chưa thể phân tích', cancelled: 'Đã hủy' } as Record<string, string>)[job.status]}</p>
         {job.provider && <p className="badge">{job.provider === 'Fake' ? job.schemaVersion === 'cv-fields-v3' ? 'Mô phỏng cục bộ · không gọi AI thật' : 'Mô phỏng bằng từ khóa · không gọi AI thật' : `DeepSeek · ${job.model}`}</p>}
         {job.status === 'failed' && <p>Tác vụ chưa thành công. File CV vẫn có thể tải về; hệ thống không tạo điểm đánh giá thay thế.</p>}
-        {output?.skills && <><p>Kỹ năng được nhắc trực tiếp trong tài liệu:</p><ul>{output.skills.map((s, i) => <li key={i}><strong>{s.name}</strong> — “{s.quote}” <small>{s.evidenceRef}</small></li>)}</ul>{!output.skills.length && <p>Chưa tìm thấy kỹ năng trong phạm vi thử nghiệm.</p>}</>}
+        {output?.skills && <><p>Kỹ năng được nhắc trực tiếp trong tài liệu:</p><ul>{output.skills.map((s, i) => <li key={i}><strong>{s.name}</strong> — “{s.quote}” <small>{s.evidenceRef}</small></li>)}</ul>{!output.skills.length && <p>Chưa tìm thấy kỹ năng trong tài liệu.</p>}</>}
         {latestRevision?.schemaVersion === 1 && <section className="revision-review" aria-label="Rà soát dữ liệu trích xuất">
           <h3>Rà soát dữ liệu trích xuất</h3>
-          <p>Revision {latestRevision.revisionNo} · {latestRevision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'} · parser {latestRevision.parserVersion}</p>
+          <p>Phiên bản rà soát {latestRevision.revisionNo} · {latestRevision.origin === 'ai_extracted' ? 'Chờ bạn xác nhận' : 'Bạn đã xác nhận'}</p>
+          <details><summary>Thông tin kỹ thuật</summary><small>Bộ phân tích: {latestRevision.parserVersion}</small></details>
           {latestRevision.origin === 'ai_extracted' ? <>
             <p>Chọn các kỹ năng có trong CV. Nội dung bạn tự bổ sung được lưu riêng, không được ghi thành trích dẫn trong tài liệu.</p>
             <fieldset className="revision-skill-options"><legend>Kỹ năng được trích xuất</legend>
