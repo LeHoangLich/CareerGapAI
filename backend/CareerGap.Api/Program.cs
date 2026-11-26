@@ -55,8 +55,14 @@ var dp = builder.Services.AddDataProtection().SetApplicationName("CareerGapAI").
 if (!builder.Environment.IsDevelopment() && !builder.Environment.IsEnvironment("Testing"))
 {
     if (builder.Configuration["Storage:Provider"] != "S3") throw new InvalidOperationException("Production requires private durable S3 storage");
-    var path = builder.Configuration["DataProtection:CertificatePath"] ?? throw new InvalidOperationException("Production requires a Data Protection certificate");
-    dp.ProtectKeysWithCertificate(X509CertificateLoader.LoadPkcs12FromFile(path, builder.Configuration["DataProtection:CertificatePassword"]));
+    var certPassword = builder.Configuration["DataProtection:CertificatePassword"];
+    var certBase64 = builder.Configuration["DataProtection:CertificateBase64"] ?? builder.Configuration["DP_CERT_BASE64"];
+    var cert = !string.IsNullOrWhiteSpace(certBase64)
+        ? X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(certBase64), certPassword)
+        : X509CertificateLoader.LoadPkcs12FromFile(
+            builder.Configuration["DataProtection:CertificatePath"] ?? throw new InvalidOperationException("Production requires a Data Protection certificate"),
+            certPassword);
+    dp.ProtectKeysWithCertificate(cert);
 }
 builder.Services.AddAntiforgery(o =>
 {
