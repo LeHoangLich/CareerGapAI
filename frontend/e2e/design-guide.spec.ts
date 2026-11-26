@@ -33,7 +33,8 @@ async function mock(page: Page, role: 'Guest' | 'Candidate' | 'Recruiter' | 'Adm
     else if (endpoint === '/api/account/deletion-request') json = { status: 'deletion_pending', purgeAfter: '2026-11-05T00:00:00Z' };
     else if (endpoint === '/api/admin/usage') json = { aiBudgets: [{ service: 'Mô phỏng', unit: 'test', limitAmount: 10, spentAmount: 1, reservedAmount: 0 }], search: [], email: [], aiErrors: [] };
     else if (endpoint === '/api/resumes/public/me') json = null;
-    else if (['/api/resumes', '/api/notifications', '/api/public/resumes', '/api/admin/accounts'].includes(endpoint) || endpoint.endsWith('/revisions')) json = [];
+    else if (['/api/resumes', '/api/public/resumes', '/api/admin/accounts'].includes(endpoint)) json = { items: [], total: 0, page: 1, pageSize: 20 };
+    else if (endpoint === '/api/notifications' || endpoint.endsWith('/revisions')) json = [];
     else { unexpected.push(endpoint); await route.fulfill({ status: 501, json: { title: 'unexpected_mock_request' } }); return; }
     await route.fulfill({ json });
   });

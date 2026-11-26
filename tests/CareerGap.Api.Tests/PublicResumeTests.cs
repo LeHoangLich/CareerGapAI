@@ -41,12 +41,12 @@ public sealed class PublicResumeTests(FoundationFixture fixture) : IClassFixture
         Assert.Equal("ready", selection.GetProperty("status").GetString());
         Assert.Equal(resumeVersionId, selection.GetProperty("resumeVersionId").GetGuid());
 
-        var candidateList = await otherCandidate.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        var candidateItem = Assert.Single(candidateList!, x => x.GetProperty("candidateId").GetGuid() == ownerId);
+        var candidateList = await otherCandidate.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        var candidateItem = Assert.Single(candidateList.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == ownerId);
         Assert.Equal("Ứng viên", candidateItem.GetProperty("displayName").GetString());
         Assert.Equal("ready", candidateItem.GetProperty("redactionStatus").GetString());
-        var recruiterList = await recruiter.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        Assert.Single(recruiterList!, x => x.GetProperty("candidateId").GetGuid() == ownerId);
+        var recruiterList = await recruiter.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        Assert.Single(recruiterList.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == ownerId);
 
         using var candidateFile = await otherCandidate.GetAsync(publicFilePath);
         Assert.Equal(HttpStatusCode.OK, candidateFile.StatusCode);
@@ -94,8 +94,8 @@ public sealed class PublicResumeTests(FoundationFixture fixture) : IClassFixture
         var rowVersion = replaced.GetProperty("rowVersion").GetInt64();
         Assert.Equal(HttpStatusCode.NoContent, (await owner.DeleteAsync($"/api/resumes/public/me?rowVersion={rowVersion}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await otherCandidate.GetAsync($"/api/public/resumes/{ownerId}/{newVersionId}/file")).StatusCode);
-        var afterHide = await recruiter.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        Assert.DoesNotContain(afterHide!, x => x.GetProperty("candidateId").GetGuid() == ownerId);
+        var afterHide = await recruiter.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        Assert.DoesNotContain(afterHide.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == ownerId);
         Assert.Equal(HttpStatusCode.OK, (await owner.GetAsync($"/api/files/{originalFileId}")).StatusCode);
     }
 
@@ -120,8 +120,8 @@ public sealed class PublicResumeTests(FoundationFixture fixture) : IClassFixture
         var selection = await owner.GetFromJsonAsync<JsonElement>("/api/resumes/public/me");
         Assert.Equal("ready", selection.GetProperty("status").GetString());
         Assert.Equal(0, selection.GetProperty("rowVersion").GetInt64());
-        var visibleToOther = await otherCandidate.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        Assert.Single(visibleToOther!, x => x.GetProperty("candidateId").GetGuid() == ownerId);
+        var visibleToOther = await otherCandidate.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        Assert.Single(visibleToOther.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == ownerId);
         using var scope = fixture.App.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDb>();
         Assert.Equal(1, await db.CandidatePublicResumes.CountAsync(x => x.CandidateId == ownerId));
@@ -179,8 +179,8 @@ public sealed class PublicResumeTests(FoundationFixture fixture) : IClassFixture
         Assert.Equal("not_ready", selection.GetProperty("status").GetString());
         Assert.Equal(JsonValueKind.Null, selection.GetProperty("redactionVerifiedAt").ValueKind);
 
-        var visible = await otherCandidate.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        Assert.DoesNotContain(visible!, x => x.GetProperty("candidateId").GetGuid() == ownerId);
+        var visible = await otherCandidate.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        Assert.DoesNotContain(visible.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == ownerId);
         using var candidateFile = await otherCandidate.GetAsync($"/api/public/resumes/{ownerId}/{versionId}/file");
         Assert.Equal(HttpStatusCode.Conflict, candidateFile.StatusCode);
         var problem = await candidateFile.Content.ReadFromJsonAsync<JsonElement>();

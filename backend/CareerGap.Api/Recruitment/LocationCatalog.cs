@@ -17,7 +17,7 @@ public static class LocationCatalog
     public static string? Normalize(string? value)=>string.IsNullOrWhiteSpace(value)?null:Find(value.Trim())?.Name??value.Trim();
     public static string[] SearchNames(string value)=>Find(value) is {} location ? new[]{location.Name}.Concat(location.Aliases).Distinct().ToArray():[value.Trim()];
     public static void MapLocationCatalog(this WebApplication app)=>app.MapGet("/api/locations",(string? q)=>{
-        if(q?.Length>100)return Results.BadRequest();
+        if(q?.Length>100)return Results.Problem(statusCode:400,title:"invalid_location_query");
         var items=Items.Where(l=>string.IsNullOrWhiteSpace(q)||new[]{l.Name}.Concat(l.Aliases).Any(a=>SkillCatalog.Fold(a).Contains(SkillCatalog.Fold(q))));
         return Results.Ok(new {version="vn-locations-2025-v1",source=Source,items=items.ToArray()});
     });

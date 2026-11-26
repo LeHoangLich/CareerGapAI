@@ -71,6 +71,7 @@ public sealed partial class AppDb(DbContextOptions<AppDb> options) : IdentityDbC
         b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.Plan).HasColumnType("jsonb");
         b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.Completed).HasColumnType("jsonb");
         b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.RowVersion).IsConcurrencyToken();
+        foreach (var property in b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Metadata.GetProperties()) property.SetColumnName(Snake(property.Name));
         b.Entity<AppUser>().Property(x => x.AccountStatus).HasMaxLength(24);
         b.Entity<AppUser>().HasIndex(x => x.NormalizedEmail).IsUnique().HasFilter("\"NormalizedEmail\" IS NOT NULL");
         b.Entity<CandidateProfile>().HasKey(x => x.UserId);
@@ -418,6 +419,7 @@ public sealed partial class AppDb(DbContextOptions<AppDb> options) : IdentityDbC
                 nameof(ApplicationNoteRecord) => "application_notes",
                 nameof(JobCandidateBlockRecord) => "job_candidate_blocks",
                 nameof(NotificationRecord) => "notifications",
+                nameof(CommunitySearch) => "community_searches",
                 _ => Snake(type.ClrType.Name) + "s"
             };
             type.SetTableName(table);

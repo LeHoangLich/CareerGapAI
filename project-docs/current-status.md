@@ -1,5 +1,8 @@
 # Hiện trạng chuẩn — CareerGap AI
 
+> **Cập nhật nhánh mở rộng sau đóng băng (20–21/11/2026 — `feat/post-freeze-p1-p3-20261121` / tag `v2026.11.21-p1-p3`):**
+> Workspace hiện đang ở nhánh mở rộng sau đóng băng (tách biệt hoàn toàn với gói bảo vệ `release20261031` tại commit `41b82c6`), đã đồng bộ phân hệ Cộng đồng, Xác minh doanh nghiệp và **32/32 tính năng F01–F32** với **31 EF Core migrations**. Kiểm thử gần nhất trên nhánh mới: **231/231 backend PG tests** (Fake) và **42/42 frontend unit tests**, `typecheck`/`lint`/`build` đạt; **bộ Playwright E2E chưa được chạy lại cho các tính năng mới** và danh sách lỗi logic/đồng bộ giao diện cần xử lý tiếp được ghi nhận tại [taskboard_v2.md](../taskboard_v2.md). Bản **Defense Baseline `release20261031`** (222 file, 19 migrations, 160/15/22) vẫn được giữ nguyên.
+
 **01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN BỞI LÊ HOÀNG LỊCH.** Trạng thái cuối **final_defense_ready**; release20261031 là **Defense Baseline**. Giai đoạn E/GĐ6 và phạm vi dự án nội bộ hoàn thành; mã nguồn đã đóng băng. Chủ dự án chính thức khép lại thủ tục dùng thử ngoài trước bảo vệ; đó không còn là điều kiện chờ của M6. Kết quả Hội đồng tại buổi bảo vệ được ghi riêng theo thực tế. [Biên bản](report/m6-internal-acceptance-2026-11-01.md) · [Manifest](evaluation/m6-internal-acceptance-2026-11-01.json) · [Source freeze](evaluation/source-freeze-2026-11-01.json). Các trạng thái M6 chờ/đánh giá ngoài hoãn trong ghi nhận cũ phía dưới chỉ là lịch sử đã được quyết định này thay thế. Metric, human direct review0, backup và archive lịch sử giữ nguyên.
 
 
@@ -148,7 +151,7 @@ Không còn công việc phát triển bắt buộc trong phạm vi nội bộ �
 
 **Lượt kiểm tra M3 mới nhất ngày 21/10:** chủ dự án yêu cầu thực hiện nghiệm thu chất lượng. Validator/replay mới khớp 122/0/0, nhưng chỉ có synthetic/3 nhóm và toàn nhãn present; không đủ kết luận chất lượng đại diện. M3 **chờ đầu vào dữ liệu**, không còn chỉ tạm hoãn theo yêu cầu cũ. [Biên bản M3](report/m3-quality-review-2026-10-21.md). Không thêm phí hoặc sửa runtime; chưa thực hiện C.
 
-Ngày đối chiếu local: **21/10/2026**, Asia/Saigon; GitHub/CI vẫn là bằng chứng đã đối chiếu ngày 16/10. Đây là điểm đọc hiện trạng; nhật ký L01–L13 trong các báo cáo/task cũ giữ nguyên giá trị lịch sử theo từng lần chạy.
+*(Mốc đối chiếu chi tiết phía dưới được giữ nguyên theo nhật ký đến ngày **21/10/2026**, Asia/Saigon; mốc hiện hành mới nhất là bản cập nhật nhánh mở rộng 21/11/2026 và Defense Baseline 01/11/2026 ở đầu tài liệu.)* GitHub/CI bản gốc được đối chiếu ngày 16/10; nhật ký L01–L13 trong các báo cáo/task cũ giữ nguyên giá trị lịch sử theo từng lần chạy.
 
 ## Bản chuẩn và bằng chứng
 

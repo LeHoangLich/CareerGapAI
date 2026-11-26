@@ -21,21 +21,24 @@ export function resolveWorkspaceView(hash: string, session?: NavigationSession):
   if (session?.deletionPending) return 'account';
   const requested = hash.replace(/^#/, '').split('?')[0];
   if (requested === 'home') return 'home';
+  if (requested === 'jobs') return 'jobs';
   if (requested === 'community') return 'community';
   if (requested === 'job') return 'job';
-  if (requested === 'access') return session?.authenticated ? 'jobs' : 'access';
+  if (requested === 'access') return session?.authenticated ? 'home' : 'access';
   if (requested === 'account') return session?.authenticated ? 'account' : 'access';
   if (resumeViews.includes(requested as WorkspaceView))
-    return !session?.authenticated ? 'access' : session.roles.includes('Candidate') ? requested as WorkspaceView : 'jobs';
-  if (requested === 'applications' || requested === 'application' || requested === 'notifications') return !session?.authenticated ? 'access' : requested;
-  if (requested === 'analysis-history') return !session?.authenticated ? 'access' : session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? 'analysis-history' : 'jobs';
+    return !session?.authenticated ? 'access' : session.roles.includes('Candidate') ? requested as WorkspaceView : 'home';
+  if (requested === 'applications')
+    return !session?.authenticated ? 'access' : session.roles.includes('Candidate') ? 'applications' : 'home';
+  if (requested === 'application' || requested === 'notifications') return !session?.authenticated ? 'access' : requested;
+  if (requested === 'analysis-history') return !session?.authenticated ? 'access' : session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? 'analysis-history' : 'home';
   if (requested === 'public-resumes') return !session?.authenticated ? 'access'
-    : session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? 'public-resumes' : 'jobs';
+    : session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? 'public-resumes' : 'home';
   if (recruiterViews.includes(requested as WorkspaceView) || requested === 'shared-profile') return !session?.authenticated ? 'access'
-    : session.roles.includes('Recruiter') ? requested as WorkspaceView : 'jobs';
+    : session.roles.includes('Recruiter') ? requested as WorkspaceView : 'home';
   if (requested === 'administration') return !session?.authenticated ? 'access'
-    : session.roles.includes('Admin') ? 'administration' : 'jobs';
-  return 'jobs';
+    : session.roles.includes('Admin') ? 'administration' : 'home';
+  return 'home';
 }
 
 export function useWorkspaceNavigation(session: NavigationSession | undefined, loading: boolean) {
@@ -57,6 +60,6 @@ export function useWorkspaceNavigation(session: NavigationSession | undefined, l
       window.scrollTo(0, 0);
     });
     return () => cancelAnimationFrame(frame);
-  }, [view, hash, loading]);
+  }, [view, loading]);
   return view;
 }

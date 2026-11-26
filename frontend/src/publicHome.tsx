@@ -43,21 +43,28 @@ export function PublicHome({ active }: { active: boolean }) {
   const [jobs, setJobs] = useState<HomeJob[]>([]);
   const [posts, setPosts] = useState<HomePost[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     if (!active) return;
-    let disposed = false;
+    const controller = new AbortController();
     setLoading(true);
-    void Promise.all([
-      api<{ items: HomeJob[] }>('/api/jobs?page=1&pageSize=6').catch(() => ({ items: [] })),
-      api<{ items: HomePost[] }>('/api/community/posts?mode=discover&sort=trending&page=1').catch(() => ({ items: [] }))
-    ]).then(([jobPage, postPage]) => {
-      if (disposed) return;
-      setJobs(jobPage.items);
-      setPosts(postPage.items.slice(0, 4));
-    }).finally(() => { if (!disposed) setLoading(false); });
-    return () => { disposed = true; };
-  }, [active]);
+    setError('');
+    void Promise.allSettled([
+      api<{ items: HomeJob[] }>('/api/jobs?page=1&pageSize=6', { signal: controller.signal }),
+      api<{ items: HomePost[] }>('/api/community/posts?mode=discover&sort=trending&page=1', { signal: controller.signal }),
+    ]).then(([jobResult, postResult]) => {
+      if (controller.signal.aborted) return;
+      const errors: string[] = [];
+      if (jobResult.status === 'fulfilled') setJobs(jobResult.value.items);
+      else if (!(jobResult.reason instanceof Error && jobResult.reason.name === 'AbortError')) errors.push((jobResult.reason as Error).message);
+      if (postResult.status === 'fulfilled') setPosts(postResult.value.items.slice(0, 4));
+      else if (!(postResult.reason instanceof Error && postResult.reason.name === 'AbortError')) errors.push((postResult.reason as Error).message);
+      if (errors.length) setError(errors[0]);
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => { controller.abort(); };
+  }, [active, retry]);
 
   function searchJobs(event: React.FormEvent) {
     event.preventDefault();
@@ -69,6 +76,7 @@ export function PublicHome({ active }: { active: boolean }) {
   }
 
   return <section className="public-home" aria-label="Trang chủ tổng hợp CareerGap AI">
+    {error && <div className="card" role="alert"><p className="error">{error}</p><button type="button" className="secondary" disabled={loading} onClick={() => setRetry(n => n + 1)}>Thử lại</button></div>}
     <section className="card">
       <p className="eyebrow">CAREERGAP AI · TRANG CHỦ KHÁM PHÁ</p>
       <h1>Kết nối hồ sơ minh bạch, đối chiếu bằng chứng CV–JD.</h1>
@@ -76,7 +84,7 @@ export function PublicHome({ active }: { active: boolean }) {
       <ValidatedForm className="job-filters job-search-bar" onSubmit={searchJobs}>
         <label>Từ khóa việc làm<input value={q} maxLength={120} onChange={e => setQ(e.target.value)} placeholder="Vị trí, kỹ năng hoặc công ty…"/></label>
         <label>Địa điểm<LocationInput value={location} onChange={setLocation} placeholder="Tỉnh, thành phố"/></label>
-        <button><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc ngay</button>
+        <button type="submit"><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc ngay</button>
       </ValidatedForm>
       <div className="row" aria-label="Tag việc làm phổ biến">
         <strong>Tag phổ biến:</strong>

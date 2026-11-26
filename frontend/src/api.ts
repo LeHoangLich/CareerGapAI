@@ -1,4 +1,5 @@
 let csrf: string | undefined;
+export type PagedResponse<T> = { items: T[]; total: number; page: number; pageSize: number };
 export class ApiError extends Error {
   readonly code: string;
   readonly status: number;

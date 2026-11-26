@@ -1,4 +1,20 @@
-# Schema và hợp đồng hiện thực tại baseline b392ef0
+# Schema và hợp đồng hiện thực tại nhánh `feat/post-freeze-p1-p3-20261121` (và lịch sử baseline)
+
+> **Cập nhật nhánh mở rộng sau đóng băng (20–26/11/2026 — 32 migrations):** Trên cơ sở **19 migrations** của Defense Baseline (`release20261031`), nhánh `feat/post-freeze-p1-p3-20261121` (`v2026.11.21-p1-p3`) đã áp dụng thêm **13 migrations** (tổng **32 migrations**):
+> - `20261102130821_CommunityNetwork`: `community_profiles`, `community_posts`, `community_tags`, `community_post_tags`, `community_comments`, `community_reactions`, `community_bookmarks`, `community_follows`, `community_views`, `community_notices`, `community_images`, `community_reports`.
+> - `20261103052341_ApplicationCoverLetter`: cột `cover_letter` (`varchar(5000)`) trên `applications`.
+> - `20261103160632_ReportReviewWorkflow`: cập nhật `ck_content_report` cho phép trạng thái trung gian `reviewed`.
+> - `20261103180858_SavedWeeklyRoadmaps`: bảng `saved_roadmaps` (FK cascade từ `match_inputs`; ban đầu cột PascalCase, đã chuẩn hóa về `snake_case` tại migration #32).
+> - `20261103182529_CompanyLogos`: cột `logo_image_id` trên `companies` tham chiếu `community_images`.
+> - `20261104144420_JobTags`: cột `tags` (`text[]`) kèm GIN index trên `jobs`.
+> - `20261104153539_RecruiterBusinessIdentity`: bảng `business_identities` (`user_id`, `company_id`, `legal_name`, `tax_code`, `bound_tax_code`, `domain`, `status`, `review_reason`, `row_version`, `submitted_at`, `reviewed_by`, `reviewed_at`).
+> - `20261104165201_CommunityCareerVisibility`: cột `show_career` trên `community_profiles`.
+> - `20261120111358_JobCapacityAndSoftDelete`: các cột `max_applications`, `archived_by_role`, `previous_status` và cập nhật `ck_job_listing_state` trên `jobs`.
+> - `20261120120328_AdminUserLastLogin`: cột `LastLoginAt` trên `AspNetUsers`.
+> - `20261120122235_StageP2AiAndLearningExtensions`: mở rộng `ai_jobs.job_type` thêm `rewrite_jd`; bổ sung `career_context`, `quick_match_jd_id` (và cho phép `job_version_id`/`job_revision_id` nullable) trên `match_inputs`; tạo các bảng `quick_match_jds`, `job_rewrite_inputs`, `job_rewrite_results`, `analysis_history_hides`.
+> - `20261120125556_StageP3DiscoveryFeatures`: tạo `job_views` và `community_searchs` (đã đổi tên bảng thành `community_searches` tại migration #32).
+> - `20261126134034_NormalizeSavedRoadmapsAndCommunitySearches` (migration #32, `BE-13`): chuẩn hóa cột `saved_roadmaps` sang `snake_case` (`pair_id`, `plan`, `completed`, `row_version`, `updated_at`) và đổi tên bảng `community_searchs` thành `community_searches`.
+> - **Ghi nhận kỹ thuật mở rộng & bảo trì:** Các bảng mở rộng (`quick_match_jds`, `job_rewrite_inputs`, `job_rewrite_results`, `community_searches`, `job_views`) đã được bổ sung vào luồng ẩn danh/xóa dữ liệu tại `AccountDeletionService.PurgeDatabaseRowsAsync`; tiến độ chi tiết theo dõi tại [taskboard_v2.md](../taskboard_v2.md).
 
 > **D ngày 23/10:** 19 migrations; các bảng thực mới `writing_inputs`, `writing_results`, `writing_decisions`, `learning_requests`, `content_reports`, `admin_audits`, `email_deliverys`; `suggest_cv` trong `ai_jobs`. Không có bảng learning_resources hay taxonomy đầy đủ như thiết kế đích. [Hợp đồng D](phase-05-improvement-and-administration.md), [report D](report/stage-d-2026-10-23.md). Ma trận baseline dưới giữ theo thời điểm b392ef0, không là hiện trạng D.
 
@@ -33,6 +49,6 @@ Không đổi schema/nghiệp vụ để hợp thức hóa khác biệt. Các gi
 | JD revision `origin` | `local_extracted`, `user_confirmed` | Không phải `ai_extracted`; bộ tách local có nguồn/offset |
 | CV version nguồn | `ResumeVersion` chưa có cột `source`/`origin` | Thiết kế có `uploaded`/`generated`; builder hiện phân biệt qua revision `user_entered` v2, không suy ra cột nguồn đã có |
 | Budget service/unit | `Fake`/`test_credit`, `DeepSeek`/`usd` | Đích có service/scope/search khác; không coi quota Fake là USD hoặc user quota |
-| AI job/method | Model hiện gắn `ResumeVersionId`; phương pháp extract skills | Các `job_type`, `access_context`, pair/result trong thiết kế chưa được triển khai đầy đủ |
+| AI job/method | Lịch sử b392ef0 gắn `ResumeVersionId` + `extract_cv`; sau C/D/mở rộng hỗ trợ `extract_cv`, `match_pair`, `suggest_cv`, `rewrite_jd` và `access_context` (`self`, `public_pool`, `application`) | Còn bảng `recommendation_items`, `learning_resources`, `audit_events` dùng cấu trúc riêng (`learning_requests`, `admin_audits`, `saved_roadmaps`) |
 
-15 migrations là baseline hiện tại; không sửa migration cũ hoặc tạo bảng chỉ để khớp sơ đồ. Kiểm tra mới/nâng cấp và giới hạn Down theo từng test được ghi trong [báo cáo A](report/stage-a-2026-10-16.md).
+*(Lưu ý lịch sử b392ef0)* 15 migrations là mốc baseline giai đoạn A (hiện tại là **19 migrations** ở Defense Baseline `release20261031` và **31 migrations** trên nhánh mở rộng `feat/post-freeze-p1-p3-20261121`); không sửa migration cũ hoặc tạo bảng chỉ để khớp sơ đồ. Kiểm tra mới/nâng cấp và giới hạn Down theo từng test được ghi trong [báo cáo A](report/stage-a-2026-10-16.md).

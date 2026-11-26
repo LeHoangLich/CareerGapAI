@@ -59,19 +59,20 @@ public static partial class ApplicationEndpoints
         if (existing is not null)
             return existing.SubmissionHash == inputHash
                 ? Results.Ok(await QueryApplications(db, applicationId: existing.Id).SingleAsync(ct))
-                : Results.Conflict(new { title = "idempotency_conflict" });
+                : Results.Problem(statusCode: 409, title: "idempotency_conflict");
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT id FROM jobs WHERE id = {jobId} FOR UPDATE", ct);
         var job = await db.Jobs.AsNoTracking().Include(x => x.Company).Include(x => x.CurrentVersion)
             .SingleOrDefaultAsync(x => x.Id == jobId && x.Company!.ArchivedAt == null, ct);
-        if (job is null) return Results.NotFound();
+        if (job is null || !await db.Users.AsNoTracking().AnyAsync(u => u.Id == job.Company!.OwnerUserId && u.AccountStatus == "active", ct))
+            return Results.NotFound();
 
         existing = await db.Applications.AsNoTracking()
             .SingleOrDefaultAsync(x => x.CandidateId == candidateId && x.SubmissionKey == input.SubmissionKey, ct);
         if (existing is not null)
         {
-            if (existing.SubmissionHash != inputHash) return Results.Conflict(new { title = "idempotency_conflict" });
+            if (existing.SubmissionHash != inputHash) return Results.Problem(statusCode: 409, title: "idempotency_conflict");
             return Results.Ok(await QueryApplications(db, applicationId: existing.Id).SingleAsync(ct));
         }
 
@@ -79,15 +80,15 @@ public static partial class ApplicationEndpoints
         if (!await CareerGap.Api.Recruitment.BusinessIdentityEndpoints.Verified(db,job.Company!.OwnerUserId,job.CompanyId,ct)) return Results.Problem(statusCode:409,title:"business_verification_required");
         if (job.Status != "published" || job.CurrentVersionId is null || job.CurrentVersion is null ||
             (job.ApplicationDeadline is { } deadline && deadline <= now))
-            return Results.Conflict(new { title = "job_not_accepting_applications" });
+            return Results.Problem(statusCode: 409, title: "job_not_accepting_applications");
         if (job.MaxApplications is { } maxApplications)
         {
             var activeCount = await db.Applications.CountAsync(x => x.JobId == jobId && ActiveStatuses.Contains(x.Status), ct);
             if (activeCount >= maxApplications)
-                return Results.Conflict(new { title = "job_capacity_reached" });
+                return Results.Problem(statusCode: 409, title: "job_capacity_reached");
         }
         if (await db.JobCandidateBlocks.AsNoTracking().AnyAsync(x => x.JobId == jobId && x.CandidateId == candidateId, ct))
-            return Results.Conflict(new { title = "candidate_blocked" });
+            return Results.Problem(statusCode: 409, title: "candidate_blocked");
         var resumeVersion = await db.ResumeVersions.AsNoTracking()
             .SingleOrDefaultAsync(x => x.Id == input.ResumeVersionId && x.CandidateId == candidateId, ct);
         if (resumeVersion is null) return Results.NotFound();
@@ -95,7 +96,7 @@ public static partial class ApplicationEndpoints
             x.OwnerUserId == candidateId && x.Status == "ready" && x.Sha256 == resumeVersion.DocumentHash && x.VerifiedAt != null, ct);
         if (file is null) return Results.NotFound();
         if (await db.Applications.AnyAsync(x => x.CandidateId == candidateId && x.JobId == jobId && ActiveStatuses.Contains(x.Status), ct))
-            return Results.Conflict(new { title = "active_application_exists" });
+            return Results.Problem(statusCode: 409, title: "active_application_exists");
 
         var application = new ApplicationRecord
         {
@@ -147,7 +148,7 @@ public static partial class ApplicationEndpoints
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
         {
             await transaction.RollbackAsync(ct);
-            return Results.Conflict(new { title = "application_conflict" });
+            return Results.Problem(statusCode: 409, title: "application_conflict");
         }
         var result = await QueryApplications(db, applicationId: application.Id).SingleAsync(ct);
         return Results.Created($"/api/applications/{application.Id}", result);
@@ -157,7 +158,7 @@ public static partial class ApplicationEndpoints
     {
         if (!TryUserId(user, out var candidateId)) return Results.Unauthorized();
         if (!user.IsInRole("Candidate")) return Results.Forbid();
-        if (!ValidPage(page, pageSize, out var currentPage, out var size)) return Results.BadRequest();
+        if (!ValidPage(page, pageSize, out var currentPage, out var size)) return Results.Problem(statusCode: 400, title: "invalid_pagination");
         var retentionCutoff = DateTimeOffset.UtcNow.AddDays(-90);
         var query = db.Applications.AsNoTracking().Where(x => x.CandidateId == candidateId &&
             (ActiveStatuses.Contains(x.Status) || ((x.Status == "rejected" || x.Status == "withdrawn") && x.StatusChangedAt > retentionCutoff)));
@@ -170,9 +171,8 @@ public static partial class ApplicationEndpoints
     {
         if (!TryUserId(user, out var recruiterId)) return Results.Unauthorized();
         if (!user.IsInRole("Recruiter")) return Results.Forbid();
-        if (!ValidPage(page, pageSize, out var currentPage, out var size)) return Results.BadRequest();
-        var ownsJob = await db.Jobs.AsNoTracking().AnyAsync(x => x.Id == jobId && x.Company!.OwnerUserId == recruiterId, ct);
-        if (!ownsJob) return Results.NotFound();
+        if (!ValidPage(page, pageSize, out var currentPage, out var size)) return Results.Problem(statusCode: 400, title: "invalid_pagination");
+        if (!await OwnsJobAsync(db, jobId, recruiterId, ct)) return Results.NotFound();
         if (status is not null && status is not ("submitted" or "reviewing" or "shortlisted" or "rejected" or "withdrawn"))
             return Results.Problem(statusCode: 400, title: "invalid_application_status_filter");
         var retentionCutoff = DateTimeOffset.UtcNow.AddDays(-90);
@@ -193,7 +193,7 @@ public static partial class ApplicationEndpoints
             .SingleOrDefaultAsync(x => x.Id == id && ((x.CandidateId == userId &&
                 (ActiveStatuses.Contains(x.Status) || ((x.Status == "rejected" || x.Status == "withdrawn") && x.StatusChangedAt > retentionCutoff))) ||
                 (recruiter && db.Users.Any(account => account.Id == x.CandidateId && account.AccountStatus == "active") &&
-                 db.Jobs.Any(j => j.Id == x.JobId && j.Company!.OwnerUserId == userId) &&
+                 db.Jobs.Any(j => j.Id == x.JobId && j.Company!.OwnerUserId == userId && db.BusinessIdentities.Any(b => b.UserId == userId && b.CompanyId == j.CompanyId)) &&
                  (ActiveStatuses.Contains(x.Status) ||
                   ((x.Status == "rejected" || x.Status == "withdrawn") && x.StatusChangedAt > retentionCutoff)))), ct);
         if (application is null) return Results.NotFound();
@@ -209,13 +209,14 @@ public static partial class ApplicationEndpoints
                               join company in db.Companies.AsNoTracking() on job.CompanyId equals company.Id
                               join version in db.ResumeVersions.AsNoTracking() on application.SubmittedResumeVersionId equals version.Id
                               where application.Id == id
-                              select new { Application = application, OwnerUserId = company.OwnerUserId, version.FileId,
-                                  CandidateActive = db.Users.Any(account => account.Id == application.CandidateId && account.AccountStatus == "active") }).SingleOrDefaultAsync(ct);
+                              select new { Application = application, OwnerUserId = company.OwnerUserId, job.CompanyId, version.FileId,
+                                  CandidateActive = db.Users.Any(account => account.Id == application.CandidateId && account.AccountStatus == "active"),
+                                  HasBusinessIdentity = db.BusinessIdentities.Any(b => b.UserId == userId && b.CompanyId == job.CompanyId) }).SingleOrDefaultAsync(ct);
         if (snapshot is null) return Results.NotFound();
         var withinRetention = ActiveStatuses.Contains(snapshot.Application.Status) ||
             (snapshot.Application.Status is "rejected" or "withdrawn" && snapshot.Application.StatusChangedAt.AddDays(90) > DateTimeOffset.UtcNow);
         var candidateAccess = snapshot.CandidateActive && user.IsInRole("Candidate") && snapshot.Application.CandidateId == userId && withinRetention;
-        var recruiterAccess = snapshot.CandidateActive && user.IsInRole("Recruiter") && snapshot.OwnerUserId == userId &&
+        var recruiterAccess = snapshot.CandidateActive && user.IsInRole("Recruiter") && snapshot.OwnerUserId == userId && snapshot.HasBusinessIdentity &&
             (ActiveStatuses.Contains(snapshot.Application.Status) ||
              (snapshot.Application.Status is "rejected" or "withdrawn" && snapshot.Application.StatusChangedAt.AddDays(90) > DateTimeOffset.UtcNow));
         if (!candidateAccess && !recruiterAccess) return Results.NotFound();

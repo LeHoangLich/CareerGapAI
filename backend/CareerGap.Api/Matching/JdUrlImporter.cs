@@ -44,12 +44,15 @@ public sealed partial class JdUrlImporter
     [GeneratedRegex(@"<[^>]+>", RegexOptions.CultureInvariant)]
     private static partial Regex AnyHtmlTag();
 
+    private static bool IsValidExternalUri(Uri uri) =>
+        uri.Scheme is "http" or "https" && string.IsNullOrEmpty(uri.UserInfo) &&
+        (uri.IsDefaultPort || uri.Port is 80 or 443);
+
     public async Task<JdUrlPreviewResult> FetchAsync(string rawUrl, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(rawUrl) || rawUrl.Length > 2048 ||
             !Uri.TryCreate(rawUrl.Trim(), UriKind.Absolute, out var uri) ||
-            uri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(uri.UserInfo) ||
-            uri.IsDefaultPort == false && uri.Port is not (80 or 443))
+            !IsValidExternalUri(uri))
             throw new JdUrlImportException("invalid_jd_url", 400);
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -83,7 +86,7 @@ public sealed partial class JdUrlImporter
                 {
                     if (hop == MaxRedirects) throw new JdUrlImportException("jd_url_too_many_redirects", 422);
                     var next = location.IsAbsoluteUri ? location : new Uri(current, location);
-                    if (next.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(next.UserInfo))
+                    if (!IsValidExternalUri(next))
                         throw new JdUrlImportException("invalid_jd_url", 400);
                     current = next;
                     continue;

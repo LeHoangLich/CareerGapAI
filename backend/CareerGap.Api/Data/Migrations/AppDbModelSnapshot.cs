@@ -1359,7 +1359,7 @@ namespace CareerGap.Api.Data.Migrations
 
                     b.HasIndex("Term", "Day");
 
-                    b.ToTable("community_searchs", (string)null);
+                    b.ToTable("community_searches");
                 });
 
             modelBuilder.Entity("CareerGap.Api.Data.CommunityTag", b =>
@@ -2748,22 +2748,27 @@ namespace CareerGap.Api.Data.Migrations
             modelBuilder.Entity("CareerGap.Api.Learning.SavedRoadmap", b =>
                 {
                     b.Property<Guid>("PairId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("pair_id");
 
                     b.Property<string>("Completed")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("jsonb")
+                        .HasColumnName("completed");
 
                     b.Property<string>("Plan")
                         .IsRequired()
-                        .HasColumnType("jsonb");
+                        .HasColumnType("jsonb")
+                        .HasColumnName("plan");
 
                     b.Property<long>("RowVersion")
                         .IsConcurrencyToken()
-                        .HasColumnType("bigint");
+                        .HasColumnType("bigint")
+                        .HasColumnName("row_version");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("PairId");
 

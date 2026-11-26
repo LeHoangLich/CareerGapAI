@@ -38,11 +38,11 @@ public static class CommunityEndpoints
         });
         g.MapGet("/trending-searches", async (string? q, CommunityService service, CancellationToken ct) =>
         {
-            if (q?.Length > 80) return Results.BadRequest();
+            if (q?.Length > 80) return Results.Problem(statusCode: 400, title: "invalid_community_query");
             return Results.Ok(await service.TrendingSearchesAsync(q, ct));
         });
         g.MapGet("/suggestions", async (string? q, AppDb db, CancellationToken ct) => {
-            if (q?.Length > 80) return Results.BadRequest();
+            if (q?.Length > 80) return Results.Problem(statusCode: 400, title: "invalid_community_query");
             var term = q?.Trim().ToLowerInvariant() ?? "";
             return Results.Ok(await db.CommunityPostTags.Where(t => t.Tag.Contains(term) && db.CommunityPosts.Any(p => p.Id == t.PostId && p.Status == "published" && db.Users.Any(u => u.Id == p.AuthorId && u.AccountStatus == "active")))
                 .GroupBy(t => t.Tag).OrderByDescending(t => t.Count()).ThenBy(t => t.Key).Take(8).Select(t => t.Key).ToArrayAsync(ct));
@@ -65,7 +65,7 @@ public static class CommunityEndpoints
             return Results.Ok(new { id });
         });
         g.MapGet("/people", async (string? q, AppDb db, ClaimsPrincipal user, CancellationToken ct) => {
-            if (q?.Length > 80) return Results.BadRequest(); var term = q?.Trim().ToLowerInvariant() ?? "";
+            if (q?.Length > 80) return Results.Problem(statusCode: 400, title: "invalid_community_query"); var term = q?.Trim().ToLowerInvariant() ?? "";
             return Results.Ok(await db.CommunityProfiles.Where(p => (p.Handle.Contains(term) || p.DisplayName.ToLower().Contains(term)) && db.Users.Any(u => u.Id == p.UserId && u.AccountStatus == "active"))
                 .OrderBy(p => p.Handle).Take(20).Select(p => new { p.UserId, p.Handle, p.DisplayName, p.AvatarId }).ToArrayAsync(ct));
         });
@@ -73,7 +73,7 @@ public static class CommunityEndpoints
             await service.Profile(id, CommunityService.User(user), ct) is { } profile ? Results.Ok(profile) : Results.NotFound());
         g.MapGet("/profiles/{id:guid}/connections", async (Guid id, string? direction, int? page, AppDb db, CommunityService service, CancellationToken ct) => {
             if (await service.Profile(id, null, ct) is null) return Results.NotFound();
-            if (direction is not ("followers" or "following") || page is < 1 or > 10000) return Results.BadRequest();
+            if (direction is not ("followers" or "following") || page is < 1 or > 10000) return Results.Problem(statusCode: 400, title: "invalid_community_query");
             var ids = direction == "followers" ? db.CommunityFollows.Where(x => x.FollowingId == id).Select(x => x.FollowerId) : db.CommunityFollows.Where(x => x.FollowerId == id).Select(x => x.FollowingId);
             var query = db.CommunityProfiles.Where(p => ids.Contains(p.UserId) && db.Users.Any(u => u.Id == p.UserId && u.AccountStatus == "active"));
             return Results.Ok(new { items = await query.OrderBy(p => p.Handle).Skip(((page ?? 1) - 1) * 20).Take(20).Select(p => new { p.UserId, p.Handle, p.DisplayName, p.AvatarId }).ToArrayAsync(ct), total = await query.CountAsync(ct) });
@@ -97,7 +97,7 @@ public static class CommunityEndpoints
         g.MapDelete("/profiles/{id:guid}/follow", async (Guid id, ClaimsPrincipal user, CommunityService service, CancellationToken ct) => Results.Ok(await service.Follow(CommunityService.User(user)!.Value, id, false, ct))).RequireAuthorization().RequireRateLimiting("community");
         g.MapPost("/reports", async (ReportCreate input, ClaimsPrincipal user, CommunityService service, CancellationToken ct) => Results.Ok(new { id = await service.Report(CommunityService.User(user)!.Value, input, ct) })).RequireAuthorization().RequireRateLimiting("community");
         g.MapGet("/notifications", async (bool? unread, int? page, ClaimsPrincipal user, AppDb db, CancellationToken ct) => {
-            if (page is < 1 or > 10000) return Results.BadRequest(); var uid = CommunityService.User(user)!.Value;
+            if (page is < 1 or > 10000) return Results.Problem(statusCode: 400, title: "invalid_pagination"); var uid = CommunityService.User(user)!.Value;
             var q = db.CommunityNotices.Where(x => x.RecipientId == uid);
             if (unread == true) q = q.Where(x => x.ReadAt == null);
             return Results.Ok(new { items = await q.OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Skip(((page ?? 1) - 1) * 20).Take(20)
@@ -116,7 +116,7 @@ public static class CommunityEndpoints
     {
         var a = g.MapGroup("/admin").RequireAuthorization(p => p.RequireRole("Admin"));
         a.MapGet("/posts", async (string? status, int? page, AppDb db, CommunityService service, CancellationToken ct) => {
-            if (page is < 1 or > 10000 || status is not (null or "pending" or "published" or "hidden" or "deleted")) return Results.BadRequest();
+            if (page is < 1 or > 10000 || status is not (null or "pending" or "published" or "hidden" or "deleted")) return Results.Problem(statusCode: 400, title: "invalid_community_query");
             var q = db.CommunityPosts.Where(x => x.Status != "draft"); if (status is not null) q = q.Where(x => x.Status == status);
             return Results.Ok(new { items = await service.Posts(q.OrderByDescending(x => x.UpdatedAt).ThenBy(x => x.Id).Skip(((page ?? 1) - 1) * 20).Take(20), null, true).ToArrayAsync(ct), total = await q.CountAsync(ct) });
         });
@@ -130,7 +130,7 @@ public static class CommunityEndpoints
         g.MapGet("/images/mine", async (ClaimsPrincipal user, AppDb db, CancellationToken ct) => Results.Ok(await db.CommunityImages.Where(x => x.OwnerId == CommunityService.User(user)).OrderByDescending(x => x.CreatedAt).Select(x => new { x.Id, x.CreatedAt }).Take(30).ToArrayAsync(ct))).RequireAuthorization();
         g.MapPost("/images", async (HttpContext http, AppDb db, IFileStorage storage, CancellationToken ct) => {
             var uid = CommunityService.User(http.User)!.Value;
-            if (!http.Request.HasFormContentType) return Results.BadRequest(); var form = await http.Request.ReadFormAsync(ct); var file = form.Files.GetFile("file");
+            if (!http.Request.HasFormContentType) return Results.Problem(statusCode: 400, title: "community_image_invalid"); var form = await http.Request.ReadFormAsync(ct); var file = form.Files.GetFile("file");
             if (file is null || file.Length is <= 0 or > 2 * 1024 * 1024) return Results.Problem(statusCode: 400, title: "community_image_invalid");
             await using var tx = await db.Database.BeginTransactionAsync(ct);
             var account = await db.Users.FromSqlInterpolated($"SELECT * FROM \"AspNetUsers\" WHERE \"Id\"={uid} FOR UPDATE").AsNoTracking().SingleAsync(ct);
@@ -179,7 +179,7 @@ public static class CommunityEndpoints
             var image = await db.CommunityImages.SingleOrDefaultAsync(x => x.Id == id && x.OwnerId == uid, ct);
             if (image is null) return Results.NotFound();
             var imagePath = "/api/community/images/" + id;
-            if (await db.Companies.AnyAsync(x=>x.LogoImageId==id,ct) || await db.CommunityPosts.AnyAsync(x => x.ThumbnailId == id || x.Body.Contains(imagePath), ct) || await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct)) return Results.Conflict(new { title = "community_image_in_use" });
+            if (await db.Companies.AnyAsync(x=>x.LogoImageId==id,ct) || await db.CommunityPosts.AnyAsync(x => x.ThumbnailId == id || x.Body.Contains(imagePath), ct) || await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct)) return Results.Problem(statusCode: 409, title: "community_image_in_use");
             await storage.DeleteAsync(image.ObjectKey, ct); db.CommunityImages.Remove(image); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return Results.NoContent();
         }).RequireAuthorization();
     }

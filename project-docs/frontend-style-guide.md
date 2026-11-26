@@ -123,13 +123,15 @@ Quy tắc: trạng thái AI-đề-xuất luôn dùng `.badge-ai-suggested`; ngay
 
 ## 7. Checklist Accessibility — ưu tiên cao nhất, làm trước
 
-- [ ] Áp 3 token contrast mới (`--color-text-tertiary/caption/placeholder`)
-- [ ] Sửa bug 2 menu cùng `aria-current="location"` ở `#jobs` (chỉ "Khám phá việc làm" được active, "Cách CareerGap hoạt động" chuyển thành hành động mở nội dung, không phải mục điều hướng)
-- [ ] Thêm `aria-expanded` cho nút mở lịch sử đơn ứng tuyển
-- [ ] Thêm `aria-describedby` + `aria-invalid` nối lỗi inline với field tương ứng (hiện nhiều lỗi chỉ hiển thị ở cấp panel)
-- [ ] Đồng bộ ngôn ngữ heading PDF theo lựa chọn Việt/English của người dùng (hiện heading PDF luôn tiếng Việt dù chọn English trong panel AI writing)
-- [ ] Thêm H1 riêng cho các màn chưa có (vd. `#access` hiện bắt đầu từ H2)
-- [ ] Mở rưng `prefers-reduced-motion: reduce` để bao gồm transition tab Trung tâm CV (hiện chỉ áp cho onboarding/CTA)
+> **Trạng thái kiểm chứng:** Cả 3 phase của Style Guide v1 đã được triển khai và kiểm chứng ngày **29/10/2026** trên bộ màn hình Defense Baseline ([Báo cáo kiểm chứng 29/10](report/frontend-style-guide-2026-10-29.md)). Trên nhánh mở rộng **`feat/post-freeze-p1-p3-20261121`**, cần đối chiếu và đồng bộ lại cho các màn hình mới (`#home`, `#community`, `#analysis-history`, `#notifications`, `#admin`, `quickMatch.tsx`, `weeklyRoadmap.tsx`) — các đầu việc chi tiết được theo dõi tại [taskboard_v2.md](../taskboard_v2.md).
+
+- [x] *(29/10)* Áp 3 token contrast mới (`--color-text-tertiary/caption/placeholder`)
+- [x] *(29/10)* Sửa bug 2 menu cùng `aria-current="location"` ở `#jobs` (chỉ "Khám phá việc làm" được active, "Cách CareerGap hoạt động" chuyển thành hành động mở nội dung, không phải mục điều hướng)
+- [x] *(29/10)* Thêm `aria-expanded` cho nút mở lịch sử đơn ứng tuyển
+- [x] *(29/10)* Thêm `aria-describedby` + `aria-invalid` nối lỗi inline với field tương ứng *(lưu ý nhánh mở rộng còn nhiều `<p role="alert">`/`<div role="alert">` thiếu `.error` — theo dõi `SYNC-05` trong `taskboard_v2.md`)*
+- [x] *(29/10)* Đồng bộ ngôn ngữ heading PDF theo lựa chọn Việt/English của người dùng *(lưu ý `resumeBuilder.tsx` và `writing.tsx` đang lặp selector — theo dõi `SYNC-11`)*
+- [x] *(29/10)* Thêm H1 riêng cho các màn chưa có *(nhánh mở rộng có sự không đồng nhất `<h1>` giữa `workspace.tsx` và các view mới — theo dõi `SYNC-01`)*
+- [x] *(29/10)* Mở rộng `prefers-reduced-motion: reduce` để bao gồm transition tab Trung tâm CV (hiện chỉ áp cho onboarding/CTA)
 
 ## 8. Thay đổi cấu trúc — làm sau accessibility
 

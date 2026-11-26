@@ -284,7 +284,9 @@ public sealed class AccountDeletionService(
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]"), ct);
         await db.BusinessIdentities.Where(x=>x.UserId==account.Id).ExecuteDeleteAsync(ct);
         await db.LearningRequests.Where(x => x.OwnerId == account.Id).ExecuteUpdateAsync(s => s
-            .SetProperty(x => x.PairJobId, (Guid?)null).SetProperty(x => x.RequirementKey, "").SetProperty(x => x.LinksJson, (string?)null).SetProperty(x => x.ExpiresAt, (DateTimeOffset?)null), ct);
+            .SetProperty(x => x.PairJobId, (Guid?)null).SetProperty(x => x.RequirementKey, "")
+            .SetProperty(x => x.Topic, "[erased]").SetProperty(x => x.InputHash, "")
+            .SetProperty(x => x.LinksJson, (string?)null).SetProperty(x => x.ExpiresAt, (DateTimeOffset?)null), ct);
 
         var aiJobIds = await db.AiJobs.Where(x => x.RequestedBy == account.Id).Select(x => x.Id).ToArrayAsync(ct);
         var applicationIds = isCandidate
@@ -293,6 +295,16 @@ public sealed class AccountDeletionService(
 
         await Matching.MatchRetention.Erase(db, db.MatchInputs.Where(x => x.CandidateId == account.Id ||
             db.AiJobs.Any(j => j.Id == x.AiJobId && j.RequestedBy == account.Id)), ct);
+        await db.QuickMatchJds.Where(x => x.CandidateId == account.Id).ExecuteDeleteAsync(ct);
+        if (aiJobIds.Length > 0)
+            await db.AnalysisHistoryHides.Where(x => aiJobIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
+        var rewriteIds = await db.JobRewriteInputs.Where(x => x.RecruiterId == account.Id ||
+            (aiJobIds.Length > 0 && aiJobIds.Contains(x.AiJobId))).Select(x => x.AiJobId).ToArrayAsync(ct);
+        if (rewriteIds.Length > 0)
+        {
+            await db.JobRewriteResults.Where(x => rewriteIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
+            await db.JobRewriteInputs.Where(x => rewriteIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
+        }
         var writingIds = await db.WritingInputs.Where(x => x.CandidateId == account.Id).Select(x => x.AiJobId).ToArrayAsync(ct);
         await db.WritingDecisions.Where(x => writingIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
         await db.WritingResults.Where(x => writingIds.Contains(x.AiJobId)).ExecuteDeleteAsync(ct);
@@ -357,6 +369,8 @@ public sealed class AccountDeletionService(
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.Reason, "[erased]"), ct);
         var communityViewer = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(account.Id.ToString())));
         await db.CommunityViews.Where(x => x.Viewer == communityViewer).ExecuteDeleteAsync(ct);
+        await db.CommunitySearches.Where(x => x.Viewer == communityViewer).ExecuteDeleteAsync(ct);
+        await db.JobViews.Where(x => x.Viewer == communityViewer).ExecuteDeleteAsync(ct);
         await db.CommunityPostTags.Where(x => communityPosts.Contains(x.PostId)).ExecuteDeleteAsync(ct);
         await db.CommunityTags.Where(x => !db.CommunityPostTags.Any(t => t.Tag == x.Name)).ExecuteDeleteAsync(ct);
         foreach (var image in await db.CommunityImages.Where(x => x.OwnerId == account.Id).ToArrayAsync(ct))

@@ -1,5 +1,9 @@
 # CareerGap AI
 
+> **Phân biệt phiên bản trong workspace (cập nhật 21/11/2026):**
+> - **Defense Baseline (`release20261031`, tag/commit đóng băng `41b82c6`, 222 file, 19 migrations):** Bản đã nghiệm thu nội bộ M6 ngày 01/11/2026 ([Bộ bàn giao](project-docs/handoff/stage-e-20261031/README.md)), kiểm chứng 160 backend / 15 unit / 22 E2E.
+> - **Nhánh phát triển mở rộng (`feat/post-freeze-p1-p3-20261121` / `v2026.11.21-p1-p3`, 31 migrations):** Đã đồng bộ phân hệ Cộng đồng (`#community`), Xác minh doanh nghiệp, Trang chủ tổng hợp (`#home`) và 32 tính năng `F01–F32`. Kiểm thử đã chạy: **231/231 backend PG** (Fake), **42/42 frontend unit**, `lint`/`typecheck`/`build` đạt; **E2E trên nhánh mới chưa chạy lại**. Theo dõi rà soát tinh chỉnh đồng bộ & sửa lỗi tại [taskboard.md](taskboard.md) và [taskboard_v2.md](taskboard_v2.md).
+
 **01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN — SẴN SÀNG BẢO VỆ.** Lê Hoàng Lịch (Project Owner) quyết định đóng phạm vi dự án nội bộ; trạng thái `final_defense_ready`, acceptance_type=`internal_owner_acceptance`. **Release20261031 là Defense Baseline**, mã nguồn222file đã đóng băng. Thủ tục dùng thử ngoài trước bảo vệ đã khép lại; các ghi nhận M6chờ phía dưới là lịch sử trước quyết định này.
 
 [Bộ bàn giao cuối](project-docs/handoff/stage-e-20261031/README.md) · [Biên bản nghiệm thu](project-docs/report/m6-internal-acceptance-2026-11-01.md) · [Manifest](project-docs/evaluation/m6-internal-acceptance-2026-11-01.json) · [Source Freeze](project-docs/evaluation/source-freeze-2026-11-01.json).

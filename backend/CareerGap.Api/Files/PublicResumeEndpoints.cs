@@ -105,7 +105,7 @@ public static class PublicResumeEndpoints
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT user_id FROM candidate_profiles WHERE user_id = {uid} FOR UPDATE", ct);
         var current = await db.CandidatePublicResumes.SingleOrDefaultAsync(x => x.CandidateId == uid, ct);
         if (input.ExpectedRowVersion != current?.RowVersion)
-            return new(Results.Conflict(new { title = "public_resume_conflict" }), false);
+            return new(Results.Problem(statusCode: 409, title: "public_resume_conflict"), false);
 
         var stillOwned = await db.ResumeVersions.AsNoTracking().AnyAsync(x => x.Id == sourceVersion.Id && x.CandidateId == uid &&
             x.DocumentHash == sourceHash && x.FileId == sourceFile.Id, ct);
@@ -125,6 +125,7 @@ public static class PublicResumeEndpoints
             derivedFile.VerifiedAt = now;
         }
 
+        var oldRedactedFileId = current?.RedactedFileId;
         if (current is null)
         {
             current = new CandidatePublicResume { CandidateId = uid, RowVersion = 0 };
@@ -139,6 +140,12 @@ public static class PublicResumeEndpoints
         current.RedactionVerifiedAt = derivedFile is null ? null : now;
         current.PublishedAt = now;
         await db.SaveChangesAsync(ct);
+        if (oldRedactedFileId is { } oldId && oldId != derivedFile?.Id &&
+            !await db.ResumeVersions.AsNoTracking().AnyAsync(x => x.FileId == oldId, ct))
+        {
+            await db.StoredFiles.Where(x => x.Id == oldId && x.OwnerUserId == uid && x.Status == "ready")
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "delete_pending"), ct);
+        }
         await transaction.CommitAsync(ct);
 
         var result = new PublicResumeSelectionDto(uid, sourceVersion.Id, sourceVersion.VersionNo, current.Status,
@@ -154,9 +161,16 @@ public static class PublicResumeEndpoints
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT user_id FROM candidate_profiles WHERE user_id = {uid} FOR UPDATE", ct);
         var selection = await db.CandidatePublicResumes.SingleOrDefaultAsync(x => x.CandidateId == uid, ct);
         if (selection is null) return Results.NotFound();
-        if (selection.RowVersion != rowVersion) return Results.Conflict(new { title = "public_resume_conflict" });
+        if (selection.RowVersion != rowVersion) return Results.Problem(statusCode: 409, title: "public_resume_conflict");
+        var oldRedactedFileId = selection.RedactedFileId;
         db.CandidatePublicResumes.Remove(selection);
         await db.SaveChangesAsync(ct);
+        if (oldRedactedFileId is { } oldId &&
+            !await db.ResumeVersions.AsNoTracking().AnyAsync(x => x.FileId == oldId, ct))
+        {
+            await db.StoredFiles.Where(x => x.Id == oldId && x.OwnerUserId == uid && x.Status == "ready")
+                .ExecuteUpdateAsync(s => s.SetProperty(x => x.Status, "delete_pending"), ct);
+        }
         await transaction.CommitAsync(ct);
         return Results.NoContent();
     }
@@ -168,7 +182,7 @@ public static class PublicResumeEndpoints
         var isRecruiter = user.IsInRole("Recruiter");
         if (!isCandidate && !isRecruiter) return Results.Forbid();
         var number = page ?? 1;
-        if (number is < 1 or > 10000) return Results.BadRequest();
+        if (number is < 1 or > 10000) return Results.Problem(statusCode: 400, title: "invalid_pagination");
 
         var query = from publication in db.CandidatePublicResumes.AsNoTracking()
             join version in db.ResumeVersions.AsNoTracking() on new { publication.ResumeVersionId, publication.CandidateId }
@@ -181,8 +195,9 @@ public static class PublicResumeEndpoints
                 db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "display_name") ? profile.DisplayName : "Ứng viên",
                 db.CandidateProfileVisibility.Any(v => v.CandidateId == profile.UserId && v.FieldKey == "headline") ? profile.Headline : null,
                 version.VersionNo, publication.PublishedAt, publication.Status);
-        var results = await query.Skip((number - 1) * 20).Take(20).ToArrayAsync(ct);
-        return Results.Ok(results);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((number - 1) * 20).Take(20).ToArrayAsync(ct);
+        return Results.Ok(new { items, total, page = number, pageSize = 20 });
     }
 
     private static async Task<IResult> ReadPublicResumeAsync(Guid candidateId, Guid resumeVersionId, ClaimsPrincipal user, AppDb db,
@@ -209,7 +224,7 @@ public static class PublicResumeEndpoints
         if (isRecruiter) return await FileEndpoints.ServeFileAsync(source.File, storage, ct);
         if (selection.Status != "ready" || selection.RedactedFileId is null ||
             selection.RedactionMethodVersion != RedactedResumeBuilder.MethodVersion || selection.RedactionVerifiedAt is null)
-            return Results.Conflict(new { title = "redaction_not_ready" });
+            return Results.Problem(statusCode: 409, title: "redaction_not_ready");
 
         var redacted = await db.StoredFiles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == selection.RedactedFileId &&
             x.OwnerUserId == candidateId && x.Status == "ready", ct);

@@ -53,7 +53,7 @@ test('candidate reviews, saves, reopens, and versions a Vietnamese template CV P
 
   const resumes = await page.request.get('/api/resumes?page=1');
   expect(resumes.ok()).toBeTruthy();
-  const listed = await resumes.json() as { id: string; title: string; versions: { id: string; fileId: string; documentHash: string; versionNo: number }[] }[];
+  const listed = (await resumes.json() as { items: { id: string; title: string; versions: { id: string; fileId: string; documentHash: string; versionNo: number }[] }[] }).items;
   const savedResume = listed.find(item => item.versions.some(version => version.versionNo === 1 && item.title.endsWith('.pdf')));
   expect(savedResume).toBeTruthy();
   const savedVersion = savedResume!.versions[0];

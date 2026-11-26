@@ -108,7 +108,7 @@ public sealed partial class CommunityService(AppDb db, TimeProvider clock)
 
         var hash = Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(viewerIdentity)));
         var day = DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
-        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO community_searchs (term, viewer, day) VALUES ({normalized}, {hash}, {day}) ON CONFLICT DO NOTHING", ct);
+        await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO community_searches (term, viewer, day) VALUES ({normalized}, {hash}, {day}) ON CONFLICT DO NOTHING", ct);
     }
 
     public async Task<object[]> TrendingSearchesAsync(string? q, CancellationToken ct)

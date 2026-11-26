@@ -1,5 +1,6 @@
 import { CommunityBadge } from './community';
 import { useEffect, useState, type ReactNode } from "react";
+import { signInReturnHref } from './jobLinks';
 import { Dialog } from './ui';
 import { recruiterViews, resumeViews, viewLabels, type WorkspaceView } from './navigation';
 import { ViewOutlet } from './persistentView';
@@ -36,9 +37,9 @@ type NavigationItem = { id: string; label: string; icon: Icon };
 function Brand() {
   return (
     <a
-      href="#top"
+      href="#home"
       className="brand flex items-center gap-2.5"
-      aria-label="CareerGap AI — về đầu trang"
+      aria-label="CareerGap AI — về trang chủ"
     >
       <span
         className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#245c48] text-white"
@@ -76,9 +77,12 @@ export function Workspace({
   children: ReactNode;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const [currentHash, setCurrentHash] = useState(() => window.location.hash);
   useEffect(() => {
     const update = () => {
       setMenuOpen(false);
+      setCurrentHash(window.location.hash);
     };
     const desktop = window.matchMedia('(min-width: 1024px)');
     const onResize = () => { if (desktop.matches) setMenuOpen(false); };
@@ -160,8 +164,7 @@ export function Workspace({
               ))}
               {!session?.authenticated && <button type="button" className="workspace-guide flex items-center gap-3 rounded-md px-3 py-3 text-left" onClick={() => {
                 setMenuOpen(false);
-                if (activeView === 'jobs') window.dispatchEvent(new Event('careergap:show-guide'));
-                else window.location.hash = 'how-it-works';
+                setGuideOpen(true);
               }}><FileText size={19} aria-hidden="true"/><span>Cách CareerGap hoạt động</span></button>}
             </nav>
             <div className="sidebar-note mx-6 mt-auto pt-16 pb-7">
@@ -228,6 +231,7 @@ export function Workspace({
           <div className="flex items-center justify-between gap-4 px-5 py-6 lg:px-6 lg:py-9">
             <Brand />
             <button
+              type="button"
               className="menu-toggle secondary lg:hidden"
               aria-label={menuOpen ? "Đóng điều hướng" : "Mở điều hướng"}
               aria-expanded={menuOpen}
@@ -263,6 +267,7 @@ export function Workspace({
                       : "Quản trị"}
                 </a>
                 <button
+                  type="button"
                   className="header-logout link-button flex items-center gap-2 text-xs"
                   disabled={busy}
                   onClick={onLogout}
@@ -274,7 +279,7 @@ export function Workspace({
             ) : (
               !session?.deletionPending && (
                 <a
-                  href="#access"
+                  href={signInReturnHref(currentHash)}
                   className="header-signin inline-flex shrink-0 items-center gap-2 text-xs font-semibold"
                 >
                   Đăng nhập <ArrowUpRight size={15} aria-hidden="true" />
@@ -306,6 +311,18 @@ export function Workspace({
           </main>
         </div>
       </div>
+      <Dialog open={guideOpen} title="Cách CareerGap AI hoạt động" onClose={() => setGuideOpen(false)}>
+        <p>CareerGap AI giúp chuẩn hóa dữ kiện CV, đối chiếu yêu cầu công việc có trích dẫn bằng chứng và xây dựng lộ trình bổ sung kỹ năng. AI chỉ hỗ trợ tổng hợp; bạn là người xác nhận và quyết định.</p>
+        <ol className="onboarding-details">
+          <li><strong>1. Chuẩn bị &amp; xác nhận CV:</strong> Tải PDF/DOCX hoặc dùng trình tạo CV để tạo dữ liệu cấu trúc có kiểm chứng.</li>
+          <li><strong>2. Đối chiếu CV–JD theo bằng chứng:</strong> Xem điểm tham chiếu, 6 nhóm tiêu chí và trích dẫn từng yêu cầu trực tiếp trên từng tin.</li>
+          <li><strong>3. Lộ trình học &amp; Ứng tuyển:</strong> Lưu kế hoạch bổ sung kỹ năng theo tuần và theo dõi trạng thái hồ sơ đã nộp.</li>
+        </ol>
+        <div className="dialog-actions">
+          <a className="secondary" href="#jobs" onClick={() => setGuideOpen(false)}>Khám phá việc làm</a>
+          <a href="#access" onClick={() => setGuideOpen(false)}>Đăng nhập để bắt đầu</a>
+        </div>
+      </Dialog>
     </IconContext.Provider>
   );
 }

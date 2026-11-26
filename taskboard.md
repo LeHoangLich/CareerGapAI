@@ -17,9 +17,11 @@ Các hạng mục này không chặn nghiệm thu nội bộ M6, nhưng cần ho
 
 ---
 
-## Phần 2: Backlog tính năng chưa hoàn thành (32 đầu việc từ đối chiếu MVC)
+## Phần 2: Backlog tính năng đã hoàn thành sau đóng băng (32 đầu việc từ đối chiếu MVC)
 
-> **Cập nhật 20/11/2026 (Phương án B):** Đã đồng bộ mã nguồn mở rộng từ worktree `D:/CareerGapAI-community-20261102` (bao gồm phân hệ Cộng đồng, Xác thực doanh nghiệp, **10/10 mục P1** và **8 mục P2** `F15, F16, F20, F21, F22, F24, F29, F30`) về `D:/CareerGapAI`. Toàn bộ mục đã đồng bộ giữ trạng thái `[ ]` / `[~]` **chờ chủ dự án xác nhận nghiệm thu** (không ghi đè baseline `release20261031` đã đóng băng).
+> **Cập nhật 20–21/11/2026:** Đã đồng bộ mã nguồn mở rộng từ worktree `D:/CareerGapAI-community-20261102` (bao gồm phân hệ Cộng đồng, Xác thực doanh nghiệp, **10/10 mục P1**, **19/19 mục P2** và **3/3 mục P3**) về `D:/CareerGapAI` trên nhánh `feat/post-freeze-p1-p3-20261121` (tag `v2026.11.21-p1-p3`). Chủ dự án đã xác nhận nghiệm thu `[x]` toàn bộ 32/32 đầu việc ở đợt đồng bộ này (không ghi đè baseline `release20261031` đã đóng băng).
+>
+> **Kế hoạch rà soát, sửa lỗi logic và đồng bộ UI/UX toàn bộ các cửa sổ tiếp theo:** Theo dõi tại [taskboard_v2.md](taskboard_v2.md) và danh sách file cần rà soát dọn dẹp tại [cleanup-candidates.md](cleanup-candidates.md).
 
 ### Ưu tiên P1 — Hoàn thiện luồng chính (10/10 Đã nghiệm thu — 20/11/2026)
 

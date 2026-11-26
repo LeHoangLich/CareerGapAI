@@ -1,12 +1,15 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { api } from './api';
+import { useViewActive } from './persistentView';
 import { AiBadge, FieldError } from './ui';
+import { useAiJobPolling } from './useAiJobPolling';
 import type { PdfLanguage } from './resumeBuilderPdf';
 
 export type WritingEdit = { target: string; text: string };
 type Proposal = { id: string; status: string; errorCode: string | null; provider: string; resumeVersionId: string; resumeRevisionId: string; sections: (WritingEdit & { sources: { key: string; value: string; sourceType: string }[] })[] | null; decision: string | null; acceptedSections: WritingEdit[] | null };
 const label = (target: string) => target === 'summary' ? 'Giới thiệu' : target.startsWith('experience') ? `Kinh nghiệm ${Number(target.match(/\d+/)?.[0] ?? 0) + 1}` : `Dự án ${Number(target.match(/\d+/)?.[0] ?? 0) + 1}`;
 export function WritingPanel({ versionId, disabled, onApply, language, onLanguageChange }: { versionId: string; disabled: boolean; onApply: (edits: WritingEdit[], revisionId: string) => boolean; language: PdfLanguage; onLanguageChange: (language: PdfLanguage) => void }) {
+  const active = useViewActive();
   const fieldErrorPrefix = useId();
   const [proposal, setProposal] = useState<Proposal>();
   const [applied, setApplied] = useState(false);
@@ -14,15 +17,34 @@ export function WritingPanel({ versionId, disabled, onApply, language, onLanguag
   const live = useRef(true);
   const pendingKey = useRef<string | undefined>(undefined);
   useEffect(() => { live.current = true; return () => { live.current = false; }; }, []);
-  useEffect(() => { let disposed = false; void api<{proposal: Proposal | null}>(`/api/writing/proposals?resumeVersionId=${versionId}`).then(({proposal:value}) => { if (!disposed && value) { setProposal(value); if(value.sections)setEdits(value.sections.map(({target,text})=>({target,text}))); } }).catch(e=>{if(!disposed)setError((e as Error).message)}); return ()=>{disposed=true}; }, [versionId]);
   useEffect(() => {
-    if (!proposal || !['queued', 'running'].includes(proposal.status)) return;
-    let disposed = false;
-    const timer = setTimeout(() => {
-      void api<Proposal>(`/api/writing/proposals/${proposal.id}`).then(value => { if (!disposed) { setProposal(value); if (value.sections) setEdits(value.sections.map(({ target, text }) => ({ target, text }))); } }).catch(e => { if (!disposed) setError((e as Error).message); });
-    }, 1800);
-    return () => { disposed = true; clearTimeout(timer); };
-  }, [proposal]);
+    const controller = new AbortController();
+    void api<{ proposal: Proposal | null }>(`/api/writing/proposals?resumeVersionId=${versionId}`, { signal: controller.signal })
+      .then(({ proposal: value }) => {
+        if (!controller.signal.aborted && value) {
+          setProposal(value);
+          if (value.sections) setEdits(value.sections.map(({ target, text }) => ({ target, text })));
+        }
+      })
+      .catch(e => { if (!controller.signal.aborted) setError((e as Error).message); });
+    return () => { controller.abort(); };
+  }, [versionId]);
+  const pollProposalId = proposal && ['queued', 'running'].includes(proposal.status) ? proposal.id : undefined;
+  const { timedOut, retryPolling } = useAiJobPolling({
+    pollKey: pollProposalId,
+    active,
+    maxAttempts: 60,
+    initialDelayMs: 1800,
+    intervalMs: 1800,
+    tick: async signal => {
+      const value = await api<Proposal>(`/api/writing/proposals/${pollProposalId}`, { signal });
+      if (signal.aborted) return false;
+      setProposal(value);
+      if (value.sections) setEdits(value.sections.map(({ target, text }) => ({ target, text })));
+      return !['queued', 'running'].includes(value.status);
+    },
+    onError: e => setError((e as Error).message),
+  });
   async function create() {
     setBusy(true); setError(''); setProposal(undefined); setEdits([]); setApplied(false);
     try {
@@ -52,6 +74,6 @@ export function WritingPanel({ versionId, disabled, onApply, language, onLanguag
     </>}
     {proposal?.status === 'failed' && <p role="alert">Chưa tạo được đề xuất hợp lệ. CV của bạn chưa thay đổi.</p>}{error && <p role="alert">{error}</p>}
     {proposal?.decision === 'accept' && proposal.acceptedSections && <button type="button" className="secondary" disabled={busy || disabled} onClick={()=>setApplied(onApply(proposal.acceptedSections!, proposal.resumeRevisionId))}>Đưa bản đã duyệt vào bản nháp</button>}
-    {running && error && <button type="button" className="secondary" onClick={()=>{setError('');setProposal({...proposal})}}>Kiểm tra lại đề xuất</button>}
+    {running && (error || timedOut) && <button type="button" className="secondary" onClick={() => { setError(''); retryPolling(); }}>Kiểm tra lại đề xuất</button>}
   </section>;
 }

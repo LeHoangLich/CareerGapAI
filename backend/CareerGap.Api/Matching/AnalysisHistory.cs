@@ -60,8 +60,9 @@ public static class AnalysisHistory
             if (row is null) return Results.NotFound();
             if (row.Status is "queued" or "running")
                 return Results.Problem(statusCode: 409, title: "analysis_in_progress");
-            db.AnalysisHistoryHides.Add(new AnalysisHistoryHide { AiJobId = id, HiddenAt = clock.GetUtcNow().ToUniversalTime() });
-            await db.SaveChangesAsync(ct);
+            var hiddenAt = clock.GetUtcNow().ToUniversalTime();
+            await db.Database.ExecuteSqlInterpolatedAsync(
+                $"INSERT INTO analysis_history_hides (ai_job_id, hidden_at) VALUES ({id}, {hiddenAt}) ON CONFLICT (ai_job_id) DO NOTHING", ct);
             return Results.NoContent();
         }).RequireAuthorization(p => p.RequireRole("Candidate", "Recruiter"));
     }

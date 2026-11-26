@@ -48,13 +48,16 @@ public static partial class AdminEndpoints
                     db.CandidateProfiles.Any(p => p.UserId == x.Id && EF.Functions.ILike(p.DisplayName, pattern, "\\")) ||
                     db.CommunityProfiles.Any(p => p.UserId == x.Id && EF.Functions.ILike(p.DisplayName, pattern, "\\")));
             }
-            return Results.Ok(await q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((Math.Clamp(page ?? 1,1,10000)-1)*20).Take(20)
+            var currentPage = Math.Clamp(page ?? 1, 1, 10000);
+            var total = await q.CountAsync(ct);
+            var items = await q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((currentPage - 1) * 20).Take(20)
                 .Select(x => new {
                     x.Id, x.Email, x.AccountStatus, x.CreatedAt, x.LastLoginAt,
                     displayName = db.CandidateProfiles.Where(p => p.UserId == x.Id).Select(p => p.DisplayName).FirstOrDefault()
                         ?? db.CommunityProfiles.Where(p => p.UserId == x.Id).Select(p => p.DisplayName).FirstOrDefault(),
                     roles = db.UserRoles.Where(r => r.UserId == x.Id).Join(db.Roles, r => r.RoleId, r => r.Id, (r, rObj) => rObj.Name).ToArray()
-                }).ToArrayAsync(ct));
+                }).ToArrayAsync(ct);
+            return Results.Ok(new { items, total, page = currentPage, pageSize = 20 });
         });
         admin.MapPost("/accounts/{id:guid}", async (Guid id, AdminAction input, ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
         {
@@ -80,13 +83,16 @@ public static partial class AdminEndpoints
                 q = q.Where(x => (x.CurrentVersion != null && EF.Functions.ILike(x.CurrentVersion.Title, pattern, "\\")) ||
                     (x.Company != null && EF.Functions.ILike(x.Company.Name, pattern, "\\")));
             }
-            return Results.Ok(await q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id)
-                .Skip((Math.Clamp(page ?? 1,1,10000)-1)*20).Take(20)
+            var currentPage = Math.Clamp(page ?? 1, 1, 10000);
+            var total = await q.CountAsync(ct);
+            var items = await q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id)
+                .Skip((currentPage - 1) * 20).Take(20)
                 .Select(x => new {
                     x.Id, title = x.CurrentVersion!.Title, company = x.Company!.Name, x.Status, x.RowVersion,
                     x.CreatedAt, x.PublishedAt, x.ArchivedByRole,
                     applicationCount = db.Applications.Count(a => a.JobId == x.Id)
-                }).ToArrayAsync(ct));
+                }).ToArrayAsync(ct);
+            return Results.Ok(new { items, total, page = currentPage, pageSize = 20 });
         });
         admin.MapPost("/jobs/{id:guid}", async (Guid id, AdminAction input, ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
         {
@@ -112,11 +118,25 @@ public static partial class AdminEndpoints
             job.UpdatedAt = DateTimeOffset.UtcNow; job.RowVersion++;
             Audit(db, Uid(user), id, "job_"+input.Action, input.Reason); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return Results.NoContent();
         });
-        admin.MapGet("/reports", async (int? page, AppDb db, CancellationToken ct) => Results.Ok(await db.ContentReports.AsNoTracking().OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((Math.Clamp(page ?? 1,1,10000)-1)*20).Take(20)
-            .Select(x => new { x.Id, x.TargetType, x.TargetId, x.Reason, x.Status, x.RowVersion, x.CreatedAt }).ToArrayAsync(ct)));
+        admin.MapGet("/reports", async (int? page, AppDb db, CancellationToken ct) =>
+        {
+            var currentPage = Math.Clamp(page ?? 1, 1, 10000);
+            var q = db.ContentReports.AsNoTracking();
+            var total = await q.CountAsync(ct);
+            var items = await q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((currentPage - 1) * 20).Take(20)
+                .Select(x => new { x.Id, x.TargetType, x.TargetId, x.Reason, x.Status, x.RowVersion, x.CreatedAt }).ToArrayAsync(ct);
+            return Results.Ok(new { items, total, page = currentPage, pageSize = 20 });
+        });
         MapReportWorkflow(admin);
-        admin.MapGet("/audit", async (int? page, AppDb db, CancellationToken ct) => Results.Ok(await db.AdminAudits.AsNoTracking().OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((Math.Clamp(page ?? 1,1,10000)-1)*20).Take(20)
-            .Select(x => new { x.Id, x.Action, x.Reason, x.CreatedAt, actor = db.Users.Where(u => u.Id == x.ActorId).Select(u => u.Email).FirstOrDefault() ?? "Tài khoản đã xóa" }).ToArrayAsync(ct)));
+        admin.MapGet("/audit", async (int? page, AppDb db, CancellationToken ct) =>
+        {
+            var currentPage = Math.Clamp(page ?? 1, 1, 10000);
+            var q = db.AdminAudits.AsNoTracking();
+            var total = await q.CountAsync(ct);
+            var items = await q.OrderByDescending(x => x.CreatedAt).ThenBy(x => x.Id).Skip((currentPage - 1) * 20).Take(20)
+                .Select(x => new { x.Id, x.Action, x.Reason, x.CreatedAt, actor = db.Users.Where(u => u.Id == x.ActorId).Select(u => u.Email).FirstOrDefault() ?? "Tài khoản đã xóa" }).ToArrayAsync(ct);
+            return Results.Ok(new { items, total, page = currentPage, pageSize = 20 });
+        });
         admin.MapGet("/dashboard", async (int? days, AppDb db, TimeProvider clock, CancellationToken ct) =>
         {
             var rangeDays = days ?? 30;

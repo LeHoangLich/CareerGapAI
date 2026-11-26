@@ -12,7 +12,8 @@ async function mockWorkspace(page: Page, applications: () => Promise<{ status?: 
     else if (path === '/api/applications/mine') {
       const result = await applications();
       await route.fulfill({ status: result.status ?? 200, json: result.body }); return;
-    } else if (['/api/resumes', '/api/notifications', '/api/public/resumes'].includes(path)) json = [];
+    } else if (['/api/resumes', '/api/public/resumes'].includes(path)) json = { items: [], total: 0, page: 1, pageSize: 20 };
+    else if (path === '/api/notifications') json = [];
     else if (path === '/api/resumes/public/me') json = null;
     else { unexpected.push(path); await route.fulfill({ status: 501, json: { title: 'unexpected_mock_request' } }); return; }
     await route.fulfill({ json });

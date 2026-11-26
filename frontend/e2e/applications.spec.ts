@@ -114,7 +114,7 @@ test('candidate submits a selected resume version and recruiter reads it only th
     expect(application?.status).toBe('withdrawn');
     const resumesResponse = await candidateContext.request.get('/api/resumes?page=1');
     expect(resumesResponse.ok()).toBeTruthy();
-    const resumeList = await resumesResponse.json() as { versions: { id: string; fileId: string }[] }[];
+    const resumeList = (await resumesResponse.json() as { items: { versions: { id: string; fileId: string }[] }[] }).items;
     const resumeVersionId = resumeList[0].versions[0].id;
     const fileId = resumeList[0].versions[0].fileId;
     const csrf = await candidateContext.request.get('/api/auth/csrf').then(response => response.json() as Promise<{ token: string }>);

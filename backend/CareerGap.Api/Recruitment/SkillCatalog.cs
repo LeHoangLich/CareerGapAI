@@ -25,7 +25,7 @@ public static class SkillCatalog
     public static string Fold(string value)=>string.Concat(value.Normalize(NormalizationForm.FormD).Where(c=>CharUnicodeInfo.GetUnicodeCategory(c)!=UnicodeCategory.NonSpacingMark)).Replace('đ','d').Replace('Đ','D').Trim().ToLowerInvariant();
     public static IEnumerable<CatalogSkill> Search(string? q,string? category)=>Items.Where(s=>(string.IsNullOrEmpty(category)||s.Category==category)&&(string.IsNullOrWhiteSpace(q)||new[]{s.Name,s.Id}.Concat(s.Aliases).Any(v=>Fold(v).Contains(Fold(q))))).OrderBy(s=>s.Name,StringComparer.OrdinalIgnoreCase);
     public static void MapSkillCatalog(this WebApplication app)=>app.MapGet("/api/skills",(string? q,string? category)=>{
-        if(q?.Length>100||category is not null&&!Items.Any(s=>s.Category==category))return Results.BadRequest();
+        if(q?.Length>100||category is not null&&!Items.Any(s=>s.Category==category))return Results.Problem(statusCode:400,title:"invalid_skill_query");
         return Results.Ok(new {version=Version,categories=Items.Select(s=>s.Category).Distinct().ToArray(),items=Search(q,category).ToArray()});
     });
 }

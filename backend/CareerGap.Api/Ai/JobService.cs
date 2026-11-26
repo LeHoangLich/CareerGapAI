@@ -378,7 +378,7 @@ public static class JobEndpoints
                     cost = attempts.Count > 0 && attempts.All(x => x.ActualAmount.HasValue) ? (decimal?)attempts.Sum(x => x.ActualAmount!.Value) : null,
                     elapsedMs = row.Job.FinishedAt.HasValue ? (long?)(row.Job.FinishedAt.Value - row.Job.CreatedAt).TotalMilliseconds : null } });
         }).RequireAuthorization();
-        app.MapGet("/api/ai/jobs/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, PairMatchingService pairService, WritingService writingService, CancellationToken ct) =>
+        app.MapGet("/api/ai/jobs/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, PairMatchingService pairService, WritingService writingService, JobRewriteService jobRewriteService, CancellationToken ct) =>
         {
             var uid = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if (await db.AiJobs.AnyAsync(x => x.Id == id && x.RequestedBy == uid && x.JobType == "suggest_cv", ct))
@@ -390,6 +390,11 @@ public static class JobEndpoints
             {
                 var match = await pairService.Read(uid, id, ct);
                 return match is null ? Results.NotFound() : Results.Ok(match);
+            }
+            if (await db.AiJobs.AnyAsync(x => x.Id == id && x.RequestedBy == uid && x.JobType == "rewrite_jd", ct))
+            {
+                var rewrite = await jobRewriteService.Read(uid, id, ct);
+                return rewrite is null ? Results.NotFound() : Results.Ok(rewrite);
             }
             var result = await (from j in db.AiJobs.AsNoTracking() join m in db.AiMethods on j.MethodVersionId equals m.Id
                 where j.Id == id && j.RequestedBy == uid

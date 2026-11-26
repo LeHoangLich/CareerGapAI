@@ -30,7 +30,7 @@ public static class SavedRoadmapEndpoints
             return Results.Ok(new { saved = row is null ? null : View(row) });
         });
         group.MapPut("/{id:guid}",async (Guid id,SaveRoadmapRequest input,ClaimsPrincipal user,AppDb db,PairMatchingService pairs,TimeProvider clock,CancellationToken ct)=>{
-            if(input.Weeks is <2 or >12 || input.HoursPerWeek is <1 or >20 || input.RowVersion<0)return Results.BadRequest();
+            if(input.Weeks is <2 or >12 || input.HoursPerWeek is <1 or >20 || input.RowVersion<0)return Results.Problem(statusCode:400,title:"invalid_roadmap_request");
             var uid=Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if(!await Allowed(uid,id,pairs,ct))return Results.NotFound();
             await using var tx=await db.Database.BeginTransactionAsync(ct);
@@ -55,7 +55,7 @@ public static class SavedRoadmapEndpoints
             var row=await db.SavedRoadmaps.SingleOrDefaultAsync(x=>x.PairId==id,ct);if(row is null)return Results.NotFound();
             if(row.RowVersion!=input.RowVersion)return Results.Problem(statusCode:409,title:"roadmap_conflict");
             var plan=JsonSerializer.Deserialize<WeeklyPlan>(row.Plan)!;
-            if(!plan.Schedule.Any(w=>w.Week==input.Week&&w.Focus.Any(f=>f.RequirementKey==input.RequirementKey)))return Results.BadRequest();
+            if(!plan.Schedule.Any(w=>w.Week==input.Week&&w.Focus.Any(f=>f.RequirementKey==input.RequirementKey)))return Results.Problem(statusCode:400,title:"invalid_roadmap_item");
             var completed=JsonSerializer.Deserialize<HashSet<string>>(row.Completed)!;var key=input.Week+":"+input.RequirementKey;
             var changed=input.Completed?completed.Add(key):completed.Remove(key);
             if(changed){row.Completed=JsonSerializer.Serialize(completed.OrderBy(x=>x,StringComparer.Ordinal));row.RowVersion++;row.UpdatedAt=clock.GetUtcNow();}

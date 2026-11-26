@@ -58,6 +58,7 @@ test('isolated views retain native file, profile, filter and builder state acros
 
 test('onboarding and advanced filters preserve preference, validation and request values', async ({ page }) => {
   await register(page);
+  await openView(page, 'jobs');
   await page.getByRole('button', { name: 'Ẩn hướng dẫn', exact: true }).click();
   await page.reload();
   await page.getByRole('button', { name: 'Xem hướng dẫn', exact: true }).click();

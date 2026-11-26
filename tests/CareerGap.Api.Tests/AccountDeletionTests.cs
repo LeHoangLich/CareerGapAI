@@ -62,8 +62,8 @@ public sealed class AccountDeletionTests(FoundationFixture fixture) : IClassFixt
         Assert.Equal(HttpStatusCode.Unauthorized, (await candidate.GetAsync("/api/profile/me")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await candidate.GetAsync($"/api/files/{fileId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await staleSession.GetAsync("/api/profile/me")).StatusCode);
-        var otherPublic = await otherCandidate.GetFromJsonAsync<JsonElement[]>("/api/public/resumes?page=1");
-        Assert.DoesNotContain(otherPublic!, x => x.GetProperty("candidateId").GetGuid() == candidateId);
+        var otherPublic = await otherCandidate.GetFromJsonAsync<JsonElement>("/api/public/resumes?page=1");
+        Assert.DoesNotContain(otherPublic.GetProperty("items").EnumerateArray(), x => x.GetProperty("candidateId").GetGuid() == candidateId);
         Assert.Equal(HttpStatusCode.NotFound, (await otherCandidate.GetAsync($"/api/public/resumes/{candidateId}/{versionId}/file")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await recruiter.GetAsync($"/api/applications/{applicationId}/resume")).StatusCode);
         var recruiterApps = await recruiter.GetFromJsonAsync<JsonElement>($"/api/jobs/{jobId}/applications");

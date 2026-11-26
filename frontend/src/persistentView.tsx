@@ -2,6 +2,11 @@ import { createContext, useContext, useLayoutEffect, useState, type ReactNode } 
 import { createPortal } from 'react-dom';
 
 const ViewOutletContext = createContext<HTMLDivElement | null>(null);
+const ViewActiveContext = createContext(true);
+
+export function useViewActive() {
+  return useContext(ViewActiveContext);
+}
 
 export function ViewOutlet({ children }: { children: ReactNode }) {
   const [outlet, setOutlet] = useState<HTMLDivElement | null>(null);
@@ -26,5 +31,5 @@ export function PersistentView({ active, name, children }: { active: boolean; na
     outlet.appendChild(container);
     return () => { container.remove(); };
   }, [active, outlet, container, name]);
-  return createPortal(children, container);
+  return createPortal(<ViewActiveContext.Provider value={active}>{children}</ViewActiveContext.Provider>, container);
 }

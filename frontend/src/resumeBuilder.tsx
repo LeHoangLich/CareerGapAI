@@ -1,8 +1,8 @@
 import { SkillPicker } from './skillPicker';
-import { FieldError, ValidatedForm } from './ui';
+import { Dialog, FieldError, ValidatedForm } from './ui';
 import { renderBuilderPdf } from './pdfGeneration';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { api } from './api';
+import { api, type PagedResponse } from './api';
 import type { BuilderEducation, BuilderExperience, BuilderProject, ResumeBuilderContent, PdfLanguage } from './resumeBuilderPdf';
 import { WritingPanel, type WritingEdit } from './writing';
 import { useStickyFit } from './useStickyFit';
@@ -97,6 +97,8 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
   const [previewBlob, setPreviewBlob] = useState<Blob>();
   const [previewKey, setPreviewKey] = useState('');
   const [savedKey, setSavedKey] = useState('');
+  const [baselineKey, setBaselineKey] = useState(() => JSON.stringify({ ...normalized(emptyContent()), pdfLanguage: 'vi' }));
+  const [pendingTargetId, setPendingTargetId] = useState<string | null>(null);
   const [pendingUpload, setPendingUpload] = useState<PendingUpload>();
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -123,6 +125,10 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
   latestContentKey.current = contentKey;
   const targetResume = resumes.find(item => item.id === targetResumeId);
   const previewUrl = useObjectUrl(previewBlob);
+  const isDirty = savedKey !== contentKey && (
+    contentKey !== baselineKey ||
+    (targetResume ? title !== targetResume.title : title !== 'CV của tôi')
+  );
 
   function edit(update: (current: ResumeBuilderContent) => ResumeBuilderContent) {
     if (pendingUpload) { setError('Hãy hoàn tất hoặc bỏ bản lưu dang dở trước khi sửa nội dung.'); return; }
@@ -131,15 +137,24 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
     setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); setPendingUpload(undefined); setMessage(''); setError('');
   }
 
-  function changeTarget(id: string) {
-    if (pendingUpload) { setError('Hãy hoàn tất hoặc bỏ bản lưu dang dở trước khi chọn CV khác.'); return; }
+  function applyTargetChange(id: string) {
     setTargetResumeId(id);
     setLoadedRevisionId('');
     const selected = resumes.find(item => item.id === id);
+    const nextBlank = emptyContent();
     setSourceVersionId(selected?.versions[0]?.id ?? '');
     setTitle(selected?.title ?? 'CV của tôi');
-    setContent(emptyContent()); setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); setPendingUpload(undefined);
+    setContent(nextBlank);
+    setBaselineKey(JSON.stringify({ ...normalized(nextBlank), pdfLanguage }));
+    setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); setPendingUpload(undefined);
     setMessage(id ? 'Chọn phiên bản bên dưới rồi nạp dữ liệu CV để chỉnh sửa.' : 'CV mới sẽ tạo một hồ sơ riêng tư.');
+  }
+
+  function changeTarget(id: string) {
+    if (id === targetResumeId) return;
+    if (pendingUpload) { setError('Hãy hoàn tất hoặc bỏ bản lưu dang dở trước khi chọn CV khác.'); return; }
+    if (isDirty) { setPendingTargetId(id); return; }
+    applyTargetChange(id);
   }
 
   async function loadRevision() {
@@ -151,12 +166,13 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
       const saved = eligible?.origin === 'user_entered' && eligible.schemaVersion === 2 ? eligible : undefined;
       const loaded = saved ? fromRevision(saved.structuredData) : fromRevision(await api<unknown>(`/api/resume-versions/${sourceVersionId}/builder-content`).catch(() => undefined));
       if (!loaded) {
+        const nextBlank = emptyContent();
         setLoadedRevisionId('');
-        setContent(emptyContent()); setSavedKey('');
+        setContent(nextBlank); setBaselineKey(JSON.stringify({ ...normalized(nextBlank), pdfLanguage })); setSavedKey('');
         setMessage('Phiên bản này chưa có dữ liệu từ trình tạo CV; bạn có thể nhập nội dung để tạo phiên bản kế tiếp.');
       } else {
         setLoadedRevisionId(eligible?.id ?? '');
-        setContent(loaded); setSavedKey('');
+        setContent(loaded); setBaselineKey(JSON.stringify({ ...normalized(loaded), pdfLanguage })); setSavedKey('');
         setMessage(`Đã nạp dữ liệu mẫu từ revision ${saved?.revisionNo ?? 'đã xác nhận'}. Lưu thay đổi sẽ tạo file version mới; bản cũ được giữ nguyên.`);
       }
       setPreviewBlob(undefined); setPreviewKey(''); setPendingUpload(undefined);
@@ -201,7 +217,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
           uploaded = { resumeId: created.id, versionId: created.versionId };
         } catch (uploadError) {
           // Recover a successful upload whose response was lost; new versions sort to the first resume page.
-          const latest = await api<Resume[]>('/api/resumes?page=1').catch(() => []);
+          const latest = await api<PagedResponse<Resume>>('/api/resumes?page=1').then(p => p.items).catch(() => []);
           const matches = latest.filter(resume => !targetResumeId || resume.id === targetResumeId).flatMap(resume => resume.versions
             .filter(version => !previousVersions.has(version.id) && version.documentHash.toLowerCase() === hash)
             .map(version => ({ resumeId: resume.id, versionId: version.id })));
@@ -215,12 +231,12 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
       const revision = await api<Revision>(`/api/resume-versions/${uploaded.versionId}/revisions/manual`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseRevisionNo: 0, ...data })
       });
-      const fresh = await api<Resume[]>('/api/resumes?page=1');
-      onResumesUpdated(fresh);
+      const fresh = await api<PagedResponse<Resume>>('/api/resumes?page=1');
+      onResumesUpdated(fresh.items);
       setTargetResumeId(uploaded.resumeId); setSourceVersionId(uploaded.versionId);
       setLoadedRevisionId(revision.id);
       window.dispatchEvent(new Event('resume-list-updated'));
-      setSavedKey(key); setPendingUpload(undefined); sessionStorage.removeItem(recoveryKey);
+      setSavedKey(key); setBaselineKey(key); setPendingUpload(undefined); sessionStorage.removeItem(recoveryKey);
       setMessage(`Đã lưu CV riêng tư, phiên bản mới và revision ${revision.revisionNo}. Các bản trước vẫn được giữ nguyên.`);
     } catch (e) { setError((e as Error).message); }
     finally { setBusy(false); }
@@ -235,8 +251,8 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
       const revision = await api<Revision>(`/api/resume-versions/${pendingUpload.versionId}/revisions/manual`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ baseRevisionNo: 0, ...data })
       });
-      onResumesUpdated(await api<Resume[]>('/api/resumes?page=1'));
-      sessionStorage.removeItem(recoveryKey); setPendingUpload(undefined); setSavedKey(pendingUpload.contentKey);
+      onResumesUpdated((await api<PagedResponse<Resume>>('/api/resumes?page=1')).items);
+      sessionStorage.removeItem(recoveryKey); setPendingUpload(undefined); setSavedKey(pendingUpload.contentKey); setBaselineKey(pendingUpload.contentKey);
       setMessage(`Đã hoàn tất bản lưu dang dở, revision ${revision.revisionNo}; không tải thêm file.`);
       window.dispatchEvent(new Event('resume-list-updated'));
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
@@ -261,7 +277,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
     </details>
     <div className="builder-source-row">
       <label>CV cần cập nhật<select aria-label="CV cần cập nhật" disabled={busy || !!pendingUpload} value={targetResumeId} onChange={e => changeTarget(e.target.value)}><option value="">Tạo CV mới</option>{resumes.map(resume => <option key={resume.id} value={resume.id}>{resume.title}</option>)}</select></label>
-      {targetResume && <><label>Phiên bản nguồn<select aria-label="Phiên bản nguồn" disabled={busy || !!pendingUpload} value={sourceVersionId} onChange={e => {setSourceVersionId(e.target.value);setLoadedRevisionId('');}}>{targetResume.versions.map(version => <option key={version.id} value={version.id}>Phiên bản {version.versionNo}</option>)}</select></label><button className="secondary" disabled={!sourceVersionId || busy} onClick={() => void loadRevision()}>{loadingRevision ? 'Đang nạp…' : 'Nạp dữ liệu CV'}</button></>}
+      {targetResume && <><label>Phiên bản nguồn<select aria-label="Phiên bản nguồn" disabled={busy || !!pendingUpload} value={sourceVersionId} onChange={e => {setSourceVersionId(e.target.value);setLoadedRevisionId('');}}>{targetResume.versions.map(version => <option key={version.id} value={version.id}>Phiên bản {version.versionNo}</option>)}</select></label><button type="button" className="secondary" disabled={!sourceVersionId || busy} onClick={() => void loadRevision()}>{loadingRevision ? 'Đang nạp…' : 'Nạp dữ liệu CV'}</button></>}
       <label>Ngôn ngữ tiêu đề PDF<select aria-label="Ngôn ngữ tiêu đề PDF" disabled={busy || !!pendingUpload} value={pdfLanguage} onChange={e => { setPdfLanguage(e.target.value as PdfLanguage); setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); }}><option value="vi">Tiếng Việt</option><option value="en">English</option></select></label><label>Tên CV<input value={title} maxLength={100} onChange={e => { setTitle(e.target.value); setPendingUpload(undefined); }}/></label>
     </div>
     <div className="builder-workspace-grid grid items-start gap-6">
@@ -318,7 +334,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
           <li>Tạo PDF, kiểm tra nội dung và bố cục.</li>
           <li>Lưu thành phiên bản CV riêng tư.</li>
         </ol>
-        {pendingUpload && <div role="status"><p>File đã được tải riêng tư; phần dữ liệu cần hoàn tất.</p><button disabled={busy} onClick={() => void completePending()}>Hoàn tất bản lưu dang dở</button><button disabled={busy} className="secondary" onClick={() => { sessionStorage.removeItem(recoveryKey); setPendingUpload(undefined); setMessage('Đã bỏ bản nháp tạm. File đã tải vẫn ở CV riêng của bạn.'); }}>Bỏ bản nháp tạm</button></div>}
+        {pendingUpload && <div role="status"><p>File đã được tải riêng tư; phần dữ liệu cần hoàn tất.</p><button type="button" disabled={busy} onClick={() => void completePending()}>Hoàn tất bản lưu dang dở</button><button type="button" disabled={busy} className="secondary" onClick={() => { sessionStorage.removeItem(recoveryKey); setPendingUpload(undefined); setMessage('Đã bỏ bản nháp tạm. File đã tải vẫn ở CV riêng của bạn.'); }}>Bỏ bản nháp tạm</button></div>}
         <div className="row builder-actions"><button type="submit" form={builderFormId} disabled={busy}>{busy ? 'Đang tạo PDF…' : 'Tạo bản xem trước PDF'}</button>{previewUrl && previewKey === contentKey && <a className="secondary download-link" href={previewUrl} download={safeFileName(title)}>Tải PDF bản xem trước</a>}<button type="button" className="secondary" disabled={busy || previewKey !== contentKey || savedKey === contentKey} onClick={() => void saveVersion()}>{busy ? 'Đang lưu…' : 'Lưu thành phiên bản CV'}</button></div>
 
     {error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
@@ -327,5 +343,12 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
       {pdfProbe}
     </aside>
     </div>
+    <Dialog open={pendingTargetId !== null} title="Bỏ bản nháp đang sửa?" onClose={() => setPendingTargetId(null)}>
+      <p>Bạn có nội dung chưa lưu trong trình tạo CV. Nếu chuyển sang CV khác, bản nháp hiện tại sẽ bị xóa.</p>
+      <div className="dialog-actions">
+        <button type="button" className="secondary" onClick={() => setPendingTargetId(null)}>Giữ bản nháp</button>
+        <button type="button" className="danger" onClick={() => { const next = pendingTargetId; setPendingTargetId(null); if (next !== null) applyTargetChange(next); }}>Chuyển CV và bỏ nháp</button>
+      </div>
+    </Dialog>
   </section>;
 }

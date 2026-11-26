@@ -11,7 +11,7 @@ describe('workspace route resolution', () => {
     expect(resolveWorkspaceView('#analysis-history?id=example',candidate)).toBe('analysis-history');
     expect(resolveWorkspaceView('#analysis-history',recruiter)).toBe('analysis-history');
     expect(resolveWorkspaceView('#analysis-history',guest)).toBe('access');
-    expect(resolveWorkspaceView('#analysis-history',admin)).toBe('jobs');
+    expect(resolveWorkspaceView('#analysis-history',admin)).toBe('home');
   });
   it('requires authentication for application notification targets',()=>{
     expect(resolveWorkspaceView('#notifications',guest)).toBe('access');
@@ -20,6 +20,12 @@ describe('workspace route resolution', () => {
     expect(resolveWorkspaceView('#application?id=example',guest)).toBe('access');
     for(const session of [candidate,recruiter,admin])expect(resolveWorkspaceView('#application?id=example',session)).toBe('application');
     expect(resolveWorkspaceView('#application?id=example',{...candidate,deletionPending:true})).toBe('account');
+  });
+  it('gates #applications to Candidate role only', () => {
+    expect(resolveWorkspaceView('#applications', guest)).toBe('access');
+    expect(resolveWorkspaceView('#applications', candidate)).toBe('applications');
+    expect(resolveWorkspaceView('#applications', recruiter)).toBe('home');
+    expect(resolveWorkspaceView('#applications', admin)).toBe('home');
   });
   it('allows public job detail links and keeps deletion-pending accounts isolated', () => {
     for (const session of [undefined, guest, candidate, recruiter, admin])
@@ -38,9 +44,11 @@ describe('workspace route resolution', () => {
     for (const view of ['jobs', 'applications', ...resumeViews, 'public-resumes', 'account'])
       expect(resolveWorkspaceView(`#${view}`, candidate)).toBe(view);
   });
-  it('uses jobs for the default, top, introductory and unknown hashes', () => {
-    for (const hash of ['', '#top', '#jobs', '#how-it-works', '#unknown'])
-      expect(resolveWorkspaceView(hash, candidate)).toBe('jobs');
+  it('uses home for the default, top, introductory and unknown hashes while keeping #jobs direct', () => {
+    for (const hash of ['', '#top', '#home', '#how-it-works', '#unknown'])
+      expect(resolveWorkspaceView(hash, candidate)).toBe('home');
+    expect(resolveWorkspaceView('#jobs', candidate)).toBe('jobs');
+    expect(resolveWorkspaceView('#jobs', guest)).toBe('jobs');
   });
   it('sends guests to access for private destinations', () => {
     for (const view of ['applications', ...resumeViews, 'public-resumes', 'account', 'administration', ...recruiterViews, 'shared-profile'])
@@ -48,19 +56,19 @@ describe('workspace route resolution', () => {
     expect(resolveWorkspaceView('#jobs', guest)).toBe('jobs');
   });
   it('keeps recruiter links while excluding candidate and admin screens', () => {
-    for (const view of [...recruiterViews, 'shared-profile', 'public-resumes', 'applications', 'account'])
+    for (const view of [...recruiterViews, 'shared-profile', 'public-resumes', 'account'])
       expect(resolveWorkspaceView(`#${view}`, recruiter)).toBe(view);
-    for (const view of [...resumeViews, 'administration'])
-      expect(resolveWorkspaceView(`#${view}`, recruiter)).toBe('jobs');
+    for (const view of ['applications', ...resumeViews, 'administration'])
+      expect(resolveWorkspaceView(`#${view}`, recruiter)).toBe('home');
     for (const view of recruiterViews) {
-      expect(resolveWorkspaceView(`#${view}`, candidate)).toBe('jobs');
-      expect(resolveWorkspaceView(`#${view}`, admin)).toBe('jobs');
+      expect(resolveWorkspaceView(`#${view}`, candidate)).toBe('home');
+      expect(resolveWorkspaceView(`#${view}`, admin)).toBe('home');
     }
   });
   it('keeps admin access separate from private and public CVs', () => {
     expect(resolveWorkspaceView('#administration', admin)).toBe('administration');
-    for (const view of [...resumeViews, 'public-resumes', 'shared-profile'])
-      expect(resolveWorkspaceView(`#${view}`, admin)).toBe('jobs');
+    for (const view of ['applications', ...resumeViews, 'public-resumes', 'shared-profile'])
+      expect(resolveWorkspaceView(`#${view}`, admin)).toBe('home');
   });
   it('isolates deletion-pending accounts regardless of their hash', () => {
     for (const hash of ['#jobs', '#private-resumes', '#administration', '#access'])
@@ -68,6 +76,6 @@ describe('workspace route resolution', () => {
   });
   it('leaves the sign-in screen after successful authentication', () => {
     expect(resolveWorkspaceView('#access', guest)).toBe('access');
-    expect(resolveWorkspaceView('#access', candidate)).toBe('jobs');
+    expect(resolveWorkspaceView('#access', candidate)).toBe('home');
   });
 });

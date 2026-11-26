@@ -150,8 +150,16 @@ public static class AccountEndpoints
             if (account is { AccountStatus: "active" })
             {
                 var token = await users.GeneratePasswordResetTokenAsync(account);
-                var baseUrl = configuration["Recovery:BaseUrl"] ?? "http://127.0.0.1:5173/";
-                if (Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsedBase) && parsedBase is not null && parsedBase.Scheme == "http" && parsedBase.IsLoopback)
+                var configuredBase = configuration["Recovery:BaseUrl"];
+                var requestOrigin = Uri.TryCreate(http.Request.Headers.Origin.ToString(), UriKind.Absolute, out var originUri)
+                    && originUri.Scheme == "http" && originUri.IsLoopback
+                    ? originUri.GetLeftPart(UriPartial.Authority) : null;
+                var baseUrl = !string.IsNullOrWhiteSpace(configuredBase) ? configuredBase : requestOrigin ?? "http://127.0.0.1:5173/";
+                var allowHttps = !string.IsNullOrWhiteSpace(configuredBase) &&
+                    bool.TryParse(configuration["Recovery:AllowHttpsOrigin"], out var allowHttpsFlag) && allowHttpsFlag;
+                if (Uri.TryCreate(baseUrl, UriKind.Absolute, out var parsedBase) && parsedBase is not null &&
+                    ((parsedBase.Scheme == "http" && parsedBase.IsLoopback) ||
+                     (allowHttps && parsedBase.Scheme == "https" && parsedBase.HostNameType == UriHostNameType.Dns && !parsedBase.IsLoopback)))
                 {
                     var builder = new UriBuilder(new Uri(parsedBase, "/"));
                     builder.Query = $"resetEmail={Uri.EscapeDataString(account.Email!)}&resetToken={Uri.EscapeDataString(token)}";

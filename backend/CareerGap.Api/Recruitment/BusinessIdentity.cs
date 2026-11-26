@@ -46,18 +46,20 @@ public static class BusinessIdentityEndpoints
             if(!await db.Companies.AnyAsync(x=>x.Id==companyId&&x.OwnerUserId==uid&&x.ArchivedAt==null,ct))return Results.NotFound();
             db.BusinessIdentities.Add(new(){UserId=uid,CompanyId=companyId});await db.SaveChangesAsync(ct);await tx.CommitAsync(ct);return Results.NoContent();
         });
-        g.MapPost("/email/request",async(ClaimsPrincipal user,UserManager<AppUser> users,IEmailSender sender,IConfiguration config,CancellationToken ct)=>{
+        g.MapPost("/email/request",async(HttpContext http,ClaimsPrincipal user,UserManager<AppUser> users,IEmailSender sender,IConfiguration config,CancellationToken ct)=>{
             var account=await users.FindByIdAsync(Uid(user).ToString());if(account is null||!CorporateEmail(account.Email))return Results.Problem(statusCode:400,title:"business_email_required");
             if(account.EmailConfirmed)return Results.NoContent();
             var token=await users.GenerateEmailConfirmationTokenAsync(account);
-            var origin=config["App:PublicOrigin"]??"http://127.0.0.1:5207";
+            var configuredOrigin=config["App:PublicOrigin"]??config["Recovery:BaseUrl"];
+            var requestOrigin=Uri.TryCreate(http.Request.Headers.Origin.ToString(),UriKind.Absolute,out var parsedOrigin)&&parsedOrigin.Scheme=="http"&&parsedOrigin.IsLoopback?parsedOrigin.GetLeftPart(UriPartial.Authority):null;
+            var origin=!string.IsNullOrWhiteSpace(configuredOrigin)?configuredOrigin:requestOrigin??"http://127.0.0.1:5173";
             var link=new Uri(origin.TrimEnd('/')+"/?businessEmailToken="+Uri.EscapeDataString(token)+"#recruiter-company");
             try{await sender.SendBusinessVerificationAsync(account.Email!,link,ct);}catch(IntegrationError e){return Results.Problem(statusCode:503,title:e.Code);}
             return Results.NoContent();
         }).RequireRateLimiting("recovery");
         g.MapPost("/email/confirm",async(EmailConfirmation input,ClaimsPrincipal user,UserManager<AppUser> users)=>{
-            var account=await users.FindByIdAsync(Uid(user).ToString());if(account is null||account.EmailConfirmed||string.IsNullOrWhiteSpace(input.Token))return Results.BadRequest();
-            var result=await users.ConfirmEmailAsync(account,input.Token);return result.Succeeded?Results.NoContent():Results.BadRequest();
+            var account=await users.FindByIdAsync(Uid(user).ToString());if(account is null||account.EmailConfirmed||string.IsNullOrWhiteSpace(input.Token))return Results.Problem(statusCode:400,title:"invalid_business_email_token");
+            var result=await users.ConfirmEmailAsync(account,input.Token);return result.Succeeded?Results.NoContent():Results.Problem(statusCode:400,title:"invalid_business_email_token");
         });
         g.MapPut("",async(BusinessSubmission input,ClaimsPrincipal user,AppDb db,CancellationToken ct)=>{
             var uid=Uid(user);var tax=input.TaxCode?.Replace("-","").Trim();
@@ -73,11 +75,14 @@ public static class BusinessIdentityEndpoints
         });
         var admin=app.MapGroup("/api/admin/businesses").RequireAuthorization(p=>p.RequireRole("Admin"));
         admin.MapGet("",async(int? page,AppDb db,CancellationToken ct)=>{
-            if(page is <1 or >10000)return Results.BadRequest();
-            return Results.Ok(new{total=await db.BusinessIdentities.CountAsync(ct),items=await db.BusinessIdentities.AsNoTracking().OrderByDescending(x=>x.Status=="pending").ThenByDescending(x=>x.SubmittedAt).ThenBy(x=>x.UserId).Skip(((page??1)-1)*10).Take(10).Select(x=>new{x.UserId,x.CompanyId,x.LegalName,x.TaxCode,x.Domain,x.Status,x.RowVersion,x.ReviewReason,email=db.Users.Where(u=>u.Id==x.UserId).Select(u=>u.Email).FirstOrDefault(),website=db.Companies.Where(c=>c.Id==x.CompanyId).Select(c=>c.WebsiteUrl).FirstOrDefault()}).ToArrayAsync(ct)});
+            if(page is <1 or >10000)return Results.Problem(statusCode:400,title:"invalid_pagination");
+            var currentPage=page??1;
+            var total=await db.BusinessIdentities.CountAsync(ct);
+            var items=await db.BusinessIdentities.AsNoTracking().OrderByDescending(x=>x.Status=="pending").ThenByDescending(x=>x.SubmittedAt).ThenBy(x=>x.UserId).Skip((currentPage-1)*10).Take(10).Select(x=>new{x.UserId,x.CompanyId,x.LegalName,x.TaxCode,x.Domain,x.Status,x.RowVersion,x.ReviewReason,email=db.Users.Where(u=>u.Id==x.UserId).Select(u=>u.Email).FirstOrDefault(),website=db.Companies.Where(c=>c.Id==x.CompanyId).Select(c=>c.WebsiteUrl).FirstOrDefault()}).ToArrayAsync(ct);
+            return Results.Ok(new{items,total,page=currentPage,pageSize=10});
         });
         admin.MapPost("/{uid:guid}",async(Guid uid,BusinessReview input,ClaimsPrincipal user,AppDb db,CancellationToken ct)=>{
-            if(input.Action is not("verify" or "reject")||input.Reason?.Trim().Length is not(>=3 and <=500))return Results.BadRequest();
+            if(input.Action is not("verify" or "reject")||input.Reason?.Trim().Length is not(>=3 and <=500))return Results.Problem(statusCode:400,title:"business_review_invalid");
             await using var tx=await db.Database.BeginTransactionAsync(ct);var row=await db.BusinessIdentities.FromSqlInterpolated($"SELECT * FROM business_identities WHERE user_id={uid} FOR UPDATE").SingleOrDefaultAsync(ct);if(row is null)return Results.NotFound();
             if(row.RowVersion!=input.RowVersion||row.Status!="pending")return Results.Problem(statusCode:409,title:"business_conflict");
             var company=await db.Companies.SingleAsync(x=>x.Id==row.CompanyId,ct);var account=await db.Users.SingleAsync(x=>x.Id==uid,ct);

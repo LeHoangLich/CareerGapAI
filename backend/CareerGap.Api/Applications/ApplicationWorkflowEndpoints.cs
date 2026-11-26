@@ -27,7 +27,7 @@ public static partial class ApplicationEndpoints
         if (!user.IsInRole("Recruiter")) return Results.Forbid();
         var nextStatus = input.Status?.Trim();
         if (nextStatus is null || !KnownStatuses.Contains(nextStatus) || nextStatus == "withdrawn")
-            return Results.BadRequest(new { title = "invalid_application_status" });
+            return Results.Problem(statusCode: 400, title: "invalid_application_status");
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT id FROM applications WHERE id = {id} FOR UPDATE", ct);
@@ -36,9 +36,9 @@ public static partial class ApplicationEndpoints
         if (!await OwnsJobAsync(db, application.JobId, recruiterId, ct) ||
             !await CandidateAccountActiveAsync(db, application.CandidateId, ct) ||
             !RecruiterCanRead(application, DateTimeOffset.UtcNow)) return Results.NotFound();
-        if (application.RowVersion != input.RowVersion) return Results.Conflict(new { title = "application_conflict" });
+        if (application.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "application_conflict");
         if (!RecruiterTransitions.TryGetValue(application.Status, out var allowed) || !allowed.Contains(nextStatus))
-            return Results.Conflict(new { title = "invalid_status_transition" });
+            return Results.Problem(statusCode: 409, title: "invalid_status_transition");
 
         var previousStatus = application.Status;
         var now = DateTimeOffset.UtcNow;
@@ -77,8 +77,8 @@ public static partial class ApplicationEndpoints
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT id FROM applications WHERE id = {id} FOR UPDATE", ct);
         var application = await db.Applications.SingleOrDefaultAsync(x => x.Id == id, ct);
         if (application is null || application.CandidateId != candidateId || !CandidateCanRead(application, DateTimeOffset.UtcNow)) return Results.NotFound();
-        if (application.RowVersion != input.RowVersion) return Results.Conflict(new { title = "application_conflict" });
-        if (!ActiveStatuses.Contains(application.Status)) return Results.Conflict(new { title = "application_is_terminal" });
+        if (application.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "application_conflict");
+        if (!ActiveStatuses.Contains(application.Status)) return Results.Problem(statusCode: 409, title: "application_is_terminal");
 
         var previousStatus = application.Status;
         var now = DateTimeOffset.UtcNow;
@@ -129,16 +129,18 @@ public static partial class ApplicationEndpoints
         if (!TryUserId(user, out var recruiterId)) return Results.Unauthorized();
         if (!user.IsInRole("Recruiter")) return Results.Forbid();
         var currentPage = page ?? 1;
-        if (currentPage is < 1 or > 1_000_000) return Results.BadRequest();
+        if (currentPage is < 1 or > 1_000_000) return Results.Problem(statusCode: 400, title: "invalid_pagination");
         var application = await db.Applications.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id, ct);
         if (application is null || !await OwnsJobAsync(db, application.JobId, recruiterId, ct) ||
             !await CandidateAccountActiveAsync(db, application.CandidateId, ct) ||
             !RecruiterCanRead(application, DateTimeOffset.UtcNow)) return Results.NotFound();
-        var notes = await db.ApplicationNotes.AsNoTracking().Where(x => x.ApplicationId == id)
+        var query = db.ApplicationNotes.AsNoTracking().Where(x => x.ApplicationId == id);
+        var total = await query.CountAsync(ct);
+        var items = await query
             .OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id)
             .Skip((currentPage - 1) * 20).Take(20)
             .Select(x => new ApplicationNoteDto(x.Id, x.Body, x.CreatedAt)).ToListAsync(ct);
-        return Results.Ok(notes);
+        return Results.Ok(new { items, total, page = currentPage, pageSize = 20 });
     }
 
     private static async Task<IResult> AddNoteAsync(Guid id, ApplicationNoteRequest input,
@@ -148,7 +150,7 @@ public static partial class ApplicationEndpoints
         if (!user.IsInRole("Recruiter")) return Results.Forbid();
         var body = input.Body?.Trim();
         if (string.IsNullOrEmpty(body) || body.Length > 4000)
-            return Results.BadRequest(new { title = "invalid_application_note" });
+            return Results.Problem(statusCode: 400, title: "invalid_application_note");
 
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT id FROM applications WHERE id = {id} FOR UPDATE", ct);

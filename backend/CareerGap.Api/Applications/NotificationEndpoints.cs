@@ -43,7 +43,7 @@ public static partial class ApplicationEndpoints
     {
         if (!TryUserId(user, out var userId)) return Results.Unauthorized();
         var currentPage = page ?? 1;
-        if (currentPage is < 1 or > 10000) return Results.BadRequest();
+        if (currentPage is < 1 or > 10000) return Results.Problem(statusCode: 400, title: "invalid_pagination");
         var records = await VisibleNotifications(db, userId, user.IsInRole("Recruiter")).AsNoTracking()
             .OrderByDescending(n => n.CreatedAt).ThenByDescending(n => n.Id).Skip((currentPage - 1) * 20).Take(20).ToListAsync(ct);
         return Results.Ok(records.Select(ToNotificationDto).ToArray());

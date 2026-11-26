@@ -142,7 +142,6 @@ public sealed partial class AppDb
         b.Entity<CommunityView>().HasKey(x => new { x.PostId, x.Viewer, x.Day });
         b.Entity<CommunityView>().Property(x => x.Viewer).HasMaxLength(64);
         b.Entity<CommunityView>().HasOne<CommunityPost>().WithMany().HasForeignKey(x => x.PostId).OnDelete(DeleteBehavior.Cascade);
-        b.Entity<CommunitySearch>().ToTable("community_searches");
         b.Entity<CommunitySearch>().HasKey(x => new { x.Term, x.Viewer, x.Day });
         b.Entity<CommunitySearch>().Property(x => x.Term).HasMaxLength(40);
         b.Entity<CommunitySearch>().Property(x => x.Viewer).HasMaxLength(64);

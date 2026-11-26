@@ -49,11 +49,37 @@ public sealed class JobRewriteService(AppDb db, JobService jobs)
             .FirstOrDefaultAsync(ct);
         if (revision is null)
         {
-            if (!JobRevisionFactory.TryExtract(job.CurrentVersion.Id, null, 1, job.CurrentVersion.RequirementsText, DateTimeOffset.UtcNow, out var createdRev, out _) || createdRev is null)
-                throw new JobError("job_revision_unavailable", 409);
-            db.JobDataRevisions.Add(createdRev);
-            await db.SaveChangesAsync(ct);
-            revision = createdRev;
+            await using var revTx = await db.Database.BeginTransactionAsync(ct);
+            await db.Database.ExecuteSqlInterpolatedAsync($"SELECT id FROM job_versions WHERE id = {job.CurrentVersion.Id} FOR UPDATE", ct);
+            revision = await db.JobDataRevisions.AsNoTracking()
+                .Where(x => x.JobVersionId == job.CurrentVersion.Id)
+                .OrderByDescending(x => x.RevisionNo)
+                .FirstOrDefaultAsync(ct);
+            if (revision is null)
+            {
+                if (!JobRevisionFactory.TryExtract(job.CurrentVersion.Id, null, 1, job.CurrentVersion.RequirementsText, DateTimeOffset.UtcNow, out var createdRev, out _) || createdRev is null)
+                    throw new JobError("job_revision_unavailable", 409);
+                db.JobDataRevisions.Add(createdRev);
+                try
+                {
+                    await db.SaveChangesAsync(ct);
+                    await revTx.CommitAsync(ct);
+                    revision = createdRev;
+                }
+                catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation })
+                {
+                    await revTx.RollbackAsync(ct);
+                    db.ChangeTracker.Clear();
+                    revision = await db.JobDataRevisions.AsNoTracking()
+                        .Where(x => x.JobVersionId == job.CurrentVersion.Id)
+                        .OrderByDescending(x => x.RevisionNo)
+                        .FirstAsync(ct);
+                }
+            }
+            else
+            {
+                await revTx.CommitAsync(ct);
+            }
         }
 
         var payload = PairMatchingContract.Serialize(JobRewriteContract.Build(job.CurrentVersion));

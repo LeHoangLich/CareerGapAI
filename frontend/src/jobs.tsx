@@ -6,12 +6,12 @@ import { CompanyLogo, CompanyLogoEditor } from './companyLogo';
 import { salaryLabel, salaryPayload, salaryPeriods } from './salary';
 import { Dialog, ValidatedForm } from './ui';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { api, ApiError } from './api';
+import { api, ApiError, type PagedResponse } from './api';
 import { jobHref, jobIdFromHash, jobShareUrl, jobSignInHref } from './jobLinks';
 import { coverLetterLimit, normalizeCoverLetter } from './coverLetter';
 import { RecruiterKeywordResumeSearch } from './matching';
 import { JobDiscoveryWorkspace } from './jobDiscoveryWorkspace';
-import { PairRecommendations } from './pairMatching';
+import { PairAnalysisButton, PairRecommendations } from './pairMatching';
 import { ReportButton } from './administration';
 import { Briefcase, MagnifyingGlass, MapPin, SlidersHorizontal, ArrowRight } from '@phosphor-icons/react';
 import { StaticLoading } from './workspace';
@@ -50,6 +50,41 @@ function toQuery(filters: SearchFilters, page: number) {
   const params = new URLSearchParams({ page: String(page), pageSize: '10' });
   for (const [key, value] of Object.entries(filters)) if (value.trim()) params.set(key, value.trim());
   return params.toString();
+}
+
+function parseJobsHash(hash: string): { filters: SearchFilters; page: number } | null {
+  const [route, query = ''] = hash.split('?');
+  if (route !== '#jobs') return null;
+  const p = new URLSearchParams(query);
+  const rawPage = Number(p.get('page') ?? '1');
+  const page = Number.isInteger(rawPage) && rawPage >= 1 && rawPage <= 10000 ? rawPage : 1;
+  return {
+    filters: {
+      q: p.get('q') ?? '',
+      location: p.get('location') ?? '',
+      tags: p.get('tags') ?? '',
+      tagMode: p.get('tagMode') === 'any' ? 'any' : 'all',
+      skill: p.get('skill') ?? '',
+      industry: p.get('industry') ?? '',
+      workMode: p.get('workMode') ?? '',
+      employmentType: p.get('employmentType') ?? '',
+      experienceYears: p.get('experienceYears') ?? '',
+    },
+    page,
+  };
+}
+
+function buildJobsHash(filters: SearchFilters, page: number): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(filters)) {
+    const trimmed = value.trim();
+    if (!trimmed) continue;
+    if (key === 'tagMode' && trimmed === 'all' && !filters.tags.trim()) continue;
+    params.set(key, trimmed);
+  }
+  if (page > 1) params.set('page', String(page));
+  const qs = params.toString();
+  return qs ? `#jobs?${qs}` : '#jobs';
 }
 
 function ShareJobLink({ jobId }: { jobId: string }) {
@@ -98,14 +133,14 @@ function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, res
     </>}
     {job.applicationDeadline && <small>Hạn nhận hồ sơ: {new Date(job.applicationDeadline).toLocaleString('vi-VN')}</small>}
     {job.maxApplications != null && <small className="job-capacity">{job.remainingSlots === 0 ? `Đã đủ ${job.maxApplications}/${job.maxApplications} hồ sơ đang xử lý` : `Còn ${job.remainingSlots ?? job.maxApplications}/${job.maxApplications} chỗ nhận hồ sơ`}</small>}
-    {candidate && <button className="secondary save-job" disabled={saving} aria-pressed={saved} onClick={() => onToggleSaved(job)}>{saving?'Đang lưu…':saved ? 'Bỏ lưu việc' : 'Lưu việc'}</button>}
+    {candidate && <button type="button" className="secondary save-job" disabled={saving} aria-pressed={saved} onClick={() => onToggleSaved(job)}>{saving?'Đang lưu…':saved ? 'Bỏ lưu việc' : 'Lưu việc'}</button>}
     {(candidate || reportable) && <ReportButton targetType="job" targetId={job.id}/>}
     {candidate && application && <p className="hint" role="status">Bạn đã nộp hồ sơ · {statusLabel(application.status)} · CV phiên bản {application.resumeVersionNo}</p>}
     {candidate && application && <SubmittedCoverLetter value={application.coverLetter}/>}
     {candidate && !application && job.acceptingApplications && <div className="apply-row">
       {resumeVersions.length ? <><label>CV gửi<select aria-label={`CV gửi cho ${version.title}`} disabled={applying} value={selectedVersionId ?? resumeVersions[0].id} onChange={e => onSelectVersion(job.id, e.target.value)}>
         {resumeVersions.map(item => <option key={item.id} value={item.id}>{item.resumeTitle} · v{item.versionNo}</option>)}
-      </select></label><label className="cover-letter-input">Thư ứng tuyển (không bắt buộc)<textarea aria-label={`Thư ứng tuyển cho ${version.title}`} rows={5} maxLength={coverLetterLimit} disabled={applying} value={coverLetter} onChange={event=>onCoverLetter(job.id,event.target.value)} placeholder="Giới thiệu ngắn về bạn và lý do quan tâm đến vị trí này."/><small>{coverLetter.length.toLocaleString('vi-VN')} / 5.000 ký tự · Thư được gửi cùng CV và không thể sửa sau khi nộp.</small></label><button disabled={applying} onClick={() => onApply(job)}>{applying ? 'Đang nộp…' : 'Nộp hồ sơ'}</button></>
+      </select></label><label className="cover-letter-input">Thư ứng tuyển (không bắt buộc)<textarea aria-label={`Thư ứng tuyển cho ${version.title}`} rows={5} maxLength={coverLetterLimit} disabled={applying} value={coverLetter} onChange={event=>onCoverLetter(job.id,event.target.value)} placeholder="Giới thiệu ngắn về bạn và lý do quan tâm đến vị trí này."/><small>{coverLetter.length.toLocaleString('vi-VN')} / 5.000 ký tự · Thư được gửi cùng CV và không thể sửa sau khi nộp.</small></label><button type="button" disabled={applying} onClick={() => onApply(job)}>{applying ? 'Đang nộp…' : 'Nộp hồ sơ'}</button></>
         : <p className="hint"><a href="#private-resumes">Tải CV lên mục “CV riêng của bạn”</a> để nộp hồ sơ.</p>}
     </div>}
     {detail&&!job.acceptingApplications&&<p className="hint">{job.status==='closed'?'Tin đã đóng, không nhận thêm hồ sơ.':job.remainingSlots===0?'Tin đã nhận đủ số hồ sơ đang xử lý.':'Tin đã hết hạn nhận hồ sơ.'}</p>}
@@ -118,9 +153,9 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
   const [detailRetry,setDetailRetry]=useState(0);
   const [detail,setDetail]=useState<{id:string;job?:Job;application?:Application;saved:boolean;error?:string;missing?:boolean}>();
   const [savingJobId,setSavingJobId]=useState<string>();
-  const [filters, setFilters] = useState(emptyFilters);
-  const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
-  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<SearchFilters>(() => parseJobsHash(window.location.hash)?.filters ?? emptyFilters);
+  const [appliedFilters, setAppliedFilters] = useState<SearchFilters>(() => parseJobsHash(window.location.hash)?.filters ?? emptyFilters);
+  const [page, setPage] = useState(() => parseJobsHash(window.location.hash)?.page ?? 1);
   const [results, setResults] = useState<Page<Job>>();
   const [saved, setSaved] = useState<Saved[]>([]);
   const [resumes, setResumes] = useState<Resume[]>([]);
@@ -147,9 +182,12 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
       if(window.location.hash==='#main-content')return;
       setDetailId(jobIdFromHash(window.location.hash));
       if(window.location.hash.startsWith('#jobs?')){
-        const p=new URLSearchParams(window.location.hash.split('?')[1]??'');
-        const next:SearchFilters={...emptyFilters,q:p.get('q')??'',location:p.get('location')??'',tags:p.get('tags')??'',tagMode:p.get('tagMode')??'all'};
-        setFilters(next);setAppliedFilters(next);setPage(1);
+        const parsed=parseJobsHash(window.location.hash);
+        if(parsed){
+          setFilters(parsed.filters);
+          setAppliedFilters(parsed.filters);
+          setPage(parsed.page);
+        }
       }
     };
     update();
@@ -199,9 +237,10 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
     setApplicationDataState('loading');
     try {
       if (candidate) {
-        const [resumeList, applicationPage] = await Promise.all([
-          api<Resume[]>('/api/resumes?page=1'), api<Page<Application>>('/api/applications/mine?page=1&pageSize=50')
+        const [resumePage, applicationPage] = await Promise.all([
+          api<PagedResponse<Resume>>('/api/resumes?page=1'), api<Page<Application>>('/api/applications/mine?page=1&pageSize=50')
         ]);
+        const resumeList = resumePage.items;
         setResumes(resumeList); setApplications(applicationPage.items);
         setSelectedVersionByJob(current => {
           const valid = new Set(resumeList.flatMap(resume => resume.versions.map(version => version.id)));
@@ -280,18 +319,26 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
     {busy && <StaticLoading label="Đang tìm tin…"/>}
     {!busy && !items.length && !error && <div className="empty-state"><Briefcase size={28} aria-hidden="true"/><h3>Chưa có tin công khai phù hợp.</h3><p>Thử thay đổi từ khóa hoặc mở rộng bộ lọc để tìm cơ hội khác.</p></div>}
     <div className="job-list">{items.map(job => <JobCard key={job.id} coverLetter={coverLettersByJob[job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} job={job} candidate={candidate} reportable={session?.roles.includes('Recruiter')} saved={savedIds.has(job.id)} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(job.id)} selectedVersionId={selectedVersionByJob[job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === job.id}/>)}</div>
-    {results && results.total > results.pageSize && <div className="row job-pages"><button className="secondary" disabled={page <= 1 || busy} onClick={() => setPage(x => x - 1)}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(results.total / results.pageSize))}</span><button className="secondary" disabled={page * results.pageSize >= results.total || busy} onClick={() => setPage(x => x + 1)}>Sau</button></div>}
+    {results && results.total > results.pageSize && <div className="row job-pages"><button type="button" className="secondary" disabled={page <= 1 || busy} onClick={() => { const nextPage = page - 1; setPage(nextPage); const nextHash = buildJobsHash(appliedFilters, nextPage); if (window.location.hash !== nextHash) window.location.hash = nextHash; }}>Trước</button><span>Trang {page} / {Math.max(1, Math.ceil(results.total / results.pageSize))}</span><button type="button" className="secondary" disabled={page * results.pageSize >= results.total || busy} onClick={() => { const nextPage = page + 1; setPage(nextPage); const nextHash = buildJobsHash(appliedFilters, nextPage); if (window.location.hash !== nextHash) window.location.hash = nextHash; }}>Sau</button></div>}
     {candidate && saved.length > 0 && <details className="saved-jobs"><summary>Việc đã lưu ({saved.length})</summary><div className="job-list">{saved.map(x => <JobCard key={x.job.id} coverLetter={coverLettersByJob[x.job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} job={x.job} candidate={true} saved={true} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(x.job.id)} selectedVersionId={selectedVersionByJob[x.job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === x.job.id}/>)}</div></details>}
     {!candidate && <p className="hint">Đăng nhập bằng tài khoản ứng viên để lưu tin quan tâm.</p>}
   </>;
+  const detailResumeVersions = resumes.flatMap(resume => resume.versions.map(item => ({ ...item, resumeTitle: resume.title })));
   return <><PersistentView active={activeView === 'jobs'} name="jobs">{intro}<section className="card job-browser" id="jobs">
     <div className="section-heading"><div><p className="eyebrow">KHÁM PHÁ CƠ HỘI</p><h1>Tìm công việc</h1></div><span className="result-count">{results ? `${results.total} kết quả` : busy ? 'Đang tải…' : 'Chưa có kết quả'}</span></div>
     <ValidatedForm className="job-filters job-search-bar" onInvalidCapture={event => {
       if (advancedFilters.current?.contains(event.target as Node)) advancedFilters.current.open = true;
-    }} onSubmit={e => { e.preventDefault(); setPage(1); setAppliedFilters({ ...filters }); }}>
+    }} onSubmit={e => {
+      e.preventDefault();
+      const next = { ...filters };
+      setPage(1);
+      setAppliedFilters(next);
+      const nextHash = buildJobsHash(next, 1);
+      if (window.location.hash !== nextHash) window.location.hash = nextHash;
+    }}>
       <label>Từ khóa<input value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} maxLength={120} placeholder="Vị trí hoặc công ty bạn quan tâm"/></label>
       <label>Địa điểm<LocationInput value={filters.location} onChange={location=>setFilters({...filters,location})} placeholder="Tỉnh, thành phố"/></label>
-      <button disabled={busy}><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc</button>
+      <button type="submit" disabled={busy}><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc</button>
       <details className="advanced-job-filters" ref={advancedFilters}>
         <summary><SlidersHorizontal size={16} aria-hidden="true"/>Bộ lọc nâng cao<span className="filter-count">{[appliedFilters.tags, appliedFilters.skill, appliedFilters.industry, appliedFilters.workMode, appliedFilters.employmentType, appliedFilters.experienceYears].filter(value => value.trim()).length} đang áp dụng</span></summary>
         <div className="advanced-filter-grid">
@@ -304,25 +351,37 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
         </div>
       </details>
     </ValidatedForm>
-    {candidate ? <JobDiscoveryWorkspace resumes={resumes} onSearchTitle={title => {
-      const next = { ...filters, q: title };
-      setFilters(next); setAppliedFilters(next); setPage(1);
-    }}>{jobResults}</JobDiscoveryWorkspace> : jobResults}
+    {candidate ? <JobDiscoveryWorkspace resumes={resumes}>{jobResults}</JobDiscoveryWorkspace> : jobResults}
   </section></PersistentView><PersistentView active={activeView==='notifications'&&session?.authenticated===true} name="notifications">{session?.authenticated&&<RecruitmentNotifications key={session.userId} userId={session.userId} active={activeView==='notifications'} revision={notificationRevision}/>}</PersistentView><PersistentView active={activeView==='application'&&session?.authenticated===true} name="application"><NotificationApplicationDetail active={activeView==='application'&&session?.authenticated===true}/></PersistentView><PersistentView active={activeView==='job'} name="job">
     <section className="job-detail" aria-label="Chi tiết việc làm">
-      <a className="job-detail-back" href="#jobs">← Quay lại danh sách việc làm</a>
+      <a className="job-detail-back" href={buildJobsHash(appliedFilters, page)}>← Quay lại danh sách việc làm</a>
       {!detailId||currentDetail?.missing?<div className="card empty-state"><h1>Không tìm thấy tin tuyển dụng</h1><p>Tin không tồn tại hoặc không còn công khai. Hãy quay lại danh sách để xem những cơ hội khác.</p></div>
-        :currentDetail?.error?<div className="card" role="alert"><h1>Chưa tải được tin tuyển dụng</h1><p>{currentDetail.error}</p><button className="secondary" onClick={()=>setDetailRetry(value=>value+1)}>Tải lại tin tuyển dụng</button></div>
+        :currentDetail?.error?<div className="card" role="alert"><h1>Chưa tải được tin tuyển dụng</h1><p>{currentDetail.error}</p><button type="button" className="secondary" onClick={()=>setDetailRetry(value=>value+1)}>Tải lại tin tuyển dụng</button></div>
         :!currentDetail?.job?<StaticLoading label="Đang tải chi tiết việc làm…"/>:<>
           {error&&<p role="alert" className="error">{error}</p>}{applicationMessage&&<p role="status">{applicationMessage}</p>}
           <JobCard key={currentDetail.job.id} coverLetter={coverLettersByJob[currentDetail.job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} detail job={currentDetail.job} candidate={candidate&&applicationDataState==='ready'} reportable={session?.roles.includes('Recruiter')} saved={currentDetail.saved} saving={savingJobId===currentDetail.job.id} onToggleSaved={job=>void toggleSaved(job,currentDetail.saved)} resumes={resumes} application={currentDetail.application} selectedVersionId={selectedVersionByJob[currentDetail.job.id]} onSelectVersion={(jobId,versionId)=>setSelectedVersionByJob(current=>({...current,[jobId]:versionId}))} onApply={job=>void apply(job)} applying={applyingJobId===currentDetail.job.id}/>
+          {candidate&&applicationDataState==='ready'&&<section className="card job-pair-match" aria-label="Đối chiếu CV với tin tuyển dụng">
+            <div className="section-heading"><div><p className="eyebrow">PHÂN TÍCH PHÙ HỢP CÓ BẰNG CHỨNG</p><h2>Đối chiếu CV của bạn với tin tuyển dụng này</h2></div><span className="badge">CV–JD</span></div>
+            {detailResumeVersions.length ? <>
+              <label>Chọn phiên bản CV để đối chiếu
+                <select value={selectedVersionByJob[currentDetail.job.id] ?? detailResumeVersions[0].id} onChange={e => { const detailJobId = currentDetail.job?.id; const versionId = e.target.value; if (detailJobId) setSelectedVersionByJob(current => ({ ...current, [detailJobId]: versionId })); }}>
+                  {detailResumeVersions.map(item => <option key={item.id} value={item.id}>{item.resumeTitle} · v{item.versionNo}</option>)}
+                </select>
+              </label>
+              <PairAnalysisButton
+                resumeVersionId={selectedVersionByJob[currentDetail.job.id] ?? detailResumeVersions[0].id}
+                jobVersionId={currentDetail.job.version.id}
+                jobId={currentDetail.job.id}
+              />
+            </> : <p className="hint"><a href="#private-resumes">Tải hoặc tạo CV riêng</a> để đối chiếu với tin tuyển dụng này.</p>}
+          </section>}
           {!session?.authenticated&&currentDetail.job.acceptingApplications&&<div className="card job-detail-signin"><p>Đăng nhập bằng tài khoản ứng viên để chọn CV, lưu tin và ứng tuyển.</p><a href={jobSignInHref(currentDetail.job.id)}>Đăng nhập để ứng tuyển</a></div>}
           {session?.authenticated&&!candidate&&<p className="hint">Chỉ tài khoản ứng viên được nộp hồ sơ ứng tuyển.</p>}
           {candidate&&applicationDataState==='loading'&&<StaticLoading label="Đang tải CV và trạng thái ứng tuyển…"/>}
-          {candidate&&applicationDataState==='error'&&<div role="alert"><p>Chưa tải đủ CV và trạng thái ứng tuyển.</p><button className="secondary" onClick={()=>void refreshApplicationData()}>Tải lại dữ liệu ứng tuyển</button></div>}
+          {candidate&&applicationDataState==='error'&&<div role="alert"><p>Chưa tải đủ CV và trạng thái ứng tuyển.</p><button type="button" className="secondary" onClick={()=>void refreshApplicationData()}>Tải lại dữ liệu ứng tuyển</button></div>}
         </>}
     </section>
-  </PersistentView><PersistentView active={activeView === 'applications' && session?.authenticated === true} name="applications">
+  </PersistentView><PersistentView active={activeView === 'applications' && candidate} name="applications">
     {error && <p role="alert" className="error">{error}</p>}
     {applicationDataState === 'loading' && <StaticLoading label="Đang tải đơn ứng tuyển…"/>}
     {applicationDataState === 'error' && <div className="application-data-error"><p>Chưa tải đủ đơn ứng tuyển. Bạn có thể kiểm tra lại.</p><button type="button" className="secondary" onClick={() => { setError(''); void refreshApplicationData(); }}>Tải lại đơn ứng tuyển</button></div>}
@@ -335,7 +394,7 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
     <p><a href="#notifications">Mở trung tâm thông báo tuyển dụng</a></p><div className="application-workspace" aria-busy={applicationDataState === 'loading'}>
     {candidate && <section className="card application-center" id="applications"><div className="section-heading"><div><p className="eyebrow">HỒ SƠ ĐÃ NỘP</p><h2>Đơn ứng tuyển của bạn</h2></div><span>{applicationDataState === 'ready' ? applications.length : '—'}</span></div>
       {applicationMessage && <p role="status">{applicationMessage}</p>}
-      {!applications.length ? applicationDataState === 'ready' && <div className="empty-state application-empty"><Briefcase size={32} aria-hidden="true"/><h3>Cơ hội tiếp theo đang chờ bạn</h3><p>Chưa có đơn ứng tuyển. Khám phá việc phù hợp và chọn phiên bản CV bạn muốn gửi.</p><a className="empty-state-cta" href="#jobs">Khám phá việc làm ngay<ArrowRight size={16} aria-hidden="true"/></a></div> : <ul className="application-list">{applications.map(application => <li key={application.id}><div><strong><a href={jobHref(application.jobId)}>{application.jobTitle}</a></strong><small>{application.companyName} · {new Date(application.submittedAt).toLocaleString('vi-VN')} · {statusLabel(application.status)}</small><SubmittedCoverLetter value={application.coverLetter}/><div className="row application-actions"><a href={`/api/applications/${application.id}/resume`}>CV đã nộp · v{application.resumeVersionNo}</a>{activeApplicationStatuses.includes(application.status) && <button className="secondary" disabled={withdrawingId === application.id} onClick={() => { setError(''); setWithdrawal(application); }}>{withdrawingId === application.id ? 'Đang rút…' : 'Rút hồ sơ'}</button>}<button className="secondary" aria-expanded={!!expandedHistory[application.id]} aria-controls={`application-history-${application.id}`} onClick={() => void toggleHistory(application)}>{expandedHistory[application.id] ? 'Ẩn lịch sử' : 'Lịch sử trạng thái'}</button></div><ul hidden={!expandedHistory[application.id]} id={`application-history-${application.id}`} className="status-history">{(applicationHistory[application.id] ?? []).map((entry, index) => <li key={`${entry.changedAt}-${index}`}><span>{entry.fromStatus ? `${statusLabel(entry.fromStatus)} → ` : ''}{statusLabel(entry.toStatus)}</span><small>{new Date(entry.changedAt).toLocaleString('vi-VN')}</small></li>)}</ul></div></li>)}</ul>}
+      {!applications.length ? applicationDataState === 'ready' && <div className="empty-state application-empty"><Briefcase size={32} aria-hidden="true"/><h3>Cơ hội tiếp theo đang chờ bạn</h3><p>Chưa có đơn ứng tuyển. Khám phá việc phù hợp và chọn phiên bản CV bạn muốn gửi.</p><a className="empty-state-cta" href="#jobs">Khám phá việc làm ngay<ArrowRight size={16} aria-hidden="true"/></a></div> : <ul className="application-list">{applications.map(application => <li key={application.id}><div><strong><a href={jobHref(application.jobId)}>{application.jobTitle}</a></strong><small>{application.companyName} · {new Date(application.submittedAt).toLocaleString('vi-VN')} · {statusLabel(application.status)}</small><SubmittedCoverLetter value={application.coverLetter}/><div className="row application-actions"><a href={`/api/applications/${application.id}/resume`}>CV đã nộp · v{application.resumeVersionNo}</a>{activeApplicationStatuses.includes(application.status) && <button type="button" className="secondary" disabled={withdrawingId === application.id} onClick={() => { setError(''); setWithdrawal(application); }}>{withdrawingId === application.id ? 'Đang rút…' : 'Rút hồ sơ'}</button>}<button type="button" className="secondary" aria-expanded={!!expandedHistory[application.id]} aria-controls={`application-history-${application.id}`} onClick={() => void toggleHistory(application)}>{expandedHistory[application.id] ? 'Ẩn lịch sử' : 'Lịch sử trạng thái'}</button></div><ul hidden={!expandedHistory[application.id]} id={`application-history-${application.id}`} className="status-history">{(applicationHistory[application.id] ?? []).map((entry, index) => <li key={`${entry.changedAt}-${index}`}><span>{entry.fromStatus ? `${statusLabel(entry.fromStatus)} → ` : ''}{statusLabel(entry.toStatus)}</span><small>{new Date(entry.changedAt).toLocaleString('vi-VN')}</small></li>)}</ul></div></li>)}</ul>}
     </section>}
 
     </div>
@@ -404,7 +463,7 @@ function JobRequirementReview({ job }: { job: Job }) {
     <div><strong>Yêu cầu có cấu trúc · JD v{job.version.versionNo}</strong>
       <p>Mỗi dòng giữ nguyên câu nguồn. Phân loại tự động chỉ là gợi ý từ từ khóa; hãy rà soát trước khi xác nhận. Thao tác này chạy local, không gọi AI.</p></div>
     {error && <p role="alert" className="error">{error}</p>}
-    {!latest && <button className="secondary" disabled={busy} onClick={() => void extract()}>{busy ? 'Đang tách dòng…' : 'Tách yêu cầu từ JD (local)'}</button>}
+    {!latest && <button type="button" className="secondary" disabled={busy} onClick={() => void extract()}>{busy ? 'Đang tách dòng…' : 'Tách yêu cầu từ JD (local)'}</button>}
     {latest && <>
       <p>Revision {latest.revisionNo} · {latest.origin === 'local_extracted' ? 'Chờ recruiter rà soát' : 'Đã xác nhận'} · {latest.parserVersion}</p>
       {!latest.structuredData.requirements.length && <p>Không có dòng yêu cầu để phân loại; recruiter có thể bổ sung bên dưới.</p>}
@@ -431,9 +490,9 @@ function JobRequirementReview({ job }: { job: Job }) {
         <div className="job-manual-requirement"><label>Yêu cầu recruiter bổ sung<input aria-label="Yêu cầu recruiter bổ sung" maxLength={2000} value={manualText} onChange={event => setManualText(event.target.value)}/></label>
           <label>Phân loại<select aria-label="Phân loại yêu cầu bổ sung" value={manualImportance} onChange={event => setManualImportance(event.target.value)}>
             {Object.entries(importanceLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select></label><button className="secondary" disabled={!manualText.trim()} onClick={addManualRequirement}>Thêm yêu cầu</button></div>
-        {!!manualRequirements.length && <ul className="job-manual-list">{manualRequirements.map((item, index) => <li key={`${item.text}-${index}`}><span>{item.text} · {importanceLabels[item.importance]}</span><button className="link-button" onClick={() => setManualRequirements(current => current.filter((_, i) => i !== index))}>Bỏ</button></li>)}</ul>}
-        <button disabled={busy} onClick={() => void confirm()}>{busy ? 'Đang lưu…' : 'Xác nhận yêu cầu JD'}</button>
+          </select></label><button type="button" className="secondary" disabled={!manualText.trim()} onClick={addManualRequirement}>Thêm yêu cầu</button></div>
+        {!!manualRequirements.length && <ul className="job-manual-list">{manualRequirements.map((item, index) => <li key={`${item.text}-${index}`}><span>{item.text} · {importanceLabels[item.importance]}</span><button type="button" className="link-button" onClick={() => setManualRequirements(current => current.filter((_, i) => i !== index))}>Bỏ</button></li>)}</ul>}
+        <button type="button" disabled={busy} onClick={() => void confirm()}>{busy ? 'Đang lưu…' : 'Xác nhận yêu cầu JD'}</button>
       </>}
     </>}
   </section>;
@@ -473,6 +532,7 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
   const [editingJob, setEditingJob] = useState<Job>();
   const [rewriteProposal, setRewriteProposal] = useState<{ id: string; status: string; errorCode?: string | null; provider?: string; sections?: { description: string; requirementsText: string; benefitsText: string | null } | null }>();
   const [rewriteBusy, setRewriteBusy] = useState(false);
+  const rewriteAbortRef = useRef<AbortController | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -507,7 +567,10 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
 
   useEffect(()=>{
     const requests=applicationRequests.current;
-    return()=>{Object.values(requests).forEach(controller=>controller.abort());};
+    return()=>{
+      rewriteAbortRef.current?.abort();
+      Object.values(requests).forEach(controller=>controller.abort());
+    };
   },[]);
 
   const jobPagination=(position:'trên'|'dưới')=><nav className="row" aria-label={`Phân trang tin tuyển dụng phía ${position}`}>
@@ -544,6 +607,8 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
   }
 
   function editJob(job: Job) {
+    rewriteAbortRef.current?.abort();
+    setRewriteBusy(false);
     setEditingJob(job); setRewriteProposal(undefined); setJobTags(job.tags??[]); setCompanyId(job.companyId); setMaxApplications(job.maxApplications?.toString() ?? '');
     setJobForm({ title: job.version.title, description: job.version.description, requirementsText: job.version.requirementsText, benefitsText: job.version.benefitsText ?? '', industry: job.version.industry ?? '', location: job.version.location ?? '', employmentType: job.version.employmentType, workMode: job.version.workMode, experienceMin: job.version.experienceMin?.toString() ?? '', experienceMax: job.version.experienceMax?.toString() ?? '', language: job.version.language, salaryMin:job.version.salaryMin?.toString()??'',salaryMax:job.version.salaryMax?.toString()??'',salaryCurrency:job.version.salaryCurrency??'VND',salaryPeriod:job.version.salaryPeriod??'month' });
     if (job.applicationDeadline) {
@@ -554,18 +619,35 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
 
   async function requestJdRewrite() {
     if (!editingJob) return;
+    rewriteAbortRef.current?.abort();
+    const controller = new AbortController();
+    rewriteAbortRef.current = controller;
     setRewriteBusy(true); setError(''); setRewriteProposal(undefined);
     try {
       const created = await api<{ id: string }>(`/api/jobs/${editingJob.id}/rewrite-proposals`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idempotencyKey: crypto.randomUUID() })
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idempotencyKey: crypto.randomUUID() }), signal: controller.signal
       });
-      for (let i = 0; i < 20; i++) {
-        const value = await api<NonNullable<typeof rewriteProposal>>(`/api/writing/jd-proposals/${created.id}`);
+      for (let i = 0; i < 60; i++) {
+        if (controller.signal.aborted) return;
+        const value = await api<NonNullable<typeof rewriteProposal>>(`/api/writing/jd-proposals/${created.id}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         setRewriteProposal(value);
         if (value.status !== 'queued' && value.status !== 'running') break;
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        await new Promise<void>((resolve, reject) => {
+          const timer = setTimeout(() => { controller.signal.removeEventListener('abort', onAbort); resolve(); }, 1500);
+          function onAbort() { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); }
+          controller.signal.addEventListener('abort', onAbort, { once: true });
+        });
+        if (i === 59) setError('Tác vụ viết lại JD đang mất nhiều thời gian hơn dự kiến. Bạn có thể bấm thử lại sau.');
       }
-    } catch (e) { setError((e as Error).message); } finally { setRewriteBusy(false); }
+    } catch (e) {
+      if (!(e instanceof Error && e.name === 'AbortError')) setError((e as Error).message);
+    } finally {
+      if (rewriteAbortRef.current === controller) {
+        rewriteAbortRef.current = null;
+        setRewriteBusy(false);
+      }
+    }
   }
 
   async function changeState(job: Job, action: 'publish' | 'close' | 'archive' | 'restore') {
@@ -647,8 +729,8 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     setExpandedNotes(current => ({ ...current, [application.id]: open }));
     if (open && !Object.prototype.hasOwnProperty.call(notesByApplication, application.id)) {
       try {
-        const notes = await api<ApplicationNote[]>(`/api/applications/${application.id}/notes`);
-        setNotesByApplication(current => ({ ...current, [application.id]: notes }));
+        const notes = await api<PagedResponse<ApplicationNote>>(`/api/applications/${application.id}/notes`);
+        setNotesByApplication(current => ({ ...current, [application.id]: notes.items }));
       } catch (e) { setError((e as Error).message); }
     }
   }
@@ -659,8 +741,8 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     setSavingNoteId(application.id); setError(''); setMessage('');
     try {
       await api<ApplicationNote>(`/api/applications/${application.id}/notes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body }) });
-      const notes = await api<ApplicationNote[]>(`/api/applications/${application.id}/notes`);
-      setNotesByApplication(current => ({ ...current, [application.id]: notes }));
+      const notes = await api<PagedResponse<ApplicationNote>>(`/api/applications/${application.id}/notes`);
+      setNotesByApplication(current => ({ ...current, [application.id]: notes.items }));
       setNoteDrafts(current => ({ ...current, [application.id]: '' })); setMessage('Đã thêm ghi chú nội bộ.');
     } catch (e) { setError((e as Error).message); }
     finally { setSavingNoteId(undefined); }
@@ -672,14 +754,14 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     {business?.status!=='verified'&&<p className="hint">Để công khai tin, hãy vào <a href="#recruiter-company">Hồ sơ công ty</a>, gắn công ty chính và hoàn tất xác minh doanh nghiệp.</p>}
     <div hidden={activeView !== 'recruiter-company'}>
     <BusinessIdentityPanel companies={companies} onChange={refresh}/>
-    <div className="company-row"><strong>Công ty của tôi</strong>{companies.map(company => <div className="company-chip" key={company.id}><span>{company.name}</span><button className="link-button" disabled={business?.companyId!==company.id} onClick={() => { setEditingCompany(company); setCompanyForm({ name: company.name, description: company.description ?? '', websiteUrl: company.websiteUrl ?? '', location: company.location ?? '', industry: company.industry ?? '', sizeLabel: company.sizeLabel ?? '' }); }}>Sửa</button></div>)}</div>
+    <div className="company-row"><strong>Công ty của tôi</strong>{companies.map(company => <div className="company-chip" key={company.id}><span>{company.name}</span><button type="button" className="link-button" disabled={business?.companyId!==company.id} onClick={() => { setEditingCompany(company); setCompanyForm({ name: company.name, description: company.description ?? '', websiteUrl: company.websiteUrl ?? '', location: company.location ?? '', industry: company.industry ?? '', sizeLabel: company.sizeLabel ?? '' }); }}>Sửa</button></div>)}</div>
     {companies.filter(company=>company.id===business?.companyId).map(company=><CompanyLogoEditor key={company.id} company={company} onUpdated={refresh}/>)}
     {!editingCompany&&companies.length>0&&business?.status!=='verified'&&<p role="status">Tài khoản đã có hồ sơ doanh nghiệp. Hãy chọn công ty chính ở trên (nếu chưa chọn), rồi nhấn Sửa để cập nhật; không tạo thêm công ty.</p>}
     {(editingCompany || business?.status!=='verified') && <ValidatedForm className="editor-form" onSubmit={saveCompany}><h3>{editingCompany ? 'Cập nhật công ty' : 'Tạo hồ sơ công ty'}</h3>
       <label>Tên công ty<input required maxLength={200} value={companyForm.name} onChange={e => setCompanyForm({ ...companyForm, name: e.target.value })}/></label>
       <label>Giới thiệu<textarea maxLength={4000} value={companyForm.description} onChange={e => setCompanyForm({ ...companyForm, description: e.target.value })}/></label>
       <div className="form-columns"><label>Website HTTPS<input type="url" placeholder="https://example.com" value={companyForm.websiteUrl} onChange={e => setCompanyForm({ ...companyForm, websiteUrl: e.target.value })}/></label><label>Địa điểm<LocationInput value={companyForm.location} onChange={location=>setCompanyForm({...companyForm,location})}/></label><label>Ngành<input maxLength={100} value={companyForm.industry} onChange={e => setCompanyForm({ ...companyForm, industry: e.target.value })}/></label><label>Quy mô<input maxLength={50} placeholder="11-50" value={companyForm.sizeLabel} onChange={e => setCompanyForm({ ...companyForm, sizeLabel: e.target.value })}/></label></div>
-      <div className="row"><button disabled={busy||(!editingCompany&&companies.length>0)}>{busy ? 'Đang lưu…' : editingCompany ? 'Lưu công ty' : 'Tạo công ty'}</button>{editingCompany && <button type="button" className="secondary" onClick={() => { setEditingCompany(undefined); setCompanyForm({ name: '', description: '', websiteUrl: '', location: '', industry: '', sizeLabel: '' }); }}>Hủy sửa</button>}</div>
+      <div className="row"><button type="submit" disabled={busy||(!editingCompany&&companies.length>0)}>{busy ? 'Đang lưu…' : editingCompany ? 'Lưu công ty' : 'Tạo công ty'}</button>{editingCompany && <button type="button" className="secondary" onClick={() => { setEditingCompany(undefined); setCompanyForm({ name: '', description: '', websiteUrl: '', location: '', industry: '', sizeLabel: '' }); }}>Hủy sửa</button>}</div>
     </ValidatedForm>}
     </div>
     <div hidden={activeView !== 'recruiter-jobs'}>
@@ -693,7 +775,7 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
       <label>Quyền lợi<textarea maxLength={5000} value={jobForm.benefitsText} onChange={e => setJobForm({ ...jobForm, benefitsText: e.target.value })}/></label>
       <fieldset><legend>Mức lương</legend><p className="hint">Để trống cả hai mức nếu chưa công bố lương.</p><div className="form-columns"><label>Lương tối thiểu<input type="number" min="0" step="0.01" value={jobForm.salaryMin} onChange={e=>setJobForm({...jobForm,salaryMin:e.target.value})}/></label><label>Lương tối đa<input type="number" min="0" step="0.01" value={jobForm.salaryMax} onChange={e=>setJobForm({...jobForm,salaryMax:e.target.value})}/></label><label>Tiền tệ<input maxLength={3} pattern="[A-Za-z]{3}" list="salary-currencies" value={jobForm.salaryCurrency} onChange={e=>setJobForm({...jobForm,salaryCurrency:e.target.value.toUpperCase()})}/><datalist id="salary-currencies"><option value="VND"/><option value="USD"/></datalist></label><label>Kỳ trả lương<select value={jobForm.salaryPeriod} onChange={e=>setJobForm({...jobForm,salaryPeriod:e.target.value})}>{Object.entries(salaryPeriods).map(([v,label])=><option key={v} value={v}>{label}</option>)}</select></label></div></fieldset>
       <div className="form-columns"><label>Ngành<input maxLength={100} value={jobForm.industry} onChange={e => setJobForm({ ...jobForm, industry: e.target.value })}/></label><label>Địa điểm<LocationInput value={jobForm.location} onChange={location=>setJobForm({...jobForm,location})}/></label><label>Loại công việc<select value={jobForm.employmentType} onChange={e => setJobForm({ ...jobForm, employmentType: e.target.value })}><option value="full_time">Toàn thời gian</option><option value="part_time">Bán thời gian</option><option value="contract">Hợp đồng</option><option value="internship">Thực tập</option><option value="temporary">Tạm thời</option></select></label><label>Hình thức<select value={jobForm.workMode} onChange={e => setJobForm({ ...jobForm, workMode: e.target.value })}><option value="unspecified">Chưa xác định</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option></select></label><label>Kinh nghiệm tối thiểu (năm)<input type="number" min="0" max="99.99" step="0.01" value={jobForm.experienceMin} onChange={e => setJobForm({ ...jobForm, experienceMin: e.target.value })}/></label><label>Kinh nghiệm tối đa (năm)<input type="number" min="0" max="99.99" step="0.01" value={jobForm.experienceMax} onChange={e => setJobForm({ ...jobForm, experienceMax: e.target.value })}/></label><label>Ngôn ngữ JD<select value={jobForm.language} onChange={e => setJobForm({ ...jobForm, language: e.target.value })}><option value="vi">Tiếng Việt</option><option value="en">English</option><option value="vi-en">Việt–Anh</option></select></label><label>Hạn nhận hồ sơ<input type="datetime-local" value={deadline} onChange={e => setDeadline(e.target.value)}/></label><label>Giới hạn hồ sơ đang xử lý<input type="number" min="1" max="10000" step="1" placeholder="Không giới hạn" value={maxApplications} onChange={e => setMaxApplications(e.target.value)}/></label></div>
-      <div className="row"><button disabled={busy || (!editingJob && !companyId)}>{busy ? 'Đang lưu…' : editingJob ? 'Lưu phiên bản mới' : 'Tạo tin nháp'}</button>{editingJob && <button type="button" className="secondary" disabled={busy || rewriteBusy} onClick={() => void requestJdRewrite()}>{rewriteBusy ? 'Đang tạo gợi ý AI…' : 'AI gợi ý viết lại JD'}</button>}{editingJob && <button type="button" className="secondary" onClick={() => { setEditingJob(undefined); setRewriteProposal(undefined); setJobTags([]); setJobForm(emptyJob); setDeadline(''); setMaxApplications(''); }}>Hủy sửa</button>}</div>
+      <div className="row"><button type="submit" disabled={busy || (!editingJob && !companyId)}>{busy ? 'Đang lưu…' : editingJob ? 'Lưu phiên bản mới' : 'Tạo tin nháp'}</button>{editingJob && <button type="button" className="secondary" disabled={busy || rewriteBusy} onClick={() => void requestJdRewrite()}>{rewriteBusy ? 'Đang tạo gợi ý AI…' : 'AI gợi ý viết lại JD'}</button>}{editingJob && <button type="button" className="secondary" onClick={() => { rewriteAbortRef.current?.abort(); setRewriteBusy(false); setEditingJob(undefined); setRewriteProposal(undefined); setJobTags([]); setJobForm(emptyJob); setDeadline(''); setMaxApplications(''); }}>Hủy sửa</button>}</div>
       {rewriteProposal?.status === 'succeeded' && rewriteProposal.sections && <section className="card" aria-label="Đề xuất viết lại JD">
         <h4>Đề xuất viết lại JD ({rewriteProposal.provider === 'Fake' ? 'AI mô phỏng' : 'AI'})</h4>
         <p><strong>Mô tả đề xuất:</strong></p><pre style={{ whiteSpace: 'pre-wrap' }}>{rewriteProposal.sections.description}</pre>
@@ -714,11 +796,11 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
     {!jobsLoading&&currentJobPage&&!jobs.length&&<p>{jobQuery.status?'Không có tin nào khớp trạng thái đã chọn.':'Chưa có tin. Hãy tạo công ty rồi bắt đầu bằng một tin nháp.'}</p>}
     <div className="job-list" aria-busy={jobsLoading}>{jobs.map(job => {
       const applicationPage=applicationsByJob[job.id];
-      return <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{['published','closed'].includes(job.status)?<a href={jobHref(job.id)}>{job.version.title}</a>:job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo} · {(job.viewCount ?? 0).toLocaleString('vi-VN')} lượt xem{job.maxApplications != null ? ` · ${job.activeApplicationCount ?? 0}/${job.maxApplications} hồ sơ đang xử lý` : ''}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><p className="job-salary"><strong>{salaryLabel(job.version)}</strong></p>{job.status === 'archived' && <p className="hint">{job.archivedByRole === 'recruiter' ? 'Tin do bạn tự ẩn. Bạn có thể khôi phục thành tin đã đóng hoặc bản nháp.' : 'Tin đã bị quản trị viên ẩn.'}</p>}<div className="row" hidden={activeView !== 'recruiter-jobs'}><button className="secondary" disabled={busy || business?.companyId!==job.companyId || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button disabled={busy||business?.status!=='verified'||business.companyId!==job.companyId} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}{job.status !== 'archived' && <button className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'archive')}>Ẩn tin</button>}{job.status === 'archived' && job.archivedByRole === 'recruiter' && <button className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'restore')}>Khôi phục tin</button>}<a href="#recruiter-applicants">Xem ứng viên</a></div>
+      return <article className="job-card" key={job.id}><div className="job-title-row"><div><h3>{['published','closed'].includes(job.status)?<a href={jobHref(job.id)}>{job.version.title}</a>:job.version.title}</h3><p>{job.company.name} · phiên bản {job.version.versionNo} · {(job.viewCount ?? 0).toLocaleString('vi-VN')} lượt xem{job.maxApplications != null ? ` · ${job.activeApplicationCount ?? 0}/${job.maxApplications} hồ sơ đang xử lý` : ''}</p></div><span className={`job-status ${job.status}`}>{({draft:'Bản nháp',published:'Đang đăng',closed:'Đã đóng',archived:'Đã ẩn'} as Record<string,string>)[job.status]??job.status}</span></div><p>{job.version.description}</p><p className="job-salary"><strong>{salaryLabel(job.version)}</strong></p>{job.status === 'archived' && <p className="hint">{job.archivedByRole === 'recruiter' ? 'Tin do bạn tự ẩn. Bạn có thể khôi phục thành tin đã đóng hoặc bản nháp.' : 'Tin đã bị quản trị viên ẩn.'}</p>}<div className="row" hidden={activeView !== 'recruiter-jobs'}><button type="button" className="secondary" disabled={busy || business?.companyId!==job.companyId || ['closed','archived'].includes(job.status)} onClick={() => editJob(job)}>Sửa JD</button>{job.status === 'draft' && <button type="button" disabled={busy||business?.status!=='verified'||business.companyId!==job.companyId} onClick={() => void changeState(job, 'publish')}>Công khai</button>}{job.status === 'published' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'close')}>Đóng tin</button>}{job.status !== 'archived' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'archive')}>Ẩn tin</button>}{job.status === 'archived' && job.archivedByRole === 'recruiter' && <button type="button" className="secondary" disabled={busy||business?.companyId!==job.companyId} onClick={() => void changeState(job, 'restore')}>Khôi phục tin</button>}<a href="#recruiter-applicants">Xem ứng viên</a></div>
       <div hidden={activeView !== 'recruiter-jobs'||business?.companyId!==job.companyId}><JobRequirementReview key={`${job.id}:${job.version.id}`} job={job}/>
       <RecruiterKeywordResumeSearch jobId={job.id} enabled={job.status === 'published' && job.acceptingApplications}/>
       </div>
-      <div hidden={activeView !== 'recruiter-applicants'}><button className="secondary" onClick={() => void toggleApplications(job)}>{expandedApplications[job.id] ? 'Ẩn hồ sơ' : 'Hồ sơ ứng tuyển'}</button>
+      <div hidden={activeView !== 'recruiter-applicants'}><button type="button" className="secondary" onClick={() => void toggleApplications(job)}>{expandedApplications[job.id] ? 'Ẩn hồ sơ' : 'Hồ sơ ứng tuyển'}</button>
       <PairRecommendations key={`applications:${job.id}`} direction="applications" jobId={job.id}/>
       {expandedApplications[job.id] && <div className="job-applications" aria-busy={!!loadingApplications[job.id]}><h4>Hồ sơ ứng tuyển</h4>
         <div className="row"><label>Lọc trạng thái hồ sơ<select aria-label="Lọc trạng thái hồ sơ" value={applicationQueries[job.id]?.status??''} disabled={!!mutatingApplicationId} onChange={e=>void refreshJobApplications(job.id,{page:1,status:e.target.value})}>
@@ -729,16 +811,16 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
         {!loadingApplications[job.id]&&applicationPage&&!applicationPage.items.length&&<p>{applicationQueries[job.id]?.status?'Không có hồ sơ khớp trạng thái đã chọn.':'Chưa có hồ sơ cho tin này.'}</p>}
         {!!applicationPage?.items.length&&<ul className="application-list">{applicationPage.items.map(application => <li key={application.id}>
         <div><strong>{statusLabel(application.status)}</strong><small>Nộp lúc {new Date(application.submittedAt).toLocaleString('vi-VN')} · CV phiên bản {application.resumeVersionNo}</small><SubmittedCoverLetter value={application.coverLetter}/>
-          <div className="row application-actions">{(recruiterTransitions[application.status] ?? []).map(status => <button className="secondary" key={status} disabled={mutatingApplicationId === application.id} onClick={() => void changeApplicationStatus(job.id, application, status)}>{status === 'reviewing' ? 'Đang xem xét' : status === 'shortlisted' ? 'Chọn tiếp' : 'Loại khỏi quy trình'}</button>)}
-            <button className="secondary" disabled={mutatingApplicationId === application.id} onClick={() => void toggleCandidateBlock(job.id, application)}>{application.candidateBlocked ? 'Bỏ chặn ứng viên' : 'Chặn ứng viên cho tin này'}</button>
-            <button className="secondary" onClick={() => void toggleNotes(application)}>{expandedNotes[application.id] ? 'Ẩn ghi chú nội bộ' : 'Ghi chú nội bộ'}</button>
+          <div className="row application-actions">{(recruiterTransitions[application.status] ?? []).map(status => <button type="button" className="secondary" key={status} disabled={mutatingApplicationId === application.id} onClick={() => void changeApplicationStatus(job.id, application, status)}>{status === 'reviewing' ? 'Đang xem xét' : status === 'shortlisted' ? 'Chọn tiếp' : 'Loại khỏi quy trình'}</button>)}
+            <button type="button" className="secondary" disabled={mutatingApplicationId === application.id} onClick={() => void toggleCandidateBlock(job.id, application)}>{application.candidateBlocked ? 'Bỏ chặn ứng viên' : 'Chặn ứng viên cho tin này'}</button>
+            <button type="button" className="secondary" onClick={() => void toggleNotes(application)}>{expandedNotes[application.id] ? 'Ẩn ghi chú nội bộ' : 'Ghi chú nội bộ'}</button>
             <a href={`/api/applications/${application.id}/resume`}>Mở CV đã nộp</a>
             <a href={`/?profile=${application.candidateId}#shared-profile`} target="_blank" rel="noopener noreferrer">Xem hồ sơ được chia sẻ</a>
           </div>
           {expandedNotes[application.id] && <section className="application-notes"><strong>Ghi chú nội bộ — chỉ recruiter phụ trách tin đọc được</strong>
             {!notesByApplication[application.id]?.length ? <p>Chưa có ghi chú.</p> : <ul className="internal-note-list">{notesByApplication[application.id].map(note => <li key={note.id}><p>{note.body}</p><small>{new Date(note.createdAt).toLocaleString('vi-VN')}</small></li>)}</ul>}
             <label>Thêm ghi chú<textarea maxLength={4000} value={noteDrafts[application.id] ?? ''} onChange={event => setNoteDrafts(current => ({ ...current, [application.id]: event.target.value }))}/></label>
-            <button className="secondary" disabled={savingNoteId === application.id || !noteDrafts[application.id]?.trim()} onClick={() => void addApplicationNote(application)}>{savingNoteId === application.id ? 'Đang lưu…' : 'Lưu ghi chú nội bộ'}</button>
+            <button type="button" className="secondary" disabled={savingNoteId === application.id || !noteDrafts[application.id]?.trim()} onClick={() => void addApplicationNote(application)}>{savingNoteId === application.id ? 'Đang lưu…' : 'Lưu ghi chú nội bộ'}</button>
           </section>}
         </div>
       </li>)}</ul>}{applicationPagination(job.id,'dưới')}</div>}

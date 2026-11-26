@@ -121,7 +121,7 @@ public static class CompanyJobEndpoints
         var company = await db.Companies.SingleOrDefaultAsync(x => x.Id == id && x.OwnerUserId == ownerId && x.ArchivedAt == null, ct);
         if (company is null) return Results.NotFound();
         if (!await BusinessIdentityEndpoints.Primary(db,ownerId,id,ct)) return Results.Problem(statusCode:409,title:"business_primary_required");
-        if (company.RowVersion != input.RowVersion) return Results.Conflict(new { title = "company_conflict" });
+        if (company.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "company_conflict");
         var identity=await db.BusinessIdentities.SingleAsync(x=>x.UserId==ownerId,ct);
         if(company.Name!=name || company.WebsiteUrl!=websiteUrl){identity.Status="draft";identity.RowVersion++;identity.ReviewReason="Thông tin doanh nghiệp đã thay đổi, cần gửi duyệt lại.";}
         company.Name = name!;
@@ -133,7 +133,7 @@ public static class CompanyJobEndpoints
         company.RowVersion++;
         company.UpdatedAt = DateTimeOffset.UtcNow;
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "company_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "company_conflict"); }
         return Results.Ok(ToCompanyDto(company));
     }
 
@@ -180,8 +180,8 @@ public static class CompanyJobEndpoints
             .SingleOrDefaultAsync(x => x.Id == id && x.Company!.OwnerUserId == ownerId, ct);
         if (job is null) return Results.NotFound();
         if (!await BusinessIdentityEndpoints.Primary(db,ownerId,job.CompanyId,ct)) return Results.Problem(statusCode:409,title:"business_primary_required");
-        if (job.Status is "closed" or "archived" || job.Company!.ArchivedAt is not null) return Results.Conflict(new { title = "job_not_editable" });
-        if (job.RowVersion != input.RowVersion) return Results.Conflict(new { title = "job_conflict" });
+        if (job.Status is "closed" or "archived" || job.Company!.ArchivedAt is not null) return Results.Problem(statusCode: 409, title: "job_not_editable");
+        if (job.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "job_conflict");
         var now = DateTimeOffset.UtcNow;
         var version = CreateVersion(job.Id, ownerId, (job.CurrentVersion?.VersionNo ?? 0) + 1, content!, now);
         db.JobVersions.Add(version);
@@ -193,7 +193,7 @@ public static class CompanyJobEndpoints
         job.RowVersion++;
         job.UpdatedAt = now;
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "job_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "job_conflict"); }
         await transaction.CommitAsync(ct);
         job.CurrentVersion = version;
         var counts = await CountActiveApplicationsAsync(db, [job.Id], ct);
@@ -209,10 +209,10 @@ public static class CompanyJobEndpoints
             .SingleOrDefaultAsync(x => x.Id == id && x.Company!.OwnerUserId == ownerId, ct);
         if (job is null) return Results.NotFound();
         if (!await BusinessIdentityEndpoints.Primary(db,ownerId,job.CompanyId,ct)) return Results.Problem(statusCode:409,title:"business_primary_required");
-        if (job.RowVersion != input.RowVersion) return Results.Conflict(new { title = "job_conflict" });
+        if (job.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "job_conflict");
         if (!await BusinessIdentityEndpoints.Verified(db,ownerId,job.CompanyId,ct)) return Results.Problem(statusCode:409,title:"business_verification_required");
         if (job.Status != "draft" || job.CurrentVersion is null || job.Company!.ArchivedAt is not null)
-            return Results.Conflict(new { title = "job_not_publishable" });
+            return Results.Problem(statusCode: 409, title: "job_not_publishable");
         var now = DateTimeOffset.UtcNow;
         if (job.ApplicationDeadline is { } deadline && deadline <= now) return Results.Problem(statusCode: 400, title: "deadline_in_past");
         job.Status = "published";
@@ -220,7 +220,7 @@ public static class CompanyJobEndpoints
         job.RowVersion++;
         job.UpdatedAt = now;
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "job_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "job_conflict"); }
         await transaction.CommitAsync(ct);
         var counts = await CountActiveApplicationsAsync(db, [job.Id], ct);
         return Results.Ok(ToJobDto(job, counts.GetValueOrDefault(job.Id)));
@@ -235,15 +235,15 @@ public static class CompanyJobEndpoints
             .SingleOrDefaultAsync(x => x.Id == id && x.Company!.OwnerUserId == ownerId, ct);
         if (job is null) return Results.NotFound();
         if (!await BusinessIdentityEndpoints.Primary(db,ownerId,job.CompanyId,ct)) return Results.Problem(statusCode:409,title:"business_primary_required");
-        if (job.RowVersion != input.RowVersion) return Results.Conflict(new { title = "job_conflict" });
-        if (job.Status != "published") return Results.Conflict(new { title = "job_not_closable" });
+        if (job.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "job_conflict");
+        if (job.Status != "published") return Results.Problem(statusCode: 409, title: "job_not_closable");
         var now = DateTimeOffset.UtcNow;
         job.Status = "closed";
         job.ClosedAt = now;
         job.RowVersion++;
         job.UpdatedAt = now;
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "job_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "job_conflict"); }
         await transaction.CommitAsync(ct);
         var counts = await CountActiveApplicationsAsync(db, [job.Id], ct);
         return Results.Ok(ToJobDto(job, counts.GetValueOrDefault(job.Id)));
@@ -258,9 +258,9 @@ public static class CompanyJobEndpoints
             .SingleOrDefaultAsync(x => x.Id == id && x.Company!.OwnerUserId == ownerId, ct);
         if (job is null) return Results.NotFound();
         if (!await BusinessIdentityEndpoints.Primary(db, ownerId, job.CompanyId, ct)) return Results.Problem(statusCode: 409, title: "business_primary_required");
-        if (job.RowVersion != input.RowVersion) return Results.Conflict(new { title = "job_conflict" });
+        if (job.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "job_conflict");
         if (job.Status is not ("draft" or "published" or "closed") || job.CurrentVersion is null || job.Company!.ArchivedAt is not null)
-            return Results.Conflict(new { title = "job_not_archivable" });
+            return Results.Problem(statusCode: 409, title: "job_not_archivable");
         var now = DateTimeOffset.UtcNow;
         job.PreviousStatus = job.Status;
         job.ArchivedByRole = "recruiter";
@@ -270,7 +270,7 @@ public static class CompanyJobEndpoints
         job.UpdatedAt = now;
         db.AdminAudits.Add(new AdminAudit { ActorId = ownerId, TargetId = job.Id, Action = "recruiter_job_archive", Reason = "Nhà tuyển dụng tự ẩn tin." });
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "job_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "job_conflict"); }
         await transaction.CommitAsync(ct);
         var counts = await CountActiveApplicationsAsync(db, [job.Id], ct);
         return Results.Ok(ToJobDto(job, counts.GetValueOrDefault(job.Id)));
@@ -285,8 +285,8 @@ public static class CompanyJobEndpoints
             .SingleOrDefaultAsync(x => x.Id == id && x.Company!.OwnerUserId == ownerId, ct);
         if (job is null) return Results.NotFound();
         if (!await BusinessIdentityEndpoints.Primary(db, ownerId, job.CompanyId, ct)) return Results.Problem(statusCode: 409, title: "business_primary_required");
-        if (job.RowVersion != input.RowVersion) return Results.Conflict(new { title = "job_conflict" });
-        if (job.Status != "archived" || job.Company!.ArchivedAt is not null) return Results.Conflict(new { title = "job_conflict" });
+        if (job.RowVersion != input.RowVersion) return Results.Problem(statusCode: 409, title: "job_conflict");
+        if (job.Status != "archived" || job.Company!.ArchivedAt is not null) return Results.Problem(statusCode: 409, title: "job_conflict");
         if (job.ArchivedByRole != "recruiter") return Results.Problem(statusCode: 403, title: "job_archived_by_admin");
         var now = DateTimeOffset.UtcNow;
         var restoreDraft = job.PreviousStatus == "draft" && job.PublishedAt is null;
@@ -298,7 +298,7 @@ public static class CompanyJobEndpoints
         job.UpdatedAt = now;
         db.AdminAudits.Add(new AdminAudit { ActorId = ownerId, TargetId = job.Id, Action = "recruiter_job_restore", Reason = "Nhà tuyển dụng tự khôi phục tin đã ẩn." });
         try { await db.SaveChangesAsync(ct); }
-        catch (DbUpdateConcurrencyException) { return Results.Conflict(new { title = "job_conflict" }); }
+        catch (DbUpdateConcurrencyException) { return Results.Problem(statusCode: 409, title: "job_conflict"); }
         await transaction.CommitAsync(ct);
         var counts = await CountActiveApplicationsAsync(db, [job.Id], ct);
         return Results.Ok(ToJobDto(job, counts.GetValueOrDefault(job.Id)));

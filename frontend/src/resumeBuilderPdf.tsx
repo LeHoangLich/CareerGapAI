@@ -19,7 +19,13 @@ export type ResumeBuilderContent = {
   certifications: string[];
 };
 
-Font.register({ family: 'NotoCV', src: '/fonts/NotoSans-Regular.ttf' });
+Font.register({
+  family: 'NotoCV',
+  fonts: [
+    { src: '/fonts/NotoSans-Regular.ttf', fontWeight: 400 },
+    { src: '/fonts/NotoSans-Bold.ttf', fontWeight: 700 },
+  ],
+});
 
 const styles = StyleSheet.create({
   page: { paddingTop: 42, paddingBottom: 46, paddingHorizontal: 48, color: '#17312c', fontFamily: 'NotoCV', fontSize: 10 },

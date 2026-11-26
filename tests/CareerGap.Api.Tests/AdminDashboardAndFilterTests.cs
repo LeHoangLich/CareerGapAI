@@ -50,7 +50,7 @@ public sealed class AdminDashboardAndFilterTests(FoundationFixture fixture) : IC
 
         // Filter accounts by role + status.
         var filteredRecruiters = await admin.GetFromJsonAsync<JsonElement>("/api/admin/accounts?status=active&role=Recruiter");
-        var recruiterItem = Assert.Single(filteredRecruiters.EnumerateArray(), x => x.GetProperty("id").GetGuid() == recruiterId);
+        var recruiterItem = Assert.Single(filteredRecruiters.GetProperty("items").EnumerateArray(), x => x.GetProperty("id").GetGuid() == recruiterId);
         Assert.True(recruiterItem.TryGetProperty("createdAt", out _));
         Assert.NotEqual(JsonValueKind.Null, recruiterItem.GetProperty("lastLoginAt").ValueKind);
 
@@ -59,7 +59,7 @@ public sealed class AdminDashboardAndFilterTests(FoundationFixture fixture) : IC
 
         // Filter jobs by status + query.
         var filteredJobs = await admin.GetFromJsonAsync<JsonElement>("/api/admin/jobs?status=published&query=AdminFilter");
-        var jobItem = Assert.Single(filteredJobs.EnumerateArray(), x => x.GetProperty("id").GetGuid() == job.Id);
+        var jobItem = Assert.Single(filteredJobs.GetProperty("items").EnumerateArray(), x => x.GetProperty("id").GetGuid() == job.Id);
         Assert.Equal(1, jobItem.GetProperty("applicationCount").GetInt32());
         Assert.NotEqual(JsonValueKind.Null, jobItem.GetProperty("publishedAt").ValueKind);
 

@@ -57,8 +57,8 @@ test('Fake writing and matching run through workers; private CV application pres
     await builder.getByRole('button', { name: 'Lưu thành phiên bản CV', exact: true }).click();
     await expect(builder.getByRole('status').filter({ hasText: 'Đã lưu CV riêng tư' })).toBeVisible();
     const resumes = await candidate.request.get('/api/resumes').then(response => response.json());
-    expect(resumes).toHaveLength(1); expect(resumes[0].versions).toHaveLength(2);
-    const version = resumes[0].versions[0];
+    expect(resumes.items).toHaveLength(1); expect(resumes.items[0].versions).toHaveLength(2);
+    const version = resumes.items[0].versions[0];
     const original = await candidate.request.get(`/api/files/${version.fileId}`).then(response => response.body());
     expect(await candidate.request.get('/api/resumes/public/me').then(response => response.json())).toBeNull();
     await openView(candidate, 'jobs');

@@ -46,7 +46,7 @@ public static class JobRevisionEndpoints
             await transaction.CommitAsync(ct);
             return Results.Ok(ToDto(latest));
         }
-        if (latest?.RevisionNo == int.MaxValue) return Results.Conflict(new { title = "job_revision_limit" });
+        if (latest?.RevisionNo == int.MaxValue) return Results.Problem(statusCode: 409, title: "job_revision_limit");
         if (!JobRevisionFactory.TryExtract(version.Id, latest?.Id, (latest?.RevisionNo ?? 0) + 1,
                 version.RequirementsText, clock.GetUtcNow(), out var revision, out var error))
             return Results.Problem(statusCode: 400, title: error);
@@ -71,8 +71,8 @@ public static class JobRevisionEndpoints
         var latest = await db.JobDataRevisions.AsNoTracking().Where(x => x.JobVersionId == versionId)
             .OrderByDescending(x => x.RevisionNo).FirstOrDefaultAsync(ct);
         if (latest is null || latest.Id != revisionId || latest.RevisionNo != input.BaseRevisionNo)
-            return Results.Conflict(new { title = "job_revision_conflict" });
-        if (latest.RevisionNo == int.MaxValue) return Results.Conflict(new { title = "job_revision_limit" });
+            return Results.Problem(statusCode: 409, title: "job_revision_conflict");
+        if (latest.RevisionNo == int.MaxValue) return Results.Problem(statusCode: 409, title: "job_revision_limit");
         if (!JobRevisionFactory.TryConfirm(latest, ownerId, latest.RevisionNo + 1, input,
                 clock.GetUtcNow(), out var confirmed, out var error))
             return Results.Problem(statusCode: 400, title: error);

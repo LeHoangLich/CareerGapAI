@@ -1,5 +1,7 @@
 # CareerGap AI – Roadmap Phát triển
 
+> **Đồng bộ nhánh mở rộng sau đóng băng (20–21/11/2026 — `feat/post-freeze-p1-p3-20261121` / `v2026.11.21-p1-p3`):** Sau khi chốt Defense Baseline `release20261031`, nhánh phát triển mở rộng đã đồng bộ phân hệ Cộng đồng (`CommunityNetwork`), Xác minh doanh nghiệp (`BusinessIdentity`) và hoàn thiện **32/32 hạng mục backlog F01–F32** với **31 migrations**, **231/231 backend PG tests** và **42/42 frontend unit tests** (E2E chưa chạy lại trên nhánh mới; danh sách lỗi & tinh chỉnh đồng bộ UI toàn bộ cửa sổ theo dõi tại [taskboard_v2.md](../taskboard_v2.md)). Bản Defense Baseline `release20261031` (222 file, 19 migrations) vẫn được bảo toàn nguyên vẹn.
+
 **01/11/2026 — M6 ĐÃ NGHIỆM THU NỘI BỘ TOÀN DIỆN BỞI LÊ HOÀNG LỊCH.** Trạng thái cuối **final_defense_ready**; release20261031 là **Defense Baseline**. Giai đoạn E/GĐ6 và phạm vi dự án nội bộ hoàn thành; mã nguồn đã đóng băng. Chủ dự án chính thức khép lại thủ tục dùng thử ngoài trước bảo vệ; đó không còn là điều kiện chờ của M6. Kết quả Hội đồng tại buổi bảo vệ được ghi riêng theo thực tế. [Biên bản](report/m6-internal-acceptance-2026-11-01.md) · [Manifest](evaluation/m6-internal-acceptance-2026-11-01.json) · [Source freeze](evaluation/source-freeze-2026-11-01.json). Các trạng thái M6 chờ/đánh giá ngoài hoãn trong ghi nhận cũ phía dưới chỉ là lịch sử đã được quyết định này thay thế. Metric, human direct review0, backup và archive lịch sử giữ nguyên.
 
 
@@ -268,7 +270,7 @@ Phạm vi thực hiện:
 - Kết luận nghiên cứu phản ánh kết quả, kể cả khi phương pháp có LLM không cải thiện một tiêu chí; không sửa phương pháp theo tập cuối rồi gọi đó là đánh giá độc lập chưa từng xem.
 - Không còn lỗi chặn ba luồng chính hoặc sai quyền nghiêm trọng. Bản bàn giao đã được kiểm tra trên localhost ở commit bàn giao.
 - Hướng dẫn chạy và khôi phục đã được thử, tài liệu phù hợp bản localhost bàn giao; thông tin bí mật được quản lý riêng.
-- Nhóm diễn tập được kịch bản của cả ứng viên và nhà tuyển dụng, trả lời được cơ sở điểm số, giới hạn AI, chi phí và kết quả thực nghiệm.
+- Chủ dự án diễn tập được kịch bản của cả ứng viên và nhà tuyển dụng, trả lời được cơ sở điểm số, giới hạn AI, chi phí và kết quả thực nghiệm.
 
 ## 4. Dữ liệu, thực nghiệm và báo cáo xuyên suốt
 
@@ -383,7 +385,7 @@ OCR, mobile, chat thời gian thực, quản lý phỏng vấn/offer/hợp đồ
 
 Việc hoàn thiện tài liệu roadmap không đồng nghĩa các mốc M1–M6 đã đạt. Người thực hiện ghi ngày nghiệm thu thực tế, phiên bản đầu ra và các thay đổi phạm vi tại từng mốc để kế hoạch phản ánh đúng tiến độ.
 
-## 9. Điều kiện mở lại deploy
+## 8. Điều kiện mở lại deploy
 
 Deploy không nằm trong công việc hiện tại và không tự khởi động lại khi hết tuần 12. Trước khi đề xuất mở lại: ba luồng cốt lõi phải hoàn thiện trên localhost, kiểm thử quyền/snapshot/job/quota và build phải có bằng chứng ở phiên bản bàn giao, các tích hợp AI/search/email thật cần thiết phải được kiểm chứng riêng trong ngân sách, không còn lỗi chặn hoặc sai quyền nghiêm trọng. Fake không thay thế đánh giá chất lượng AI.
 

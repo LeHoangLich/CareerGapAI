@@ -79,7 +79,7 @@ public sealed class StageP2Batch4Tests(FoundationFixture fixture) : IClassFixtur
         using var redirectHttp = new HttpClient(new StubHandler((_, _) =>
         {
             var msg = new HttpResponseMessage(HttpStatusCode.Found);
-            msg.Headers.Location = new Uri("http://127.0.0.1:5080/secret");
+            msg.Headers.Location = new Uri("http://127.0.0.1/secret");
             return Task.FromResult(msg);
         }));
         var redirectImporter = new JdUrlImporter(redirectHttp, (host, _) => Task.FromResult(host == "127.0.0.1" ? [IPAddress.Loopback] : publicIp));
