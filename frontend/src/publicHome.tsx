@@ -5,7 +5,8 @@ import { CompanyLogo } from './companyLogo';
 import { jobHref } from './jobLinks';
 import { LocationInput } from './locationInput';
 import { salaryLabel } from './salary';
-import { ValidatedForm, PageHeader, Alert, EmptyState, StaticLoading } from './ui';
+import { ValidatedForm, PageHeader, Alert, EmptyState, StaticLoading, StatusBadge } from './ui';
+import { ScrollReveal } from './motion';
 
 type HomeJob = {
   id: string;
@@ -78,32 +79,53 @@ export function PublicHome({ active }: { active: boolean }) {
   return <section className="public-home" aria-label="Trang chủ tổng hợp CareerGap AI">
     {error && <Alert tone="error" actions={<button type="button" className="secondary" disabled={loading} onClick={() => setRetry(n => n + 1)}>Thử lại</button>}>{error}</Alert>}
     <section className="card">
-      <PageHeader
-        eyebrow="CAREERGAP AI · TRANG CHỦ KHÁM PHÁ"
-        title="Kết nối hồ sơ minh bạch, đối chiếu bằng chứng CV–JD."
-        description="Tìm việc làm theo tag & địa điểm chuẩn, xem đánh giá khoảng trống kỹ năng và trao đổi cùng cộng đồng nghề nghiệp."
-      />
-      <ValidatedForm className="job-filters job-search-bar" onSubmit={searchJobs}>
-        <label>Từ khóa việc làm<input value={q} maxLength={120} onChange={e => setQ(e.target.value)} placeholder="Vị trí, kỹ năng hoặc công ty…"/></label>
-        <label>Địa điểm<LocationInput value={location} onChange={setLocation} placeholder="Tỉnh, thành phố"/></label>
-        <button type="submit"><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc ngay</button>
-      </ValidatedForm>
-      <div className="chip-row" aria-label="Tag việc làm phổ biến">
-        <strong>Tag phổ biến:</strong>
-        {featuredTags.map(tag => <a key={tag} className="badge" href={`#jobs?tags=${encodeURIComponent(tag)}`}>{tag}</a>)}
-      </div>
-      <div className="chip-row" aria-label="Địa điểm phổ biến">
-        <strong>Địa điểm:</strong>
-        {featuredLocations.map(loc => <a key={loc} className="badge" href={`#jobs?location=${encodeURIComponent(loc)}`}>{loc}</a>)}
+      <div className="editorial-hero-grid">
+        <div>
+          <PageHeader
+            eyebrow="ĐỐI CHIẾU CV & JD BẰNG BẰNG CHỨNG THỰC TẾ"
+            title="Biết chính xác khoảng trống kỹ năng trước khi nộp CV."
+            description="Tìm việc làm theo tag & địa điểm chuẩn, đối chiếu từng tiêu chí tuyển dụng có trích dẫn nguyên văn và xây dựng lộ trình học thực tế."
+          />
+          <ValidatedForm className="job-filters job-search-bar" onSubmit={searchJobs}>
+            <label>Từ khóa việc làm<input value={q} maxLength={120} onChange={e => setQ(e.target.value)} placeholder="Vị trí, kỹ năng hoặc công ty…"/></label>
+            <label>Địa điểm<LocationInput value={location} onChange={setLocation} placeholder="Tỉnh, thành phố"/></label>
+            <button type="submit"><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc ngay</button>
+          </ValidatedForm>
+          <div className="chip-row" aria-label="Tag việc làm phổ biến">
+            <strong>Tag phổ biến:</strong>
+            {featuredTags.map(tag => <a key={tag} className="badge" href={`#jobs?tags=${encodeURIComponent(tag)}`}>{tag}</a>)}
+          </div>
+          <div className="chip-row" aria-label="Địa điểm phổ biến">
+            <strong>Địa điểm:</strong>
+            {featuredLocations.map(loc => <a key={loc} className="badge" href={`#jobs?location=${encodeURIComponent(loc)}`}>{loc}</a>)}
+          </div>
+        </div>
+        <aside className="ai-preview-card" aria-label="Minh họa đối chiếu AI">
+          <div className="row">
+            <span className="inline-flex items-center gap-2"><span className="ai-live-dot" aria-hidden="true" /><strong>Senior .NET Backend Engineer</strong></span>
+            <StatusBadge state="matched">78% Phù hợp</StatusBadge>
+          </div>
+          <div className="chip-row">
+            <StatusBadge state="matched">8/11 Khớp</StatusBadge>
+            <StatusBadge state="partial">2 Một phần</StatusBadge>
+            <StatusBadge state="gap">1 Thiếu hụt</StatusBadge>
+          </div>
+          <blockquote className="ai-evidence-quote">
+            “Tối ưu truy vấn PostgreSQL và ASP.NET Core 8 cho hệ thống 120k req/ngày.”
+            <small>Bằng chứng trích từ CV · Kinh nghiệm làm việc</small>
+          </blockquote>
+          <p className="hint m-0">Gợi ý cải thiện: Bổ sung kinh nghiệm Docker Compose &amp; CI/CD pipeline (tuần 1–2).</p>
+        </aside>
       </div>
     </section>
 
+    <ScrollReveal>
     <section className="card" aria-label="Việc làm mới nhất">
       <div className="section-heading">
         <div><p className="eyebrow">CƠ HỘI MỚI NHẤT</p><h2>Tin tuyển dụng đang mở</h2></div>
-        <a href="#jobs">Xem tất cả việc làm <ArrowRight size={15} aria-hidden="true"/></a>
+        <a href="#jobs">Xem tất cả việc làm <ArrowRight className="icon-nudge" size={15} aria-hidden="true"/></a>
       </div>
-      {loading && jobs.length === 0 && <StaticLoading message="Đang tải việc làm nổi bật…"/>}
+      {loading && jobs.length === 0 && <StaticLoading variant="cards" message="Đang tải việc làm nổi bật…"/>}
       {!loading && jobs.length === 0 && <EmptyState title="Chưa có tin tuyển dụng công khai nào."/>}
       <div className="card-grid-2">
         {jobs.map(job => <article className="job-card" key={job.id}>
@@ -119,7 +141,9 @@ export function PublicHome({ active }: { active: boolean }) {
         </article>)}
       </div>
     </section>
+    </ScrollReveal>
 
+    <ScrollReveal>
     <section className="card" aria-label="Giới thiệu quy trình Skill Gap">
       <div className="section-heading">
         <div><p className="eyebrow">CÔNG NGHỆ ĐỐI CHIẾU</p><h2>Skill Gap &amp; Lộ trình học theo bằng chứng</h2></div>
@@ -132,7 +156,9 @@ export function PublicHome({ active }: { active: boolean }) {
       </div>
       <div className="chip-row"><a href="#jobs?quickMatch=1">Thử đối chiếu CV–JD</a><a href="#private-resumes">Quản lý CV của bạn</a></div>
     </section>
+    </ScrollReveal>
 
+    <ScrollReveal>
     <section className="card" aria-label="Bài viết xu hướng cộng đồng">
       <div className="section-heading">
         <div><p className="eyebrow">CỘNG ĐỒNG NGHỀ NGHIỆP</p><h2>Bài viết được quan tâm</h2></div>
@@ -146,5 +172,6 @@ export function PublicHome({ active }: { active: boolean }) {
         </article>)}
       </div>}
     </section>
+    </ScrollReveal>
   </section>;
 }

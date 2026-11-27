@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { X } from '@phosphor-icons/react';
+import { ProgressBar } from './motion';
 
 export function PageHeader({ eyebrow, title, description, actions }: {
   eyebrow?: string;
@@ -53,12 +54,62 @@ export function EmptyState({ icon, title, description, action }: {
   );
 }
 
-export function StaticLoading({ message, label }: { message?: string; label?: string }) {
+export function StaticLoading({
+  message,
+  label,
+  variant = 'default',
+}: {
+  message?: string;
+  label?: string;
+  variant?: 'default' | 'cards' | 'analysis' | 'table';
+}) {
+  const text = message ?? label ?? 'Đang tải dữ liệu…';
   return (
     <div className="loading-state" role="status" aria-live="polite">
-      <p>{message ?? label ?? 'Đang tải dữ liệu…'}</p>
+      <div className="loading-status-bar">
+        <StatusBadge state="ai">ĐANG KẾT NỐI</StatusBadge>
+        <span>{text}</span>
+      </div>
+      <ProgressBar indeterminate label={text} />
+      {variant === 'cards' ? (
+        <div className="loading-skeleton-grid" aria-hidden="true">
+          {[0, 1].map(card => (
+            <div className="loading-skeleton-card" key={card}>
+              <div className="skeleton-line h-3 w-1/3" />
+              <div className="skeleton-line h-5 w-4/5" />
+              <div className="skeleton-line h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      ) : variant === 'analysis' ? (
+        <div className="loading-skeleton-card" aria-hidden="true">
+          <div className="skeleton-line h-4 w-1/2" />
+          <div className="skeleton-line h-3 w-full" />
+          <div className="skeleton-line h-3 w-5/6" />
+          <div className="skeleton-line h-3 w-2/3" />
+        </div>
+      ) : variant === 'table' ? (
+        <div className="loading-skeleton-card" aria-hidden="true">
+          <div className="skeleton-line h-4 w-full" />
+          <div className="skeleton-line h-4 w-11/12" />
+          <div className="skeleton-line h-4 w-10/12" />
+        </div>
+      ) : (
+        <div className="loading-skeleton-card" aria-hidden="true">
+          <div className="skeleton-line h-3 w-1/3" />
+          <div className="skeleton-line h-5 w-2/3" />
+          <div className="skeleton-line h-3 w-1/2" />
+        </div>
+      )}
     </div>
   );
+}
+
+export function StatusBadge({ state = 'neutral', children }: {
+  state?: 'matched' | 'partial' | 'gap' | 'ai' | 'neutral';
+  children: ReactNode;
+}) {
+  return <span className={`status-badge is-${state}`}>{children}</span>;
 }
 
 export function Pagination({ page, totalItems, pageSize = 20, totalPages: explicitTotalPages, busy = false, onPageChange, ariaLabel = 'Phân trang' }: {
