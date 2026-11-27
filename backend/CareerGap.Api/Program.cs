@@ -302,6 +302,27 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 app.UseDefaultFiles(); app.UseStaticFiles();
 app.MapFallback("/api/{**path}", () => Results.NotFound());
 app.MapFallbackToFile("index.html");
+if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing") &&
+    !string.Equals(app.Configuration["Database:AutoMigrate"], "false", StringComparison.OrdinalIgnoreCase))
+{
+    using var migrationScope = app.Services.CreateScope();
+    var db = migrationScope.ServiceProvider.GetRequiredService<AppDb>();
+    var logger = migrationScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
+    try
+    {
+        var pending = (await db.Database.GetPendingMigrationsAsync()).ToArray();
+        if (pending.Length > 0)
+        {
+            logger.LogInformation("Applying {Count} pending EF Core migration(s).", pending.Length);
+            await db.Database.MigrateAsync();
+            logger.LogInformation("Database migrations applied successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Automatic startup database migration failed.");
+    }
+}
 app.Run();
 
 public partial class Program;
