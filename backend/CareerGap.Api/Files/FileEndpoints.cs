@@ -14,29 +14,33 @@ public static class FileEndpoints
 {
     public static void MapFiles(this WebApplication app)
     {
-        app.MapPost("/api/resumes", async (HttpContext http, AppDb db, IFileStorage storage, DocumentParser parser, CancellationToken ct) =>
-            await UploadAsync(null, http, db, storage, parser, ct))
+        app.MapPost("/api/resumes", async (HttpContext http, AppDb db, IFileStorage storage, DocumentParser parser, ILoggerFactory loggerFactory, CancellationToken ct) =>
+            await UploadAsync(null, http, db, storage, parser, loggerFactory.CreateLogger("ResumeUpload"), ct))
             .RequireAuthorization().Accepts<IFormFile>("multipart/form-data");
 
         app.MapPost("/api/resumes/{resumeId:guid}/versions", async (Guid resumeId, HttpContext http, AppDb db,
-            IFileStorage storage, DocumentParser parser, CancellationToken ct) =>
-            await UploadAsync(resumeId, http, db, storage, parser, ct))
+            IFileStorage storage, DocumentParser parser, ILoggerFactory loggerFactory, CancellationToken ct) =>
+            await UploadAsync(resumeId, http, db, storage, parser, loggerFactory.CreateLogger("ResumeUpload"), ct))
             .RequireAuthorization().Accepts<IFormFile>("multipart/form-data");
 
         app.MapPut("/api/resumes/{id:guid}", RenameResumeAsync).RequireAuthorization();
         app.MapGet("/api/resumes", GetResumesAsync).RequireAuthorization();
 
-        app.MapGet("/api/files/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, IFileStorage storage, CancellationToken ct) =>
+        app.MapGet("/api/files/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, IFileStorage storage, ILoggerFactory loggerFactory, CancellationToken ct) =>
         {
             if (!TryUserId(user, out var uid)) return Results.Unauthorized();
             var file = await db.StoredFiles.AsNoTracking().SingleOrDefaultAsync(x => x.Id == id && x.OwnerUserId == uid && x.Status == "ready", ct);
-            return file is null ? Results.NotFound() : await ServeFileAsync(file, storage, ct);
+            return file is null ? Results.NotFound() : await ServeFileAsync(file, storage, ct, loggerFactory.CreateLogger("FileDownload"));
         }).RequireAuthorization();
     }
 
-    internal static async Task<IResult> ServeFileAsync(StoredFile file, IFileStorage storage, CancellationToken ct)
+    internal static async Task<IResult> ServeFileAsync(StoredFile file, IFileStorage storage, CancellationToken ct, ILogger? logger = null)
     {
-        if (file.Provider != storage.Provider) return Results.Problem(statusCode: 503, title: "storage_unavailable");
+        if (file.Provider != storage.Provider)
+        {
+            logger?.LogWarning("ServeFileAsync provider mismatch: file={FileProvider}, active={ActiveProvider}", file.Provider, storage.Provider);
+            return Results.Problem(statusCode: 503, title: "storage_unavailable");
+        }
         try
         {
             var bytes = await storage.ReadAsync(file.ObjectKey, ct);
@@ -46,12 +50,38 @@ public static class FileEndpoints
         }
         catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception)
         {
+            logger?.LogError(ex, "ServeFileAsync failed (fileId={FileId}, provider={Provider}): {Message}", file.Id, storage.Provider, ex.Message);
             return Results.Problem(statusCode: 503, title: "file_unavailable");
         }
     }
 
+    public static bool IsCompatibleUploadMime(string? contentType, string parsedMime)
+    {
+        if (string.IsNullOrWhiteSpace(contentType)) return true;
+        var normalized = contentType.Split(';', 2)[0].Trim();
+        if (normalized.Length == 0 ||
+            string.Equals(normalized, "application/octet-stream", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, parsedMime, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (parsedMime == "application/pdf" &&
+            string.Equals(normalized, "application/x-pdf", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+        if (parsedMime == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" &&
+            (string.Equals(normalized, "application/zip", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(normalized, "application/x-zip-compressed", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(normalized, "application/msword", StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+        return false;
+    }
+
     private static async Task<IResult> UploadAsync(Guid? targetResumeId, HttpContext http, AppDb db,
-        IFileStorage storage, DocumentParser parser, CancellationToken ct)
+        IFileStorage storage, DocumentParser parser, ILogger logger, CancellationToken ct)
     {
         if (!TryUserId(http.User, out var uid)) return Results.Unauthorized();
         if (!http.User.IsInRole("Candidate")) return Results.Forbid();
@@ -69,9 +99,16 @@ public static class FileEndpoints
         var bytes = buffer.ToArray();
         ParsedDocument parsed;
         try { parsed = parser.Parse(bytes, name, ct); }
-        catch (DocumentError ex) { return Results.Problem(statusCode: 422, title: ex.Code); }
-        if (!string.IsNullOrWhiteSpace(upload.ContentType) && upload.ContentType != "application/octet-stream" && upload.ContentType != parsed.MimeType)
+        catch (DocumentError ex)
+        {
+            logger.LogWarning("Resume parse failed ({Code}) for {Ext}", ex.Code, Path.GetExtension(name));
+            return Results.Problem(statusCode: 422, title: ex.Code);
+        }
+        if (!IsCompatibleUploadMime(upload.ContentType, parsed.MimeType))
+        {
+            logger.LogWarning("Resume upload MIME mismatch: contentType={ContentType}, parsed={ParsedMime}", upload.ContentType, parsed.MimeType);
             return Results.Problem(statusCode: 422, title: "file_format");
+        }
 
         // Store the upload under a fresh key before the short database transaction; never overwrite a file referenced by an older version.
         var file = new StoredFile { OwnerUserId = uid, ObjectKey = Guid.NewGuid().ToString("N"), Provider = storage.Provider,
@@ -85,7 +122,10 @@ public static class FileEndpoints
             stored = await storage.ReadAsync(file.ObjectKey, ct);
         }
         catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception or InvalidDataException)
-        { return Results.Problem(statusCode: 503, title: "storage_verification_failed"); }
+        {
+            logger.LogError(ex, "Resume storage verification failed ({Provider}): {Type} {Message}", storage.Provider, ex.GetType().Name, ex.Message);
+            return Results.Problem(statusCode: 503, title: "storage_verification_failed");
+        }
         var sourceHash = SHA256.HashData(bytes);
         if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(stored), sourceHash))
             return Results.Problem(statusCode: 503, title: "storage_verification_failed");

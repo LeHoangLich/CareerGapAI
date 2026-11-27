@@ -9,7 +9,7 @@ public sealed record ParserReply(ParsedDocument? Document, string? Error);
 public static class ParserProcess
 {
     public static ParsedDocument Parse(byte[] bytes, string name, CancellationToken ct, TimeSpan? limit = null)
-        => ParseAsync(bytes, name, ct, limit ?? TimeSpan.FromSeconds(10)).GetAwaiter().GetResult();
+        => ParseAsync(bytes, name, ct, limit ?? TimeSpan.FromSeconds(25)).GetAwaiter().GetResult();
 
     private static async Task<ParsedDocument> ParseAsync(byte[] bytes, string name, CancellationToken ct, TimeSpan limit)
     {
@@ -26,6 +26,7 @@ public static class ParserProcess
         foreach (var item in environment) if (item.Value is not null) start.Environment[item.Key] = item.Value;
         start.Environment["DOTNET_NOLOGO"] = "1";
         start.Environment["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1";
+        start.Environment["DOTNET_GCHeapHardLimit"] = "0x0A000000";
         using var process = new Process { StartInfo = start };
         var started = false;
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);

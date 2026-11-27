@@ -167,7 +167,6 @@ function ImageInput({
 
   function fail(msg: string) {
     setLocalError(msg);
-    onError(msg);
   }
 
   function uploadFile(file: File | undefined) {

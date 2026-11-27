@@ -1,4 +1,4 @@
-import { useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent, type ReactNode } from 'react';
 import { LazyMotion, MotionConfig, domMax, m } from 'motion/react';
 import { UploadSimple } from '@phosphor-icons/react';
 
@@ -124,6 +124,14 @@ export function FileDropzone({
   const inputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
   const [fileName, setFileName] = useState('');
+
+  useEffect(() => {
+    const form = inputRef.current?.form;
+    if (!form) return;
+    const onReset = () => setFileName('');
+    form.addEventListener('reset', onReset);
+    return () => form.removeEventListener('reset', onReset);
+  }, []);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     setFileName(event.currentTarget.files?.[0]?.name ?? '');

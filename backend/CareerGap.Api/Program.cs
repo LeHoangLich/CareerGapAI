@@ -102,7 +102,9 @@ builder.Services.AddScoped<IWebSearchClient>(sp => sp.GetRequiredService<Microso
     _ => throw new InvalidOperationException("Unknown search provider") });
 builder.Services.AddScoped<CareerGap.Api.Learning.LearningService>();
 builder.Services.AddHostedService<CareerGap.Api.Learning.LearningCacheWorker>();
-builder.Services.AddSingleton<IFileStorage>(sp => builder.Configuration["Storage:Provider"] == "S3" ? new S3FileStorage(builder.Configuration) : new LocalFileStorage(sp.GetRequiredService<IWebHostEnvironment>(), builder.Configuration));
+builder.Services.AddSingleton<IFileStorage>(sp => builder.Configuration["Storage:Provider"] == "S3"
+    ? new S3FileStorage(builder.Configuration, sp.GetRequiredService<ILogger<S3FileStorage>>())
+    : new LocalFileStorage(sp.GetRequiredService<IWebHostEnvironment>(), builder.Configuration));
 builder.Services.AddScoped<OrphanFileCleanupService>();
 builder.Services.AddHostedService<OrphanFileCleanupWorker>();
 builder.Services.Configure<KeywordBaselineOptions>(builder.Configuration.GetSection("Matching:Baseline"));

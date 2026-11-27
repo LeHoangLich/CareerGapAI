@@ -97,6 +97,12 @@ export function errorMessage(code: string, status: number): string {
   if (code === 'redacted_file_unavailable') return 'Bản CV đã ẩn liên hệ chưa thể mở. File gốc vẫn được giữ riêng.';
   if (['file_format', 'file_unreadable', 'no_text'].includes(code)) return 'Không đọc được tài liệu. Hãy kiểm tra file PDF/DOCX.';
   if (['file_size', 'text_limit', 'page_limit', 'docx_expansion_limit'].includes(code)) return 'Tài liệu vượt giới hạn: 4 MB, 20 trang PDF hoặc lượng văn bản cho phép.';
+  if (code === 'storage_verification_failed') return 'Không thể xác minh tệp vừa lưu trên hệ thống lưu trữ. Vui lòng thử lại sau.';
+  if (code === 'storage_unavailable') return 'Hệ thống lưu trữ tệp hiện không khớp hoặc tạm thời không khả dụng.';
+  if (code === 'file_unavailable') return 'Không thể đọc tệp từ hệ thống lưu trữ. Vui lòng thử lại sau.';
+  if (code === 'community_image_decode_failed') return 'Không thể xử lý tệp ảnh này. Hãy thử ảnh PNG hoặc JPEG khác.';
+  if (code === 'community_image_storage_failed') return 'Không thể lưu ảnh lên hệ thống lưu trữ đám mây. Vui lòng thử lại sau.';
+  if (code === 'community_image_db_failed') return 'Không thể lưu thông tin ảnh vào cơ sở dữ liệu. Vui lòng thử lại sau.';
   if (status === 429) return 'Bạn thao tác quá nhanh hoặc đã hết hạn mức. Hãy thử lại sau.';
   return 'Chưa xử lý được yêu cầu. Hãy thử lại sau.';
 }
