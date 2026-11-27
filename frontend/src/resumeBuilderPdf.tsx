@@ -28,17 +28,17 @@ Font.register({
 });
 
 const styles = StyleSheet.create({
-  page: { paddingTop: 42, paddingBottom: 46, paddingHorizontal: 48, color: '#17312c', fontFamily: 'NotoCV', fontSize: 10 },
-  name: { fontSize: 24, lineHeight: 1.2, fontWeight: 700, color: '#164c3b' },
-  headline: { marginTop: 5, fontSize: 12, color: '#52665e' },
-  contact: { marginTop: 7, color: '#52665e', fontSize: 9 },
+  page: { paddingTop: 42, paddingBottom: 46, paddingHorizontal: 48, color: '#132a33', fontFamily: 'NotoCV', fontSize: 10 },
+  name: { fontSize: 24, lineHeight: 1.2, fontWeight: 700, color: '#0b6e8a' },
+  headline: { marginTop: 5, fontSize: 12, color: '#475d66' },
+  contact: { marginTop: 7, color: '#475d66', fontSize: 9 },
   section: { marginTop: 18 },
-  heading: { fontSize: 11, fontWeight: 700, color: '#1e644d', borderBottomWidth: 1, borderBottomColor: '#dce4da', paddingBottom: 4, marginBottom: 7 },
+  heading: { fontSize: 11, fontWeight: 700, color: '#08556d', borderBottomWidth: 1, borderBottomColor: '#d8e2e5', paddingBottom: 4, marginBottom: 7 },
   item: { marginBottom: 8 },
   itemTitle: { fontSize: 10, fontWeight: 700 },
-  detail: { marginTop: 2, color: '#52665e' },
-  skills: { color: '#214f3e' },
-  footer: { position: 'absolute', bottom: 20, height: 12, left: 48, right: 48, fontSize: 8, color: '#809087', textAlign: 'center' }
+  detail: { marginTop: 2, color: '#475d66' },
+  skills: { color: '#0b5d75' },
+  footer: { position: 'absolute', bottom: 20, height: 12, left: 48, right: 48, fontSize: 8, color: '#667a82', textAlign: 'center' }
 });
 
 function nonempty(...values: string[]) { return values.map(value => value.trim()).filter(Boolean).join(' · '); }

@@ -19,6 +19,7 @@ import { recruiterViews, useWorkspaceNavigation } from './navigation';
 import { PersistentView } from './persistentView';
 import { jobReturnAfterSignIn, safeReturnAfterSignIn } from './jobLinks';
 import { useAiJobPolling } from './useAiJobPolling';
+import { FileDropzone, MotionRoot, Spinner } from './motion';
 
 const ResumeBuilderPanel = lazy(() => import('./resumeBuilder').then(module => ({ default: module.ResumeBuilderPanel })));
 
@@ -321,9 +322,16 @@ function App() {
           const nextPage = await api<PagedResponse<Resume>>('/api/resumes?page=1');
           setPage(1); setSelectedResumeId(created.id); setSelectedResumeVersionId(created.versionId); setResumes(nextPage.items); setResumesTotal(nextPage.total); window.dispatchEvent(new Event('resume-list-updated')); form.reset();
         }); }}>
-          <label>Thêm vào CV<input name="file" type="file" accept=".pdf,.docx" required/></label>
+          <FileDropzone
+            name="file"
+            accept=".pdf,.docx"
+            required
+            label="Thêm vào CV"
+            hint="Kéo thả PDF hoặc DOCX (tối đa 4 MB), hoặc nhấn để chọn file"
+            disabled={busy}
+          />
           <label>CV đích<select name="targetResumeId" value={selectedResumeId} onChange={e => setSelectedResumeId(e.target.value)}><option value="">Tạo CV mới</option>{resumes.map(r => <option key={r.id} value={r.id}>{r.title}</option>)}</select></label>
-          <button type="submit" disabled={busy}>{busy ? 'Đang xử lý…' : selectedResumeId ? 'Thêm phiên bản' : 'Tạo CV riêng tư'}</button>
+          <button type="submit" disabled={busy}>{busy && <Spinner size={15} />}{busy ? 'Đang xử lý…' : selectedResumeId ? 'Thêm phiên bản' : 'Tạo CV riêng tư'}</button>
         </ValidatedForm>
         <CandidatePublicResumeManager resumes={resumes} selectedVersionId={selectedResumeVersionId}/>
         <ul className="resumes">{resumes.map(r => <li key={r.id}>
@@ -404,4 +412,4 @@ function App() {
     <footer className="workspace-footer"><span>CareerGap AI<span className="footer-dot" aria-hidden="true">·</span>Hồ sơ rõ ràng. Cơ hội phù hợp.</span><span>AI hỗ trợ. Bạn quyết định.</span></footer>
   </Workspace>;
 }
-createRoot(document.getElementById('root')!).render(<React.StrictMode><App/></React.StrictMode>);
+createRoot(document.getElementById('root')!).render(<React.StrictMode><MotionRoot><App/></MotionRoot></React.StrictMode>);

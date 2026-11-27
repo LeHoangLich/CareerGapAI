@@ -6,8 +6,7 @@ import { LearningResources } from './learning';
 import { useViewActive } from './persistentView';
 import { ResultPlacement } from './resultPlacement';
 import { useAiJobPolling } from './useAiJobPolling';
-import { StaticLoading } from './workspace';
-import { AiBadge } from './ui';
+import { AiBadge, StaticLoading, StatusBadge } from './ui';
 
 type Fact = { key: string; value: string; sourceType: string };
 type Criterion = { requirementKey: string; requirement: string; importance: string; status: string; evidence: Fact[]; explanation: string; needsReview: boolean; requirementSourceType: string };
@@ -33,23 +32,59 @@ const reasons: Record<string, string> = {
 const reason = (code: string | null) => code ? reasons[code] ?? 'Chưa phân tích được. Hãy kiểm tra đầu vào hoặc thử lại sau.' : 'Chưa được chọn phân tích sâu trong lượt này.';
 
 export function PairDetails({ pair, jobId }: { pair: Pair; jobId?: string }) {
-  if (pair.status !== 'succeeded') return <p role="status">{pair.status === 'failed' || pair.status === 'cancelled' ? reason(pair.errorCode) : 'Đang chờ hoặc đang phân tích…'}</p>;
+  if (pair.status !== 'succeeded') {
+    if (pair.status === 'failed' || pair.status === 'cancelled') {
+      return <p role="status">{reason(pair.errorCode)}</p>;
+    }
+    return <StaticLoading variant="analysis" message="AI đang đối chiếu từng tiêu chí CV × JD…" />;
+  }
+  const metCount = pair.criteria?.filter(c => c.status === 'met').length ?? 0;
+  const partialCount = pair.criteria?.filter(c => c.status === 'partial').length ?? 0;
   const required = pair.criteria?.filter(c => c.importance === 'required' && c.status !== 'met' && c.status !== 'not_assessed').length ?? 0;
+  const gapCount = pair.criteria?.filter(c => c.status === 'no_evidence').length ?? 0;
+  const totalCount = pair.criteria?.length ?? 0;
   const manual = pair.criteria?.filter(c => c.status === 'not_assessed').length ?? 0;
   const currentJobId = jobIdFromHash(window.location.hash);
   const targetJobId = jobId && jobId !== currentJobId ? jobId : undefined;
   return <div className="pair-result">
     <AiBadge>{pair.provider === 'Fake' ? 'AI mô phỏng · cần đối chiếu' : 'AI đối chiếu · cần rà soát'}</AiBadge>
-    <p><strong>Điểm đối chiếu {pair.score?.toFixed(2)}/100</strong> · thang chấm tiêu chí{pair.provider === 'Fake' ? ' · Kết quả mô phỏng kiểm thử' : ''}{pair.careerContext ? ` · Bối cảnh: ${careerContextLabels[pair.careerContext] ?? pair.careerContext}` : ''}</p>
-    <p className="hint">Điểm cho cặp CV–JD này, không phải xác suất trúng tuyển hoặc kết luận năng lực. {required} yêu cầu bắt buộc chưa được chứng minh đầy đủ.</p>
+    <div className="kpi-strip" aria-label="Tổng hợp kết quả đối chiếu">
+      <div className="kpi-card">
+        <span className="kpi-label">Điểm đối chiếu</span>
+        <strong className="kpi-value">{pair.score?.toFixed(2) ?? '0.00'}/100</strong>
+        <span className="kpi-sub">{pair.careerContext ? careerContextLabels[pair.careerContext] ?? pair.careerContext : 'Thang chấm tiêu chí'}</span>
+      </div>
+      <div className="kpi-card">
+        <span className="kpi-label">Yêu cầu khớp</span>
+        <strong className="kpi-value is-matched">{metCount} / {totalCount}</strong>
+        <span className="kpi-sub">Có bằng chứng nguyên văn</span>
+      </div>
+      <div className="kpi-card">
+        <span className="kpi-label">Khớp một phần</span>
+        <strong className="kpi-value is-partial">{partialCount}</strong>
+        <span className="kpi-sub">Cần bổ sung chi tiết</span>
+      </div>
+      <div className="kpi-card">
+        <span className="kpi-label">Chưa có bằng chứng</span>
+        <strong className="kpi-value is-gap">{gapCount}</strong>
+        <span className="kpi-sub">{required} yêu cầu bắt buộc</span>
+      </div>
+    </div>
+    <p className="hint">Điểm cho cặp CV–JD này, không phải xác suất trúng tuyển hoặc kết luận năng lực.{pair.provider === 'Fake' ? ' Kết quả mô phỏng kiểm thử.' : ''}</p>
     <p className="hint">Địa điểm: {pair.location ?? 'chưa nêu'} · hình thức: {pair.workMode} · lương: {pair.salaryMin == null && pair.salaryMax == null ? 'chưa công bố' : `${pair.salaryMin ?? '?'}–${pair.salaryMax ?? '?'} ${pair.salaryCurrency ?? ''} ${pair.salaryPeriod ?? ''}`}. Chưa đánh giá sự phù hợp các điều kiện này vì chưa có mong muốn được xác nhận của ứng viên.{manual > 0 && ` ${manual} tiêu chí cần đối chiếu thủ công, không tính vào điểm.`}</p>
-    {!!pair.criterionGroups?.length && <section className="criterion-groups" aria-label="Tổng hợp 6 nhóm tiêu chí"><h4>Tổng hợp 6 nhóm tiêu chí</h4><div className="form-columns">{pair.criterionGroups.map(g => <article className="card" key={g.key}><header className="row"><strong>{g.label}</strong><span className="badge">{groupStatusLabels[g.status] ?? g.status}</span></header><p className="hint">{g.summary}</p></article>)}</div></section>}
+    {!!pair.criterionGroups?.length && <section className="criterion-groups" aria-label="Tổng hợp 6 nhóm tiêu chí"><h4>Tổng hợp 6 nhóm tiêu chí</h4><div className="form-columns">{pair.criterionGroups.map(g => <article className="card" key={g.key}><header className="row"><strong>{g.label}</strong><StatusBadge state={g.status === 'met' ? 'matched' : g.status === 'partial' ? 'partial' : g.status === 'no_evidence' ? 'gap' : 'neutral'}>{groupStatusLabels[g.status] ?? g.status}</StatusBadge></header><p className="hint">{g.summary}</p></article>)}</div></section>}
     {pair.context === 'self' && <WeeklyRoadmap key={pair.id} pairId={pair.id} jobId={targetJobId}/>}
-    <details><summary>Xem tiêu chí và bằng chứng</summary><ul>{pair.criteria?.map(c => <li key={c.requirementKey}>
-      <strong>{c.requirement}</strong> · {c.importance === 'required' ? 'Bắt buộc' : c.importance === 'optional' ? 'Ưu tiên' : 'Chưa phân loại'} · {c.status === 'not_assessed' ? 'Chưa đánh giá điều kiện' : c.status === 'met' ? 'Có bằng chứng đối chiếu' : c.status === 'partial' ? 'Có thông tin một phần' : 'Chưa có bằng chứng'}
-      <p>{c.explanation}{c.needsReview ? ' Yêu cầu này cần người dùng đánh giá thêm.' : ''}</p>
+    <details><summary>Xem tiêu chí và bằng chứng</summary><ul className="grid gap-3 pl-0">{pair.criteria?.map(c => <li className="ai-evidence-card" key={c.requirementKey}>
+      <div className="row">
+        <strong>{c.requirement}</strong>
+        <StatusBadge state={c.status === 'met' ? 'matched' : c.status === 'partial' ? 'partial' : c.status === 'no_evidence' ? 'gap' : 'neutral'}>
+          {c.status === 'not_assessed' ? 'Chưa đánh giá điều kiện' : c.status === 'met' ? 'Có bằng chứng đối chiếu' : c.status === 'partial' ? 'Có thông tin một phần' : 'Chưa có bằng chứng'}
+        </StatusBadge>
+      </div>
+      <small className="hint">{c.importance === 'required' ? 'Bắt buộc' : c.importance === 'optional' ? 'Ưu tiên' : 'Chưa phân loại'}</small>
+      <p className="m-0">{c.explanation}{c.needsReview ? ' Yêu cầu này cần người dùng đánh giá thêm.' : ''}</p>
       {c.requirementSourceType === 'user_statement' && <small>Yêu cầu do recruiter bổ sung.</small>}
-      {c.evidence.map(f => <blockquote key={f.key}>{f.value}<small>{f.sourceType === 'user_statement' ? 'Thông tin ứng viên tự khai đã xác nhận' : 'Nội dung CV đã xác nhận'}</small></blockquote>)}
+      {c.evidence.map(f => <blockquote className="ai-evidence-quote" key={f.key}>{f.value}<small>{f.sourceType === 'user_statement' ? 'Thông tin ứng viên tự khai đã xác nhận' : 'Nội dung CV đã xác nhận'}</small></blockquote>)}
       {pair.context === 'self' && ['partial', 'no_evidence'].includes(c.status) && <LearningResources pairId={pair.id} requirementKey={c.requirementKey}/>}
     </li>)}</ul></details>
     {pair.context === 'self' && <nav className="row pair-next-steps" aria-label="Bước tiếp theo sau đối chiếu"><a className="secondary" href="#cv-builder">Mở trình tạo CV để bổ sung</a><a className="secondary" href="#private-resumes">Quản lý CV của tôi</a>{targetJobId && <a className="secondary" href={jobHref(targetJobId)}>Xem tin tuyển dụng &amp; Ứng tuyển</a>}</nav>}

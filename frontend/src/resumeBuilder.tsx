@@ -2,10 +2,13 @@ import { SkillPicker } from './skillPicker';
 import { Dialog, FieldError, ValidatedForm } from './ui';
 import { renderBuilderPdf } from './pdfGeneration';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { Reorder, useDragControls } from 'motion/react';
+import { ArrowDown, ArrowUp, DotsSixVertical } from '@phosphor-icons/react';
 import { api, type PagedResponse } from './api';
 import type { BuilderEducation, BuilderExperience, BuilderProject, ResumeBuilderContent, PdfLanguage } from './resumeBuilderPdf';
 import { WritingPanel, type WritingEdit } from './writing';
 import { useStickyFit } from './useStickyFit';
+import { MOTION_SPRING, moveListItem, Spinner } from './motion';
 
 type ResumeVersion = { id: string; fileId: string; versionNo: number; documentHash: string; createdAt: string };
 type Resume = { id: string; title: string; rowVersion: number; createdAt: string; updatedAt: string; versions: ResumeVersion[] };
@@ -22,6 +25,90 @@ function useObjectUrl(blob: Blob | undefined) {
     return () => URL.revokeObjectURL(next);
   }, [blob]);
   return url;
+}
+
+const itemKeys = new WeakMap<object, string>();
+let itemKeySeq = 0;
+function getItemKey(item: object): string {
+  let key = itemKeys.get(item);
+  if (!key) {
+    key = `cv-item-${++itemKeySeq}`;
+    itemKeys.set(item, key);
+  }
+  return key;
+}
+function withPreservedKey<T extends object>(prev: T, next: T): T {
+  itemKeys.set(next, getItemKey(prev));
+  return next;
+}
+
+function SortableEntry<T extends object>({
+  item,
+  legend,
+  index,
+  total,
+  disabled,
+  onMove,
+  onRemove,
+  children,
+}: {
+  item: T;
+  legend: string;
+  index: number;
+  total: number;
+  disabled: boolean;
+  onMove: (from: number, to: number) => void;
+  onRemove: () => void;
+  children: ReactNode;
+}) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      value={item}
+      dragListener={false}
+      dragControls={controls}
+      transition={MOTION_SPRING}
+      className="list-none"
+    >
+      <fieldset className="builder-entry">
+        <div className="builder-entry-header">
+          <legend className="m-0">{legend}</legend>
+          <div className="builder-entry-actions">
+            <button
+              type="button"
+              className="secondary reorder-btn"
+              disabled={disabled || index === 0}
+              aria-label={`Đưa ${legend} lên`}
+              onClick={() => onMove(index, index - 1)}
+            >
+              <ArrowUp size={14} aria-hidden="true" />
+            </button>
+            <button
+              type="button"
+              className="secondary reorder-btn"
+              disabled={disabled || index === total - 1}
+              aria-label={`Đưa ${legend} xuống`}
+              onClick={() => onMove(index, index + 1)}
+            >
+              <ArrowDown size={14} aria-hidden="true" />
+            </button>
+            <span
+              className="drag-handle"
+              role="img"
+              aria-label={`Kéo để sắp xếp ${legend}`}
+              onPointerDown={event => { if (!disabled) controls.start(event); }}
+            >
+              <DotsSixVertical size={18} aria-hidden="true" />
+            </span>
+            <button type="button" className="link-button" disabled={disabled} onClick={onRemove}>
+              Xóa mục
+            </button>
+          </div>
+        </div>
+        {children}
+      </fieldset>
+    </Reorder.Item>
+  );
 }
 
 const emptyExperience = (): BuilderExperience => ({ role: '', organization: '', period: '', description: '' });
@@ -258,7 +345,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
 
-  const updateListItem = <T,>(list: T[], index: number, update: Partial<T>) => list.map((item, i) => i === index ? { ...item, ...update } : item);
+  const updateListItem = <T extends object,>(list: T[], index: number, update: Partial<T>) => list.map((item, i) => i === index ? withPreservedKey(item, { ...item, ...update }) : item);
   const addItem = <T,>(list: T[], blank: () => T, max: number) => list.length < max ? [...list, blank()] : list;
   const dropItem = <T,>(list: T[], index: number) => list.filter((_, i) => i !== index);
   function applyWriting(edits: WritingEdit[], revisionId: string) {
@@ -277,7 +364,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
     </details>
     <div className="builder-source-row">
       <label>CV cần cập nhật<select aria-label="CV cần cập nhật" disabled={busy || !!pendingUpload} value={targetResumeId} onChange={e => changeTarget(e.target.value)}><option value="">Tạo CV mới</option>{resumes.map(resume => <option key={resume.id} value={resume.id}>{resume.title}</option>)}</select></label>
-      {targetResume && <><label>Phiên bản nguồn<select aria-label="Phiên bản nguồn" disabled={busy || !!pendingUpload} value={sourceVersionId} onChange={e => {setSourceVersionId(e.target.value);setLoadedRevisionId('');}}>{targetResume.versions.map(version => <option key={version.id} value={version.id}>Phiên bản {version.versionNo}</option>)}</select></label><button type="button" className="secondary" disabled={!sourceVersionId || busy} onClick={() => void loadRevision()}>{loadingRevision ? 'Đang nạp…' : 'Nạp dữ liệu CV'}</button></>}
+      {targetResume && <><label>Phiên bản nguồn<select aria-label="Phiên bản nguồn" disabled={busy || !!pendingUpload} value={sourceVersionId} onChange={e => {setSourceVersionId(e.target.value);setLoadedRevisionId('');}}>{targetResume.versions.map(version => <option key={version.id} value={version.id}>Phiên bản {version.versionNo}</option>)}</select></label><button type="button" className="secondary" disabled={!sourceVersionId || busy} onClick={() => void loadRevision()}>{loadingRevision && <Spinner size={15} />}{loadingRevision ? 'Đang nạp…' : 'Nạp dữ liệu CV'}</button></>}
       <label>Ngôn ngữ tiêu đề PDF<select aria-label="Ngôn ngữ tiêu đề PDF" disabled={busy || !!pendingUpload} value={pdfLanguage} onChange={e => { setPdfLanguage(e.target.value as PdfLanguage); setPreviewBlob(undefined); setPreviewKey(''); setSavedKey(''); }}><option value="vi">Tiếng Việt</option><option value="en">English</option></select></label><label>Tên CV<input value={title} maxLength={100} onChange={e => { setTitle(e.target.value); setPendingUpload(undefined); }}/></label>
     </div>
     <div className="builder-workspace-grid grid items-start gap-6">
@@ -300,24 +387,72 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
       <FieldError id={skillsErrorId} message={skillsError}/>
 
       <div className="builder-section-heading"><h3>Kinh nghiệm</h3><button type="button" className="secondary" disabled={busy || content.experience.length >= 10} onClick={() => edit(current => ({ ...current, experience: addItem(current.experience, emptyExperience, 10) }))}>Thêm kinh nghiệm</button></div>
-      {content.experience.map((item, index) => <fieldset className="builder-entry" key={`experience-${index}`}><legend>Kinh nghiệm {index + 1}</legend><button type="button" className="link-button" onClick={() => edit(current => ({ ...current, experience: dropItem(current.experience, index) }))}>Xóa mục</button><div className="form-columns">
-        <label>Chức danh<input required maxLength={160} value={item.role} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { role: value }) })); }}/></label>
-        <label>Đơn vị<input required maxLength={160} value={item.organization} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { organization: value }) })); }}/></label>
-        <label>Thời gian<input maxLength={100} value={item.period} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { period: value }) })); }}/></label>
-      </div><label>Mô tả<textarea required maxLength={1200} value={item.description} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { description: value }) })); }}/></label></fieldset>)}
+      <Reorder.Group axis="y" values={content.experience} onReorder={next => edit(current => ({ ...current, experience: next }))} className="builder-reorder-list">
+        {content.experience.map((item, index) => (
+          <SortableEntry
+            key={getItemKey(item)}
+            item={item}
+            legend={`Kinh nghiệm ${index + 1}`}
+            index={index}
+            total={content.experience.length}
+            disabled={busy}
+            onMove={(from, to) => edit(current => ({ ...current, experience: moveListItem(current.experience, from, to) }))}
+            onRemove={() => edit(current => ({ ...current, experience: dropItem(current.experience, index) }))}
+          >
+            <div className="form-columns">
+              <label>Chức danh<input required maxLength={160} value={item.role} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { role: value }) })); }}/></label>
+              <label>Đơn vị<input required maxLength={160} value={item.organization} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { organization: value }) })); }}/></label>
+              <label>Thời gian<input maxLength={100} value={item.period} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { period: value }) })); }}/></label>
+            </div>
+            <label>Mô tả<textarea required maxLength={1200} value={item.description} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, experience: updateListItem(current.experience, index, { description: value }) })); }}/></label>
+          </SortableEntry>
+        ))}
+      </Reorder.Group>
 
       <div className="builder-section-heading"><h3>Dự án</h3><button type="button" className="secondary" disabled={busy || content.projects.length >= 10} onClick={() => edit(current => ({ ...current, projects: addItem(current.projects, emptyProject, 10) }))}>Thêm dự án</button></div>
-      {content.projects.map((item, index) => <fieldset className="builder-entry" key={`project-${index}`}><legend>Dự án {index + 1}</legend><button type="button" className="link-button" onClick={() => edit(current => ({ ...current, projects: dropItem(current.projects, index) }))}>Xóa mục</button><div className="form-columns">
-        <label>Tên dự án<input required maxLength={180} value={item.name} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, projects: updateListItem(current.projects, index, { name: value }) })); }}/></label>
-        <label>Bối cảnh/vai trò<input maxLength={160} value={item.context} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, projects: updateListItem(current.projects, index, { context: value }) })); }}/></label>
-      </div><label>Mô tả<textarea required maxLength={1200} value={item.description} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, projects: updateListItem(current.projects, index, { description: value }) })); }}/></label></fieldset>)}
+      <Reorder.Group axis="y" values={content.projects} onReorder={next => edit(current => ({ ...current, projects: next }))} className="builder-reorder-list">
+        {content.projects.map((item, index) => (
+          <SortableEntry
+            key={getItemKey(item)}
+            item={item}
+            legend={`Dự án ${index + 1}`}
+            index={index}
+            total={content.projects.length}
+            disabled={busy}
+            onMove={(from, to) => edit(current => ({ ...current, projects: moveListItem(current.projects, from, to) }))}
+            onRemove={() => edit(current => ({ ...current, projects: dropItem(current.projects, index) }))}
+          >
+            <div className="form-columns">
+              <label>Tên dự án<input required maxLength={180} value={item.name} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, projects: updateListItem(current.projects, index, { name: value }) })); }}/></label>
+              <label>Bối cảnh/vai trò<input maxLength={160} value={item.context} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, projects: updateListItem(current.projects, index, { context: value }) })); }}/></label>
+            </div>
+            <label>Mô tả<textarea required maxLength={1200} value={item.description} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, projects: updateListItem(current.projects, index, { description: value }) })); }}/></label>
+          </SortableEntry>
+        ))}
+      </Reorder.Group>
 
       <div className="builder-section-heading"><h3>Học vấn</h3><button type="button" className="secondary" disabled={busy || content.education.length >= 10} onClick={() => edit(current => ({ ...current, education: addItem(current.education, emptyEducation, 10) }))}>Thêm học vấn</button></div>
-      {content.education.map((item, index) => <fieldset className="builder-entry" key={`education-${index}`}><legend>Học vấn {index + 1}</legend><button type="button" className="link-button" onClick={() => edit(current => ({ ...current, education: dropItem(current.education, index) }))}>Xóa mục</button><div className="form-columns">
-        <label>Chương trình/ngành<input required maxLength={180} value={item.program} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { program: value }) })); }}/></label>
-        <label>Trường/cơ sở đào tạo<input required maxLength={180} value={item.institution} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { institution: value }) })); }}/></label>
-        <label>Thời gian<input maxLength={100} value={item.period} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { period: value }) })); }}/></label>
-      </div><label>Chi tiết<textarea maxLength={600} value={item.details} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { details: value }) })); }}/></label></fieldset>)}
+      <Reorder.Group axis="y" values={content.education} onReorder={next => edit(current => ({ ...current, education: next }))} className="builder-reorder-list">
+        {content.education.map((item, index) => (
+          <SortableEntry
+            key={getItemKey(item)}
+            item={item}
+            legend={`Học vấn ${index + 1}`}
+            index={index}
+            total={content.education.length}
+            disabled={busy}
+            onMove={(from, to) => edit(current => ({ ...current, education: moveListItem(current.education, from, to) }))}
+            onRemove={() => edit(current => ({ ...current, education: dropItem(current.education, index) }))}
+          >
+            <div className="form-columns">
+              <label>Chương trình/ngành<input required maxLength={180} value={item.program} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { program: value }) })); }}/></label>
+              <label>Trường/cơ sở đào tạo<input required maxLength={180} value={item.institution} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { institution: value }) })); }}/></label>
+              <label>Thời gian<input maxLength={100} value={item.period} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { period: value }) })); }}/></label>
+            </div>
+            <label>Chi tiết<textarea maxLength={600} value={item.details} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, education: updateListItem(current.education, index, { details: value }) })); }}/></label>
+          </SortableEntry>
+        ))}
+      </Reorder.Group>
 
       <h3>Chứng chỉ</h3><label>Chứng chỉ, mỗi dòng một mục<textarea aria-invalid={certificatesError ? true : undefined} aria-describedby={certificatesError ? certificatesErrorId : undefined} value={content.certifications.join('\n')} maxLength={4200} onChange={e => { const value = e.currentTarget.value; edit(current => ({ ...current, certifications: parseLines(value) })); }}/></label>
       <FieldError id={certificatesErrorId} message={certificatesError}/>
@@ -335,7 +470,7 @@ export function ResumeBuilderPanel({ ownerId, resumes, onResumesUpdated, pdfProb
           <li>Lưu thành phiên bản CV riêng tư.</li>
         </ol>
         {pendingUpload && <div role="status"><p>File đã được tải riêng tư; phần dữ liệu cần hoàn tất.</p><button type="button" disabled={busy} onClick={() => void completePending()}>Hoàn tất bản lưu dang dở</button><button type="button" disabled={busy} className="secondary" onClick={() => { sessionStorage.removeItem(recoveryKey); setPendingUpload(undefined); setMessage('Đã bỏ bản nháp tạm. File đã tải vẫn ở CV riêng của bạn.'); }}>Bỏ bản nháp tạm</button></div>}
-        <div className="row builder-actions"><button type="submit" form={builderFormId} disabled={busy}>{busy ? 'Đang tạo PDF…' : 'Tạo bản xem trước PDF'}</button>{previewUrl && previewKey === contentKey && <a className="secondary download-link" href={previewUrl} download={safeFileName(title)}>Tải PDF bản xem trước</a>}<button type="button" className="secondary" disabled={busy || previewKey !== contentKey || savedKey === contentKey} onClick={() => void saveVersion()}>{busy ? 'Đang lưu…' : 'Lưu thành phiên bản CV'}</button></div>
+        <div className="row builder-actions"><button type="submit" form={builderFormId} disabled={busy}>{busy && <Spinner size={15} />}{busy ? 'Đang tạo PDF…' : 'Tạo bản xem trước PDF'}</button>{previewUrl && previewKey === contentKey && <a className="secondary download-link" href={previewUrl} download={safeFileName(title)}>Tải PDF bản xem trước</a>}<button type="button" className="secondary" disabled={busy || previewKey !== contentKey || savedKey === contentKey} onClick={() => void saveVersion()}>{busy && <Spinner size={15} />}{busy ? 'Đang lưu…' : 'Lưu thành phiên bản CV'}</button></div>
 
     {error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
       </div>
