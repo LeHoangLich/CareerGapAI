@@ -128,7 +128,8 @@ public static class CommunityEndpoints
     private static void MapImages(RouteGroupBuilder g)
     {
         g.MapGet("/images/mine", async (ClaimsPrincipal user, AppDb db, CancellationToken ct) => Results.Ok(await db.CommunityImages.Where(x => x.OwnerId == CommunityService.User(user)).OrderByDescending(x => x.CreatedAt).Select(x => new { x.Id, x.CreatedAt }).Take(30).ToArrayAsync(ct))).RequireAuthorization();
-        g.MapPost("/images", async (HttpContext http, AppDb db, IFileStorage storage, CancellationToken ct) => {
+        g.MapPost("/images", async (HttpContext http, AppDb db, IFileStorage storage, ILoggerFactory loggerFactory, CancellationToken ct) => {
+            var log = loggerFactory.CreateLogger("CommunityImages");
             var uid = CommunityService.User(http.User)!.Value;
             if (!http.Request.HasFormContentType) return Results.Problem(statusCode: 400, title: "community_image_invalid"); var form = await http.Request.ReadFormAsync(ct); var file = form.Files.GetFile("file");
             if (file is null || file.Length is <= 0 or > 2 * 1024 * 1024) return Results.Problem(statusCode: 400, title: "community_image_invalid");
@@ -150,10 +151,22 @@ public static class CommunityEndpoints
                 using var clean = SKImage.FromBitmap(resized); using var encoded = clean.Encode(SKEncodedImageFormat.Png, 100);
                 output = encoded.ToArray(); if (output.Length > 4 * 1024 * 1024) throw new InvalidDataException();
             } catch (Exception e) when (e is InvalidDataException or NotSupportedException) { return Results.Problem(statusCode: 400, title: "community_image_invalid"); }
+            catch (Exception e) {
+                log.LogError(e, "Community image decode failed: {Type} {Message} {Inner}", e.GetType().Name, e.Message, e.InnerException?.Message);
+                return Results.Problem(statusCode: 500, title: "community_image_decode_failed");
+            }
             var row = new CommunityImage { OwnerId = uid, ObjectKey = Guid.NewGuid().ToString("N"), ContentType = "image/png", Provider = storage.Provider };
-            await storage.PutAsync(row.ObjectKey, output, row.ContentType, ct);
+            try { await storage.PutAsync(row.ObjectKey, output, row.ContentType, ct); }
+            catch (Exception e) {
+                log.LogError(e, "Community image storage PutAsync failed ({Provider}): {Type} {Message} {Inner}", storage.Provider, e.GetType().Name, e.Message, e.InnerException?.Message);
+                return Results.Problem(statusCode: 500, title: "community_image_storage_failed");
+            }
             try { db.CommunityImages.Add(row); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); }
-            catch { await storage.DeleteAsync(row.ObjectKey, CancellationToken.None); throw; }
+            catch (Exception e) {
+                log.LogError(e, "Community image DB save failed: {Type} {Message} {Inner}", e.GetType().Name, e.Message, e.InnerException?.Message);
+                await storage.DeleteAsync(row.ObjectKey, CancellationToken.None);
+                return Results.Problem(statusCode: 500, title: "community_image_db_failed");
+            }
             return Results.Created("/api/community/images/" + row.Id, new { row.Id });
         }).WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(2 * 1024 * 1024 + 64 * 1024)).RequireAuthorization().RequireRateLimiting("community");
         g.MapGet("/images/{id:guid}", async (Guid id, HttpContext http, AppDb db, IFileStorage storage, CancellationToken ct) => {
