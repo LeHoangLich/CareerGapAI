@@ -593,6 +593,8 @@ public sealed class AccountDeletionService(
         account.Email = tombstoneEmail;
         account.NormalizedEmail = tombstoneEmail.ToUpperInvariant();
         account.EmailConfirmed = false;
+        account.DisplayName = null;
+        account.AvatarImageId = null;
         account.PasswordHash = null;
         account.SecurityStamp = Guid.NewGuid().ToString("N");
         account.ConcurrencyStamp = Guid.NewGuid().ToString("N");

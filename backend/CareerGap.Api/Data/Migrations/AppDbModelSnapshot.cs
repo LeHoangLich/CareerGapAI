@@ -378,12 +378,19 @@ namespace CareerGap.Api.Data.Migrations
                         .HasMaxLength(24)
                         .HasColumnType("character varying(24)");
 
+                    b.Property<Guid?>("AvatarImageId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -409,6 +416,16 @@ namespace CareerGap.Api.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
+                    b.Property<bool>("NotifyCommunity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("NotifyRecruitment")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -429,6 +446,8 @@ namespace CareerGap.Api.Data.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AvatarImageId");
 
                     b.HasIndex("NormalizedEmail")
                         .IsUnique()
@@ -3037,6 +3056,14 @@ namespace CareerGap.Api.Data.Migrations
                         .HasForeignKey("CareerGap.Api.Data.AnalysisHistoryHide", "AiJobId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("CareerGap.Api.Data.AppUser", b =>
+                {
+                    b.HasOne("CareerGap.Api.Data.CommunityImage", null)
+                        .WithMany()
+                        .HasForeignKey("AvatarImageId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("CareerGap.Api.Data.ApplicationNoteRecord", b =>

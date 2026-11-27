@@ -53,16 +53,19 @@ public static partial class ApplicationEndpoints
             ActorUserId = recruiterId,
             ChangedAt = now
         });
-        db.Notifications.Add(new NotificationRecord
+        if (await db.Users.AsNoTracking().Where(x => x.Id == application.CandidateId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
         {
-            RecipientUserId = application.CandidateId,
-            NotificationType = "application_status_changed",
-            ApplicationId = application.Id,
-            Title = "Hồ sơ được cập nhật",
-            Body = $"Trạng thái hồ sơ ứng tuyển đã chuyển thành {StatusLabel(nextStatus)}.",
-            CreatedAt = now,
-            DeduplicationKey = $"application:{application.Id}:status:{application.RowVersion}"
-        });
+            db.Notifications.Add(new NotificationRecord
+            {
+                RecipientUserId = application.CandidateId,
+                NotificationType = "application_status_changed",
+                ApplicationId = application.Id,
+                Title = "Hồ sơ được cập nhật",
+                Body = $"Trạng thái hồ sơ ứng tuyển đã chuyển thành {StatusLabel(nextStatus)}.",
+                CreatedAt = now,
+                DeduplicationKey = $"application:{application.Id}:status:{application.RowVersion}"
+            });
+        }
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
         return Results.Ok(await QueryApplications(db, applicationId: id, includeBlockState: true).SingleAsync(ct));
@@ -98,16 +101,19 @@ public static partial class ApplicationEndpoints
         });
         var jobTitle = await db.JobVersions.Where(x => x.Id == application.SubmittedJobVersionId)
             .Select(x => x.Title).SingleAsync(ct);
-        db.Notifications.Add(new NotificationRecord
+        if (await db.Users.AsNoTracking().Where(x => x.Id == recruiterId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
         {
-            RecipientUserId = recruiterId,
-            NotificationType = "application_status_changed",
-            ApplicationId = application.Id,
-            Title = "Ứng viên đã rút hồ sơ",
-            Body = $"Ứng viên đã rút hồ sơ cho vị trí {jobTitle}.",
-            CreatedAt = now,
-            DeduplicationKey = $"application:{application.Id}:status:{application.RowVersion}"
-        });
+            db.Notifications.Add(new NotificationRecord
+            {
+                RecipientUserId = recruiterId,
+                NotificationType = "application_status_changed",
+                ApplicationId = application.Id,
+                Title = "Ứng viên đã rút hồ sơ",
+                Body = $"Ứng viên đã rút hồ sơ cho vị trí {jobTitle}.",
+                CreatedAt = now,
+                DeduplicationKey = $"application:{application.Id}:status:{application.RowVersion}"
+            });
+        }
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
         return Results.Ok(await QueryApplications(db, applicationId: id).SingleAsync(ct));

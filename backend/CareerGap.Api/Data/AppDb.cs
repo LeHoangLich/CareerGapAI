@@ -73,6 +73,10 @@ public sealed partial class AppDb(DbContextOptions<AppDb> options) : IdentityDbC
         b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.RowVersion).IsConcurrencyToken();
         foreach (var property in b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Metadata.GetProperties()) property.SetColumnName(Snake(property.Name));
         b.Entity<AppUser>().Property(x => x.AccountStatus).HasMaxLength(24);
+        b.Entity<AppUser>().Property(x => x.DisplayName).HasMaxLength(150);
+        b.Entity<AppUser>().Property(x => x.NotifyRecruitment).HasDefaultValue(true);
+        b.Entity<AppUser>().Property(x => x.NotifyCommunity).HasDefaultValue(true);
+        b.Entity<AppUser>().HasOne<CommunityImage>().WithMany().HasForeignKey(x => x.AvatarImageId).OnDelete(DeleteBehavior.SetNull);
         b.Entity<AppUser>().HasIndex(x => x.NormalizedEmail).IsUnique().HasFilter("\"NormalizedEmail\" IS NOT NULL");
         b.Entity<CandidateProfile>().HasKey(x => x.UserId);
         b.Entity<CandidateProfile>().HasOne<AppUser>().WithOne().HasForeignKey<CandidateProfile>(x => x.UserId).OnDelete(DeleteBehavior.Restrict);

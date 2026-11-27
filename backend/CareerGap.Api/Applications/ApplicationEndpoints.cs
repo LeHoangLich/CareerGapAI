@@ -120,26 +120,32 @@ public static partial class ApplicationEndpoints
             ActorUserId = candidateId,
             ChangedAt = now
         });
-        db.Notifications.Add(new NotificationRecord
+        if (await db.Users.AsNoTracking().Where(x => x.Id == candidateId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
         {
-            RecipientUserId = candidateId,
-            NotificationType = "application_submitted",
-            ApplicationId = application.Id,
-            Title = "Đã nộp hồ sơ",
-            Body = $"Đơn ứng tuyển cho vị trí {job.CurrentVersion.Title} đã được ghi nhận.",
-            CreatedAt = now,
-            DeduplicationKey = $"application:{application.Id}:submitted:candidate"
-        });
-        db.Notifications.Add(new NotificationRecord
+            db.Notifications.Add(new NotificationRecord
+            {
+                RecipientUserId = candidateId,
+                NotificationType = "application_submitted",
+                ApplicationId = application.Id,
+                Title = "Đã nộp hồ sơ",
+                Body = $"Đơn ứng tuyển cho vị trí {job.CurrentVersion.Title} đã được ghi nhận.",
+                CreatedAt = now,
+                DeduplicationKey = $"application:{application.Id}:submitted:candidate"
+            });
+        }
+        if (await db.Users.AsNoTracking().Where(x => x.Id == job.Company!.OwnerUserId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
         {
-            RecipientUserId = job.Company!.OwnerUserId,
-            NotificationType = "application_submitted",
-            ApplicationId = application.Id,
-            Title = "Có hồ sơ ứng tuyển mới",
-            Body = $"Có ứng viên nộp hồ sơ vào vị trí {job.CurrentVersion.Title}.",
-            CreatedAt = now,
-            DeduplicationKey = $"application:{application.Id}:submitted:recruiter"
-        });
+            db.Notifications.Add(new NotificationRecord
+            {
+                RecipientUserId = job.Company!.OwnerUserId,
+                NotificationType = "application_submitted",
+                ApplicationId = application.Id,
+                Title = "Có hồ sơ ứng tuyển mới",
+                Body = $"Có ứng viên nộp hồ sơ vào vị trí {job.CurrentVersion.Title}.",
+                CreatedAt = now,
+                DeduplicationKey = $"application:{application.Id}:submitted:recruiter"
+            });
+        }
         try
         {
             await db.SaveChangesAsync(ct);

@@ -1,10 +1,12 @@
 using System.Net.Mail;
 using System.Security.Claims;
+using CareerGap.Api.Ai;
 using CareerGap.Api.Data;
 using CareerGap.Api.Integrations;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace CareerGap.Api.Accounts;
@@ -15,21 +17,45 @@ public sealed record ChangePasswordRequest(string CurrentPassword, string NewPas
 public sealed record ForgotPasswordRequest(string Email);
 public sealed record ResetPasswordRequest(string Email, string Token, string NewPassword);
 public sealed record AccountDeletionPasswordRequest(string? Password);
+public sealed record AccountProfileUpdateRequest(string DisplayName, Guid? AvatarImageId, bool NotifyRecruitment, bool NotifyCommunity);
 
 public static class AccountEndpoints
 {
     public static void MapAccounts(this WebApplication app)
     {
         var localFakeMailbox = (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing")) &&
-            app.Services.GetRequiredService<Microsoft.Extensions.Options.IOptions<EmailOptions>>().Value.Provider == "Fake";
+            app.Services.GetRequiredService<IOptions<EmailOptions>>().Value.Provider == "Fake";
         app.MapGet("/api/auth/csrf", (HttpContext http, IAntiforgery antiforgery) => Results.Ok(new { token = antiforgery.GetAndStoreTokens(http).RequestToken }));
-        app.MapGet("/api/auth/me", (ClaimsPrincipal user) => Results.Ok(new
+        app.MapGet("/api/auth/me", async (ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
         {
-            authenticated = user.Identity?.IsAuthenticated == true,
-            userId = user.FindFirstValue(ClaimTypes.NameIdentifier),
-            email = user.FindFirstValue(ClaimTypes.Email),
-            roles = user.FindAll(ClaimTypes.Role).Select(x => x.Value).ToArray()
-        }));
+            if (user.Identity?.IsAuthenticated != true || !TryUserId(user, out var uid))
+                return Results.Ok(new { authenticated = false, userId = (string?)null, email = (string?)null, roles = Array.Empty<string>() });
+            var profile = await BuildProfileDtoAsync(uid, user.FindAll(ClaimTypes.Role).Select(x => x.Value).ToArray(), db, ct);
+            if (profile is null)
+                return Results.Ok(new { authenticated = false, userId = (string?)null, email = (string?)null, roles = Array.Empty<string>() });
+            return Results.Ok(new
+            {
+                authenticated = true,
+                userId = uid.ToString(),
+                profile.Email,
+                profile.Roles,
+                profile.DisplayName,
+                profile.AvatarImageId,
+                profile.AvatarUrl,
+                profile.EmailConfirmed,
+                profile.LastLoginAt,
+                profile.NotifyRecruitment,
+                profile.NotifyCommunity
+            });
+        });
+        app.MapGet("/api/account/profile", async (ClaimsPrincipal user, AppDb db, CancellationToken ct) =>
+        {
+            if (!TryUserId(user, out var uid)) return Results.Unauthorized();
+            var profile = await BuildProfileDtoAsync(uid, user.FindAll(ClaimTypes.Role).Select(x => x.Value).ToArray(), db, ct);
+            return profile is null ? Results.Unauthorized() : Results.Ok(profile);
+        }).RequireAuthorization();
+        app.MapPut("/api/account/profile", UpdateProfileAsync).RequireAuthorization().RequireRateLimiting("community");
+        app.MapGet("/api/account/ai-quota", GetAiQuotaAsync).RequireAuthorization();
         app.MapPost("/api/auth/register", RegisterAsync).RequireRateLimiting("register");
         app.MapPost("/api/auth/login", async (LoginRequest input, UserManager<AppUser> users, SignInManager<AppUser> signin,
             AccountDeletionService deletions, AppDb db, TimeProvider clock, CancellationToken ct) =>
@@ -48,6 +74,14 @@ public static class AccountEndpoints
             return Results.NoContent();
         }).RequireRateLimiting("login");
         app.MapPost("/api/auth/logout", async (SignInManager<AppUser> signin) => { await signin.SignOutAsync(); return Results.NoContent(); }).RequireAuthorization();
+        app.MapPost("/api/auth/logout-other-devices", async (ClaimsPrincipal principal, UserManager<AppUser> users, SignInManager<AppUser> signin) =>
+        {
+            var account = await users.GetUserAsync(principal);
+            if (account is null || account.AccountStatus != "active") return Results.Problem(statusCode: 401, title: "invalid_session");
+            await users.UpdateSecurityStampAsync(account);
+            await signin.RefreshSignInAsync(account);
+            return Results.NoContent();
+        }).RequireAuthorization().RequireRateLimiting("recovery");
         app.MapPost("/api/auth/password/change", ChangePasswordAsync).RequireAuthorization();
         app.MapPost("/api/auth/password/forgot", ForgotPasswordAsync).RequireRateLimiting("recovery");
         app.MapPost("/api/auth/password/reset", ResetPasswordAsync).RequireRateLimiting("recovery");
@@ -108,7 +142,16 @@ public static class AccountEndpoints
             if (!roleResult.Succeeded && await roles.FindByNameAsync(roleName) is null) return Results.Problem(statusCode: 500, title: "account_setup_failed");
         }
 
-        var account = new AppUser { Id = Guid.NewGuid(), UserName = email, Email = email };
+        var account = new AppUser
+        {
+            Id = Guid.NewGuid(),
+            UserName = email,
+            Email = email,
+            DisplayName = roleName == "Candidate"
+                ? (string.IsNullOrWhiteSpace(input.DisplayName) ? email.Split('@')[0] : input.DisplayName.Trim())
+                : (string.IsNullOrWhiteSpace(input.DisplayName) ? null : input.DisplayName.Trim())
+        };
+        if (account.DisplayName is { Length: > 150 }) return Results.Problem(statusCode: 400, title: "invalid_display_name");
         var created = await users.CreateAsync(account, input.Password);
         if (!created.Succeeded)
         {
@@ -119,9 +162,7 @@ public static class AccountEndpoints
         if (!added.Succeeded) return Results.Problem(statusCode: 500, title: "account_setup_failed");
         if (roleName == "Candidate")
         {
-            var displayName = string.IsNullOrWhiteSpace(input.DisplayName) ? email.Split('@')[0] : input.DisplayName.Trim();
-            if (displayName.Length > 150) return Results.Problem(statusCode: 400, title: "invalid_display_name");
-            db.CandidateProfiles.Add(new CandidateProfile { UserId = account.Id, DisplayName = displayName });
+            db.CandidateProfiles.Add(new CandidateProfile { UserId = account.Id, DisplayName = account.DisplayName! });
             await db.SaveChangesAsync(ct);
         }
         await transaction.CommitAsync(ct);
@@ -190,6 +231,148 @@ public static class AccountEndpoints
         "deletion_not_cancellable" => Results.Problem(statusCode: 409, title: error),
         _ => Results.Problem(statusCode: 409, title: error)
     };
+
+    private sealed record AccountProfileDto(
+        string? Email,
+        string[] Roles,
+        string? DisplayName,
+        Guid? AvatarImageId,
+        string? AvatarUrl,
+        bool EmailConfirmed,
+        DateTimeOffset? LastLoginAt,
+        bool NotifyRecruitment,
+        bool NotifyCommunity);
+
+    private static async Task<AccountProfileDto?> BuildProfileDtoAsync(Guid uid, string[] roles, AppDb db, CancellationToken ct)
+    {
+        var account = await db.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == uid, ct);
+        if (account is null) return null;
+        var candidateName = await db.CandidateProfiles.AsNoTracking().Where(x => x.UserId == uid).Select(x => x.DisplayName).SingleOrDefaultAsync(ct);
+        var community = await db.CommunityProfiles.AsNoTracking().Where(x => x.UserId == uid).Select(x => new { x.DisplayName, x.AvatarId }).SingleOrDefaultAsync(ct);
+        var displayName = !string.IsNullOrWhiteSpace(account.DisplayName) ? account.DisplayName
+            : !string.IsNullOrWhiteSpace(candidateName) ? candidateName
+            : community?.DisplayName;
+        var avatarImageId = account.AvatarImageId ?? community?.AvatarId;
+        var avatarUrl = avatarImageId is { } aid ? $"/api/community/images/{aid}" : null;
+        return new AccountProfileDto(account.Email, roles, displayName, avatarImageId, avatarUrl,
+            account.EmailConfirmed, account.LastLoginAt, account.NotifyRecruitment, account.NotifyCommunity);
+    }
+
+    private static async Task<IResult> UpdateProfileAsync(AccountProfileUpdateRequest input, ClaimsPrincipal principal, AppDb db, TimeProvider clock, CancellationToken ct)
+    {
+        if (!TryUserId(principal, out var uid)) return Results.Unauthorized();
+        var displayName = input.DisplayName?.Trim() ?? "";
+        if (displayName.Length is < 1 or > 150) return Results.Problem(statusCode: 400, title: "invalid_display_name");
+        if (input.AvatarImageId is { } avatarId && !await db.CommunityImages.AnyAsync(x => x.Id == avatarId && x.OwnerId == uid, ct))
+            return Results.Problem(statusCode: 400, title: "community_image_not_owned");
+
+        var now = clock.GetUtcNow();
+        await using var tx = await db.Database.BeginTransactionAsync(ct);
+        var account = await db.Users.FromSqlInterpolated($"SELECT * FROM \"AspNetUsers\" WHERE \"Id\" = {uid} FOR UPDATE").SingleOrDefaultAsync(ct);
+        if (account is null || account.AccountStatus != "active") return Results.Unauthorized();
+
+        account.DisplayName = displayName;
+        account.AvatarImageId = input.AvatarImageId;
+        account.NotifyRecruitment = input.NotifyRecruitment;
+        account.NotifyCommunity = input.NotifyCommunity;
+
+        var candidate = await db.CandidateProfiles.SingleOrDefaultAsync(x => x.UserId == uid, ct);
+        if (candidate is not null)
+        {
+            candidate.DisplayName = displayName;
+            candidate.UpdatedAt = now;
+        }
+        var community = await db.CommunityProfiles.SingleOrDefaultAsync(x => x.UserId == uid, ct);
+        if (community is not null)
+        {
+            community.DisplayName = displayName;
+            community.AvatarId = input.AvatarImageId;
+            community.UpdatedAt = now;
+        }
+
+        await db.SaveChangesAsync(ct);
+        await tx.CommitAsync(ct);
+
+        var roles = principal.FindAll(ClaimTypes.Role).Select(x => x.Value).ToArray();
+        return Results.Ok(new AccountProfileDto(account.Email, roles, account.DisplayName, account.AvatarImageId,
+            account.AvatarImageId is { } aid ? $"/api/community/images/{aid}" : null,
+            account.EmailConfirmed, account.LastLoginAt, account.NotifyRecruitment, account.NotifyCommunity));
+    }
+
+    private static async Task<IResult> GetAiQuotaAsync(ClaimsPrincipal principal, AppDb db, IOptions<AiOptions> options, TimeProvider clock, CancellationToken ct)
+    {
+        if (!TryUserId(principal, out var uid)) return Results.Unauthorized();
+        var opt = options.Value;
+        var now = clock.GetUtcNow();
+        DateTimeOffset start;
+        DateTimeOffset end;
+        if (opt.Provider == "Fake")
+        {
+            start = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+            end = start.AddMonths(1);
+        }
+        else if (DateTimeOffset.TryParse(opt.PeriodStart, out var parsedStart) && DateTimeOffset.TryParse(opt.PeriodEnd, out var parsedEnd))
+        {
+            start = parsedStart.ToUniversalTime();
+            end = parsedEnd.ToUniversalTime();
+        }
+        else
+        {
+            start = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+            end = start.AddMonths(1);
+        }
+
+        var budget = await db.BudgetPeriods.AsNoTracking().SingleOrDefaultAsync(x => x.Service == opt.Provider && x.PeriodStart == start, ct);
+        var activeJobs = await db.AiJobs.CountAsync(x => x.RequestedBy == uid && (x.Status == "queued" || x.Status == "running"), ct);
+        var maxActiveJobs = Math.Clamp(opt.UserMaxActiveJobs, 1, 10);
+
+        decimal usedAmount = 0m;
+        decimal reservedAmount = 0m;
+        int jobsCountInPeriod = 0;
+
+        if (budget is not null)
+        {
+            var reservations = await (from r in db.BudgetReservations.AsNoTracking()
+                join j in db.AiJobs.AsNoTracking() on r.AiJobId equals j.Id
+                where j.RequestedBy == uid && r.BudgetPeriodId == budget.Id
+                select new { r.AiJobId, r.ReservedRemaining, j.Status }).ToListAsync(ct);
+
+            var jobIds = reservations.Select(x => x.AiJobId).ToArray();
+            if (jobIds.Length > 0)
+            {
+                usedAmount = await db.ExternalCallAttempts.AsNoTracking()
+                    .Where(x => jobIds.Contains(x.AiJobId))
+                    .SumAsync(x => x.ActualAmount ?? 0m, ct);
+            }
+            reservedAmount = reservations.Sum(x => x.ReservedRemaining);
+            jobsCountInPeriod = reservations.Count(x => x.Status == "succeeded");
+        }
+
+        var limitAmount = opt.Provider == "Fake" ? opt.FakeUserTestCreditLimit : Math.Min(opt.UserPeriodLimit, opt.MonthlyLimit);
+        var effectiveSystemLimit = budget is null
+            ? (opt.Provider == "Fake" ? 1000m : opt.MonthlyLimit)
+            : (opt.Provider == "Fake" ? budget.LimitAmount : Math.Min(budget.LimitAmount, opt.MonthlyLimit));
+        var systemExhausted = limitAmount <= 0 || (budget is not null && budget.SpentAmount + budget.ReservedAmount >= effectiveSystemLimit);
+        var usedPercent = limitAmount > 0 ? Math.Min(100m, Math.Round((usedAmount + reservedAmount) / limitAmount * 100m, 1)) : 100m;
+
+        return Results.Ok(new
+        {
+            enabled = opt.Enabled,
+            provider = opt.Provider,
+            unit = opt.Provider == "Fake" ? "test_credit" : "usd",
+            planLabel = "Gói Cơ bản",
+            periodStart = start,
+            periodEnd = end,
+            usedAmount,
+            reservedAmount,
+            limitAmount,
+            usedPercent,
+            jobsCountInPeriod,
+            activeJobs,
+            maxActiveJobs,
+            systemExhausted
+        });
+    }
 
     private static bool TryUserId(ClaimsPrincipal user, out Guid userId) =>
         Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out userId);

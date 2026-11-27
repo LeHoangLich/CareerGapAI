@@ -1,4 +1,5 @@
 import { CommunityBadge } from './community';
+import { accountInitials, type AccountSession } from './accountSettings';
 import { useEffect, useState, type ReactNode } from "react";
 import { signInReturnHref } from './jobLinks';
 import { Dialog } from './ui';
@@ -26,13 +27,7 @@ import {
   type Icon,
 } from "@phosphor-icons/react";
 
-type Session = {
-  userId?: string;
-  authenticated: boolean;
-  email?: string;
-  roles: string[];
-  deletionPending?: boolean;
-};
+type Session = AccountSession;
 type NavigationItem = { id: string; label: string; icon: Icon };
 
 function Brand() {
@@ -211,19 +206,27 @@ export function Workspace({
                   aria-current={activeView === 'account' ? 'page' : undefined}
                   className="account-link flex items-center gap-3 rounded-md p-2"
                 >
-                  <span
-                    className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-badge-bg)] text-xs font-semibold text-[var(--color-primary)]"
-                    aria-hidden="true"
-                  >
-                    {session.email?.slice(0, 2).toUpperCase() || "CG"}
-                  </span>
+                  {session.avatarUrl ? (
+                    <img
+                      src={session.avatarUrl}
+                      alt=""
+                      className="size-9 shrink-0 rounded-full object-cover border border-[var(--color-border)]"
+                    />
+                  ) : (
+                    <span
+                      className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-badge-bg)] text-xs font-semibold text-[var(--color-primary)]"
+                      aria-hidden="true"
+                    >
+                      {accountInitials(session.displayName, session.email)}
+                    </span>
+                  )}
                   <span className="min-w-0">
-                    <strong className="block text-xs font-medium">
-                      {recruiter
+                    <strong className="block truncate text-xs font-medium">
+                      {session.displayName?.trim() || (recruiter
                         ? "Nhà tuyển dụng"
                         : candidate
                           ? "Ứng viên"
-                          : "Quản trị viên"}
+                          : "Quản trị viên")}
                     </strong>
                     <small className="block truncate text-[12px]">
                       {session.email}

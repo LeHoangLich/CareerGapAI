@@ -174,13 +174,14 @@ public static class CommunityEndpoints
             if (image is null || !await db.Users.AnyAsync(x => x.Id == image.OwnerId && x.AccountStatus == "active", ct)) return Results.NotFound();
             var own = image.OwnerId == uid;
             var imagePath = "/api/community/images/" + id;
-            var publicAvatar = await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct);
+            var publicAvatar = await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct)
+                || await db.Users.AnyAsync(x => x.AvatarImageId == id && x.AccountStatus == "active", ct);
             var publication = await db.CommunityPosts.AnyAsync(x => (x.ThumbnailId == id || x.Body.Contains(imagePath)) && (x.Status == "published" || http.User.IsInRole("Admin") && x.Status != "draft"), ct);
             if (!own && !publicAvatar && !publication) return Results.NotFound();
             var bytes = await storage.ReadAsync(image.ObjectKey, ct);
             // Recheck after storage I/O: a post may have been hidden or its owner suspended meanwhile.
             if (!await db.CommunityImages.AnyAsync(x => x.Id == id && db.Users.Any(u => u.Id == x.OwnerId && u.AccountStatus == "active") &&
-                (x.OwnerId == uid || db.CommunityProfiles.Any(p => p.AvatarId == id) || db.CommunityPosts.Any(p => (p.ThumbnailId == id || p.Body.Contains(imagePath)) &&
+                (x.OwnerId == uid || db.CommunityProfiles.Any(p => p.AvatarId == id) || db.Users.Any(u => u.AvatarImageId == id && u.AccountStatus == "active") || db.CommunityPosts.Any(p => (p.ThumbnailId == id || p.Body.Contains(imagePath)) &&
                 (p.Status == "published" || http.User.IsInRole("Admin") && p.Status != "draft"))), ct)) return Results.NotFound();
             http.Response.Headers.XContentTypeOptions = "nosniff"; return Results.File(bytes, image.ContentType);
         });
@@ -192,7 +193,7 @@ public static class CommunityEndpoints
             var image = await db.CommunityImages.SingleOrDefaultAsync(x => x.Id == id && x.OwnerId == uid, ct);
             if (image is null) return Results.NotFound();
             var imagePath = "/api/community/images/" + id;
-            if (await db.Companies.AnyAsync(x=>x.LogoImageId==id,ct) || await db.CommunityPosts.AnyAsync(x => x.ThumbnailId == id || x.Body.Contains(imagePath), ct) || await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct)) return Results.Problem(statusCode: 409, title: "community_image_in_use");
+            if (await db.Companies.AnyAsync(x=>x.LogoImageId==id,ct) || await db.CommunityPosts.AnyAsync(x => x.ThumbnailId == id || x.Body.Contains(imagePath), ct) || await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct) || await db.Users.AnyAsync(x => x.AvatarImageId == id, ct)) return Results.Problem(statusCode: 409, title: "community_image_in_use");
             await storage.DeleteAsync(image.ObjectKey, ct); db.CommunityImages.Remove(image); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return Results.NoContent();
         }).RequireAuthorization();
     }

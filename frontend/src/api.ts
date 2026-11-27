@@ -50,6 +50,9 @@ export function errorMessage(code: string, status: number): string {
 
     invalid_or_expired_reset:'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn. Vui lòng yêu cầu liên kết mới.',
     password_policy:'Mật khẩu mới phải có độ dài từ 12 đến 256 ký tự.',
+    current_password_invalid:'Mật khẩu hiện tại không đúng.',
+    invalid_display_name:'Họ tên hiển thị cần từ 1 đến 150 ký tự.',
+    invalid_session:'Phiên đăng nhập không còn hợp lệ. Vui lòng đăng nhập lại.',
     ai_disabled:'AI đang tắt trong môi trường này. Yêu cầu mới chưa được tạo; bạn vẫn có thể xem, tải CV và thao tác thủ công.',
     writing_output_budget_required:'Chưa cấu hình hạn mức đầu ra cho đề xuất viết CV.', writing_output_invalid:'Đề xuất chưa đạt kiểm tra dữ kiện nguồn; CV giữ nguyên.',
     writing_input_limit:'Dữ kiện CV vượt giới hạn soạn thử nghiệm.', writing_facts_required:'CV chưa có đủ dữ kiện nghề nghiệp đã xác nhận trong giới hạn soạn thử nghiệm.', invalid_writing_language:'Chọn tiếng Việt hoặc tiếng Anh cho đề xuất.',

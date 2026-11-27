@@ -14,6 +14,7 @@ import { CandidatePublicResumeManager, PublicResumeBrowser } from './publicResum
 import { FullCvReview } from './fullCvReview';
 import { AdminPanel } from './administration';
 import { PublicHome } from './publicHome';
+import { AccountSettingsPanel, type AccountSession } from './accountSettings';
 import { StaticLoading, Workspace, WorkspaceIntro } from './workspace';
 import { recruiterViews, useWorkspaceNavigation } from './navigation';
 import { PersistentView } from './persistentView';
@@ -23,7 +24,7 @@ import { FileDropzone, MotionRoot, Spinner } from './motion';
 
 const ResumeBuilderPanel = lazy(() => import('./resumeBuilder').then(module => ({ default: module.ResumeBuilderPanel })));
 
-type Session = { authenticated: boolean; userId?: string; email?: string; roles: string[]; deletionPending?: boolean; purgeAfter?: string };
+type Session = AccountSession;
 type DeletionState = { status: string; requestedAt: string; purgeAfter: string };
 type ResumeVersion = { id: string; fileId: string; versionNo: number; documentHash: string; createdAt: string };
 type Resume = { id: string; title: string; rowVersion: number; createdAt: string; updatedAt: string; versions: ResumeVersion[] };
@@ -169,11 +170,6 @@ function RecruiterProfileLookup({ active }: { active: boolean }) {
   const details=profile?.details&&typeof profile.details==='object'?Object.entries(profile.details):[];
   function text(value:unknown,depth=0):string {if(value==null)return '';if(typeof value==='string'||typeof value==='number')return String(value);if(depth>3)return '';if(Array.isArray(value))return value.slice(0,20).map(x=>text(x,depth+1)).filter(Boolean).join(' · ');if(typeof value==='object')return Object.values(value).slice(0,20).map(x=>text(x,depth+1)).filter(Boolean).join(' · ');return '';}
   return <section className="card" id="shared-profile"><h1>Hồ sơ được chia sẻ</h1><p>Chọn ứng viên từ kho CV hoặc mở liên kết hồ sơ ứng viên gửi. Chỉ hiển thị các trường họ cho phép.</p><ValidatedForm onSubmit={e=>{e.preventDefault();if(candidateId)setReloadTick(v=>v+1);}}><label>Ứng viên<select value={candidateId} onChange={e=>{setCandidateId(e.target.value);setProfile(undefined)}} required><option value="">Chọn ứng viên</option>{candidateId&&!items.some(x=>x.candidateId===candidateId)&&<option value={candidateId}>Ứng viên từ liên kết</option>}{items.map(x=><option key={x.candidateId} value={x.candidateId}>{x.displayName}</option>)}</select></label><button type="submit" disabled={busy||!candidateId}>{busy?'Đang tải…':'Xem hồ sơ'}</button></ValidatedForm>{error&&<p role="alert" className="error">{error}</p>}{profile&&<dl>{[...Object.entries(profile).filter(([key,value])=>key!=='details'&&value!==null),...details].map(([key,value])=><React.Fragment key={key}><dt>{labels[key]??'Nội dung chia sẻ'}</dt><dd>{text(value)||'Chưa có nội dung'}</dd></React.Fragment>)}</dl>}</section>;
-}
-
-function PasswordChangePanel() {
-  const [error,setError]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);
-  return <section className="card"><h2>Đổi mật khẩu</h2><ValidatedForm onSubmit={e=>{e.preventDefault();const form=e.currentTarget;const data=new FormData(form);void(async()=>{setBusy(true);setError('');setMessage('');try{await api('/api/auth/password/change',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({currentPassword:data.get('currentPassword'),newPassword:data.get('newPassword')})});form.reset();setMessage('Đã đổi mật khẩu.');}catch(err){setError((err as Error).message)}finally{setBusy(false)}})()}}><label>Mật khẩu hiện tại<input type="password" name="currentPassword" required autoComplete="current-password"/></label><label>Mật khẩu mới<input type="password" name="newPassword" required minLength={12} autoComplete="new-password"/></label><button type="submit" disabled={busy}>{busy?'Đang lưu…':'Đổi mật khẩu'}</button></ValidatedForm>{error&&<p role="alert" className="error">{error}</p>}{message&&<p role="status">{message}</p>}</section>;
 }
 
 function AccountDeletionPanel({ onPending }: { onPending: (purgeAfter: string) => void }) {
@@ -405,8 +401,7 @@ function App() {
         </section>}
         <button type="button" className="secondary" disabled={busy} onClick={() => void action(async () => { setPollCount(c => c + 1); setJob(await api<Job>(`/api/ai/jobs/${job.id}`)); })}>Kiểm tra lại</button>
       </>}</section></div><FullCvReview versionId={selectedResumeVersionId} refreshKey={`${job?.id}-${job?.status}`} parentPolling={!!job && job.resumeVersionId === selectedResumeVersionId && job.schemaVersion === 'cv-fields-v3' && ['queued', 'running'].includes(job.status)}/></PersistentView></> : null}
-      {session.roles.includes('Recruiter') && <><PersistentView active={recruiterViews.includes(activeView)} name={activeView}><section className="card"><h2>Tài khoản nhà tuyển dụng</h2><p>Recruiter được mở file gốc khi ứng viên chủ động công khai hoặc từ snapshot của đơn thuộc tin mình phụ trách.</p></section><RecruiterJobManager activeView={activeView}/></PersistentView><PersistentView active={activeView === 'shared-profile'} name="shared-profile"><RecruiterProfileLookup active={activeView === 'shared-profile'}/></PersistentView></>}{session.roles.includes('Admin')&&<PersistentView active={activeView === 'administration'} name="administration"><AdminPanel/></PersistentView>}<PersistentView active={activeView === 'account'} name="account"><div id="account"><PasswordChangePanel/>
-      {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <AccountDeletionPanel onPending={purgeAfter => setAuthenticated({ authenticated: true, roles: [], deletionPending: true, purgeAfter })}/>}</div></PersistentView>
+      {session.roles.includes('Recruiter') && <><PersistentView active={recruiterViews.includes(activeView)} name={activeView}><section className="card"><h2>Tài khoản nhà tuyển dụng</h2><p>Recruiter được mở file gốc khi ứng viên chủ động công khai hoặc từ snapshot của đơn thuộc tin mình phụ trách.</p></section><RecruiterJobManager activeView={activeView}/></PersistentView><PersistentView active={activeView === 'shared-profile'} name="shared-profile"><RecruiterProfileLookup active={activeView === 'shared-profile'}/></PersistentView></>}{session.roles.includes('Admin')&&<PersistentView active={activeView === 'administration'} name="administration"><AdminPanel/></PersistentView>}<PersistentView active={activeView === 'account'} name="account"><div id="account"><AccountSettingsPanel session={session} onSessionUpdated={patch => setSession(prev => prev ? { ...prev, ...patch } : prev)} deletionSlot={session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? <AccountDeletionPanel onPending={purgeAfter => setAuthenticated({ authenticated: true, roles: [], deletionPending: true, purgeAfter })}/> : undefined}/></div></PersistentView>
 
     </>}
     <footer className="workspace-footer"><span>CareerGap AI<span className="footer-dot" aria-hidden="true">·</span>Hồ sơ rõ ràng. Cơ hội phù hợp.</span><span>AI hỗ trợ. Bạn quyết định.</span></footer>

@@ -5,6 +5,10 @@ namespace CareerGap.Api.Data;
 public sealed class AppUser : IdentityUser<Guid>
 {
     public string AccountStatus { get; set; } = "active";
+    public string? DisplayName { get; set; }
+    public Guid? AvatarImageId { get; set; }
+    public bool NotifyRecruitment { get; set; } = true;
+    public bool NotifyCommunity { get; set; } = true;
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
     public DateTimeOffset? LastLoginAt { get; set; }
 }
