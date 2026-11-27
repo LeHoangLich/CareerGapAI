@@ -1,6 +1,6 @@
-import { CommunityBadge } from './community';
-import { accountInitials, type AccountSession } from './accountSettings';
-import { useEffect, useState, type ReactNode } from "react";
+import { CommunityBadge } from './communityBadge';
+import { accountInitials, type AccountSession } from './accountInitials';
+import { useEffect, useId, useState, type ReactNode } from "react";
 import { signInReturnHref } from './jobLinks';
 import { Dialog } from './ui';
 import { TabIndicator } from './motion';
@@ -31,11 +31,13 @@ type Session = AccountSession;
 type NavigationItem = { id: string; label: string; icon: Icon };
 
 function Brand() {
+  const rawId = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const leftGradId = `cgBrandL-${rawId}`;
+  const rightGradId = `cgBrandR-${rawId}`;
   return (
     <a
       href="#home"
       className="brand flex items-center gap-2.5"
-      aria-label="CareerGap AI — về trang chủ"
     >
       <span
         className="flex h-9 w-12 shrink-0 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-bg)] px-1"
@@ -43,31 +45,31 @@ function Brand() {
       >
         <svg viewBox="36 30 250 156" width="40" height="25" fill="none">
           <defs>
-            <linearGradient id="cgBrandL" x1="50" y1="50" x2="120" y2="180" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#1AA6BD" />
-              <stop offset="55%" stopColor="#107E9F" />
-              <stop offset="100%" stopColor="#084D74" />
+            <linearGradient id={leftGradId} x1="50" y1="50" x2="120" y2="180" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="var(--color-brand-cyan-light)" />
+              <stop offset="55%" stopColor="var(--color-brand-cyan)" />
+              <stop offset="100%" stopColor="var(--color-brand-navy)" />
             </linearGradient>
-            <linearGradient id="cgBrandR" x1="270" y1="50" x2="200" y2="180" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#FCA52E" />
-              <stop offset="60%" stopColor="#EB821D" />
-              <stop offset="100%" stopColor="#D46212" />
+            <linearGradient id={rightGradId} x1="270" y1="50" x2="200" y2="180" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="var(--color-brand-amber-light)" />
+              <stop offset="60%" stopColor="var(--color-brand-amber)" />
+              <stop offset="100%" stopColor="var(--color-brand-amber-dark)" />
             </linearGradient>
           </defs>
-          <circle cx="96" cy="52" r="16" fill="#1AA6BD" />
-          <circle cx="236" cy="52" r="16" fill="#FCA52E" />
-          <path d="M 96 72 C 72 72, 54 90, 42 114 C 53 111, 62 109, 68 108 C 64 138, 76 178, 114 178 C 132 178, 144 170, 152 158 C 142 152, 134 150, 124 152 C 102 156, 92 140, 92 120 C 92 98, 108 86, 128 94 C 134 96, 140 94, 144 88 C 132 76, 114 72, 96 72 Z" fill="url(#cgBrandL)" />
-          <path d="M 236 72 C 266 72, 280 98, 278 128 C 276 160, 252 178, 220 178 C 202 178, 190 170, 180 158 C 190 152, 198 150, 208 152 C 230 156, 240 140, 240 120 C 240 98, 224 86, 204 94 C 198 96, 192 94, 188 88 C 200 76, 218 72, 236 72 Z" fill="url(#cgBrandR)" />
-          <path d="M 144 88 C 130 98, 118 112, 114 126 C 111 135, 121 143, 131 137 C 138 127, 146 114, 155 102 C 159 96, 152 84, 144 88 Z" fill="#EB821D" />
-          <path d="M 188 148 C 202 138, 214 124, 218 110 C 221 101, 211 93, 201 99 C 194 109, 186 122, 177 134 C 173 140, 180 152, 188 148 Z" fill="#084D74" />
-          <path d="M 122 96 C 140 68, 192 68, 212 100 C 216 107, 207 115, 198 110 C 182 92, 150 92, 134 108 C 126 112, 118 103, 122 96 Z" fill="#107E9F" />
-          <path d="M 210 140 C 192 168, 140 168, 120 136 C 116 129, 125 121, 134 126 C 150 144, 182 144, 198 128 C 206 124, 214 133, 210 140 Z" fill="#FCA52E" />
-          <polygon points="166,106.5 168.7,114.3 176.9,114.5 170.4,119.4 172.8,127.3 166,122.6 159.2,127.3 161.6,119.4 155.1,114.5 163.3,114.3" fill="#F58B1B" />
+          <circle cx="96" cy="52" r="16" fill="var(--color-brand-cyan-light)" />
+          <circle cx="236" cy="52" r="16" fill="var(--color-brand-amber-light)" />
+          <path d="M 96 72 C 72 72, 54 90, 42 114 C 53 111, 62 109, 68 108 C 64 138, 76 178, 114 178 C 132 178, 144 170, 152 158 C 142 152, 134 150, 124 152 C 102 156, 92 140, 92 120 C 92 98, 108 86, 128 94 C 134 96, 140 94, 144 88 C 132 76, 114 72, 96 72 Z" fill={`url(#${leftGradId})`} />
+          <path d="M 236 72 C 266 72, 280 98, 278 128 C 276 160, 252 178, 220 178 C 202 178, 190 170, 180 158 C 190 152, 198 150, 208 152 C 230 156, 240 140, 240 120 C 240 98, 224 86, 204 94 C 198 96, 192 94, 188 88 C 200 76, 218 72, 236 72 Z" fill={`url(#${rightGradId})`} />
+          <path d="M 144 88 C 130 98, 118 112, 114 126 C 111 135, 121 143, 131 137 C 138 127, 146 114, 155 102 C 159 96, 152 84, 144 88 Z" fill="var(--color-brand-amber)" />
+          <path d="M 188 148 C 202 138, 214 124, 218 110 C 221 101, 211 93, 201 99 C 194 109, 186 122, 177 134 C 173 140, 180 152, 188 148 Z" fill="var(--color-brand-navy)" />
+          <path d="M 122 96 C 140 68, 192 68, 212 100 C 216 107, 207 115, 198 110 C 182 92, 150 92, 134 108 C 126 112, 118 103, 122 96 Z" fill="var(--color-brand-cyan)" />
+          <path d="M 210 140 C 192 168, 140 168, 120 136 C 116 129, 125 121, 134 126 C 150 144, 182 144, 198 128 C 206 124, 214 133, 210 140 Z" fill="var(--color-brand-amber-light)" />
+          <polygon points="166,106.5 168.7,114.3 176.9,114.5 170.4,119.4 172.8,127.3 166,122.6 159.2,127.3 161.6,119.4 155.1,114.5 163.3,114.3" fill="var(--color-brand-star)" />
         </svg>
       </span>
       <span>
-        CareerGap<span className="ml-1 text-[var(--color-ai-accent)]">AI</span>
-        <small className="brand-caption">HỒ SƠ & CƠ HỘI</small>
+        CareerGap{' '}<span className="text-[var(--color-ai-accent)]">AI</span>{' '}
+        <small className="brand-caption">HỒ SƠ &amp; CƠ HỘI</small>
       </span>
     </a>
   );
@@ -103,7 +105,7 @@ export function Workspace({
   const candidate = session?.roles.includes("Candidate");
   const recruiter = session?.roles.includes("Recruiter");
   const authenticated = session?.authenticated && !session.deletionPending;
-  const isPublicShell = !authenticated && !session?.deletionPending && ['home', 'jobs', 'job', 'community'].includes(activeView);
+  const isPublicShell = !authenticated && !session?.deletionPending && ['home', 'jobs', 'job', 'community', 'access'].includes(activeView);
   const items: NavigationItem[] = session?.deletionPending
     ? []
     : [
@@ -288,15 +290,21 @@ export function Workspace({
                 </div>
               </div>
               <div className="public-topnav-actions">
-                <a
-                  href={signInReturnHref(currentHash)}
-                  className="header-signin hidden items-center gap-1.5 text-xs font-semibold lg:inline-flex"
-                >
-                  Đăng nhập <ArrowUpRight size={15} aria-hidden="true" />
-                </a>
-                <a href="#access" className="btn-primary-link hidden lg:inline-flex">
-                  Bắt đầu miễn phí
-                </a>
+                {activeView !== 'access' ? (
+                  <>
+                    <a
+                      href={signInReturnHref(currentHash)}
+                      className="header-signin hidden items-center gap-1.5 text-xs font-semibold lg:inline-flex"
+                    >
+                      Đăng nhập <ArrowUpRight size={15} aria-hidden="true" />
+                    </a>
+                    <a href="#access" className="btn-primary-link hidden lg:inline-flex">
+                      Bắt đầu miễn phí
+                    </a>
+                  </>
+                ) : (
+                  <span className="badge hidden lg:inline-flex">Chế độ khách</span>
+                )}
                 <button
                   type="button"
                   className="menu-toggle secondary lg:hidden"

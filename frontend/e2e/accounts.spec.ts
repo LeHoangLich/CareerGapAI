@@ -51,10 +51,12 @@ test('candidate registers, controls profile sharing, changes password, and recov
   await expect(page.getByRole('checkbox', { name: 'Tiêu đề', exact: true })).toBeChecked();
 
   await openView(page, 'account');
+  await page.getByRole('tab', { name: 'Bảo mật', exact: true }).click();
   await page.getByLabel('Mật khẩu hiện tại', { exact: true }).fill(initialPassword);
   await page.getByLabel('Mật khẩu mới', { exact: true }).fill(changedPassword);
+  await page.getByLabel('Xác nhận mật khẩu mới', { exact: true }).fill(changedPassword);
   await page.getByRole('button', { name: 'Đổi mật khẩu', exact: true }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Đã đổi mật khẩu.' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Đã đổi mật khẩu thành công.' })).toBeVisible();
   await page.getByRole('button', { name: 'Đăng xuất', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Đăng nhập', exact: true })).toBeVisible();
 

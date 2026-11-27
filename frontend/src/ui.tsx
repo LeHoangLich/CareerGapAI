@@ -38,16 +38,18 @@ export function Alert({ tone = 'info', title, children, actions }: {
   );
 }
 
-export function EmptyState({ icon, title, description, action }: {
+export function EmptyState({ icon, title, description, action, headingLevel = 'h2' }: {
   icon?: ReactNode;
   title: string;
   description?: string;
   action?: ReactNode;
+  headingLevel?: 'h2' | 'h3';
 }) {
+  const Heading = headingLevel;
   return (
     <div className="empty-state">
       {icon}
-      <h3>{title}</h3>
+      <Heading>{title}</Heading>
       {description && <p>{description}</p>}
       {action && <div className="empty-state-action">{action}</div>}
     </div>

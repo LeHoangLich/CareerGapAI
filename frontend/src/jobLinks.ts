@@ -12,6 +12,17 @@ export function jobHref(id: string) {
   return `#job?id=${encodeURIComponent(id.toLowerCase())}`;
 }
 
+export function sharedProfileHref(candidateId: string) {
+  return `#shared-profile?profile=${encodeURIComponent(candidateId)}`;
+}
+
+export function isQuickMatchHash(hash: string): boolean {
+  if (hash.split('?')[0] !== '#jobs') return false;
+  const queryIdx = hash.indexOf('?');
+  if (queryIdx < 0) return false;
+  return new URLSearchParams(hash.slice(queryIdx + 1)).get('quickMatch') === '1';
+}
+
 export function jobIdFromHash(hash: string): string | null {
   if (hash.split('?')[0] !== '#job') return null;
   const id = new URLSearchParams(hash.slice(hash.indexOf('?') + 1)).get('id');

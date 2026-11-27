@@ -62,6 +62,7 @@ function SortableEntry<T extends object>({
   children: ReactNode;
 }) {
   const controls = useDragControls();
+  const headingId = useId();
   return (
     <Reorder.Item
       value={item}
@@ -70,9 +71,9 @@ function SortableEntry<T extends object>({
       transition={MOTION_SPRING}
       className="list-none"
     >
-      <fieldset className="builder-entry">
+      <fieldset className="builder-entry" aria-labelledby={headingId}>
         <div className="builder-entry-header">
-          <legend className="m-0">{legend}</legend>
+          <strong id={headingId} className="m-0 text-xs font-medium text-[var(--color-text-legend)]">{legend}</strong>
           <div className="builder-entry-actions">
             <button
               type="button"

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { api } from './api';
-import { jobHref } from './jobLinks';
+import { jobHref, sharedProfileHref } from './jobLinks';
 import { PairAnalysisButton, PairRecommendations } from './pairMatching';
 import { ResultPlacement } from './resultPlacement';
 import { StaticLoading } from './workspace';
@@ -102,7 +102,7 @@ export function RecruiterKeywordResumeSearch({ jobId, enabled }: { jobId: string
           {item.keywordOverlap.terms.length > 0 && <small>Từ khóa trùng: {item.keywordOverlap.terms.join(', ')}</small>}
           <small>{revisionDiagnosticText(item.confirmedRevisionMatch, 'recruiter')}</small>
         </div><a href={`/api/public/resumes/${item.candidateId}/${item.resumeVersionId}/file`} target="_blank" rel="noreferrer">Mở CV công khai</a>
-        <a href={`/?profile=${item.candidateId}#shared-profile`} target="_blank" rel="noopener noreferrer">Xem hồ sơ được chia sẻ</a>
+        <a href={sharedProfileHref(item.candidateId)} target="_blank" rel="noopener noreferrer">Xem hồ sơ được chia sẻ</a>
       </li>)}</ol> : <p>Không có CV công khai đọc được với từ khóa trùng JD.</p>}
     </>}
   </section>;

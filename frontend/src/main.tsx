@@ -3,26 +3,27 @@ import '@fontsource/geist/500.css';
 import '@fontsource/geist/600.css';
 import './style.css';
 import './community.css';
-import { AnalysisHistory } from './analysisHistory';
-import { Community } from './community';
 import { Dialog, ValidatedForm } from './ui';
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { api, ApiError, refreshCsrf, type PagedResponse } from './api';
 import { PublicJobBrowser, RecruiterJobManager } from './jobs';
 import { CandidatePublicResumeManager, PublicResumeBrowser } from './publicResumes';
-import { FullCvReview } from './fullCvReview';
-import { AdminPanel } from './administration';
 import { PublicHome } from './publicHome';
-import { AccountSettingsPanel, type AccountSession } from './accountSettings';
+import type { AccountSession } from './accountInitials';
 import { StaticLoading, Workspace, WorkspaceIntro } from './workspace';
 import { recruiterViews, useWorkspaceNavigation } from './navigation';
 import { PersistentView } from './persistentView';
-import { jobReturnAfterSignIn, safeReturnAfterSignIn } from './jobLinks';
+import { jobReturnAfterSignIn, safeReturnAfterSignIn, sharedProfileHref } from './jobLinks';
 import { useAiJobPolling } from './useAiJobPolling';
 import { FileDropzone, MotionRoot, Spinner } from './motion';
 
 const ResumeBuilderPanel = lazy(() => import('./resumeBuilder').then(module => ({ default: module.ResumeBuilderPanel })));
+const Community = lazy(() => import('./community').then(module => ({ default: module.Community })));
+const AnalysisHistory = lazy(() => import('./analysisHistory').then(module => ({ default: module.AnalysisHistory })));
+const FullCvReview = lazy(() => import('./fullCvReview').then(module => ({ default: module.FullCvReview })));
+const AdminPanel = lazy(() => import('./administration').then(module => ({ default: module.AdminPanel })));
+const AccountSettingsPanel = lazy(() => import('./accountSettings').then(module => ({ default: module.AccountSettingsPanel })));
 
 type Session = AccountSession;
 type DeletionState = { status: string; requestedAt: string; purgeAfter: string };
@@ -125,8 +126,8 @@ function CandidateProfilePanel() {
   }, []);
   if (!profile) return <section className="card"><h2>Hồ sơ ứng viên</h2><p role="status">Đang tải hồ sơ…</p>{error && <p role="alert" className="error">{error}</p>}</section>;
   const toggle = (key: string, checked: boolean) => setProfile(current => current ? { ...current, sharedFields: checked ? [...new Set([...current.sharedFields, key])] : current.sharedFields.filter(x => x !== key) } : current);
-  const field = (key: keyof Profile, label: string, type = 'text') => <label>{label}<input type={type} required={key === 'displayName'} min={type === 'number' ? 0 : undefined} max={type === 'number' ? 99.99 : undefined} step={type === 'number' ? 0.01 : undefined} value={String(profile[key] ?? '')} onChange={e => { const value = e.currentTarget.value || null; setProfile(current => current ? { ...current, [key]: value } : current); }}/></label>;
-  return <section className="card" id="profile"><h2>Hồ sơ và quyền chia sẻ</h2><p><a href={`/?profile=${profile.userId}#shared-profile`}>Liên kết hồ sơ dành cho nhà tuyển dụng</a> chỉ hiển thị các trường bạn cho phép bên dưới.</p>
+  const field = (key: keyof Profile, label: string, type = 'text') => <label>{label}<input name={String(key)} type={type} required={key === 'displayName'} min={type === 'number' ? 0 : undefined} max={type === 'number' ? 99.99 : undefined} step={type === 'number' ? 0.01 : undefined} value={String(profile[key] ?? '')} onChange={e => { const value = e.currentTarget.value || null; setProfile(current => current ? { ...current, [key]: value } : current); }}/></label>;
+  return <section className="card" id="profile"><h2>Hồ sơ và quyền chia sẻ</h2><p><a href={sharedProfileHref(profile.userId)}>Liên kết hồ sơ dành cho nhà tuyển dụng</a> chỉ hiển thị các trường bạn cho phép bên dưới.</p>
     <ValidatedForm onSubmit={e => { e.preventDefault(); void (async () => { setBusy(true); setError(''); setMessage(''); try {
       const saved = await api<Profile>('/api/profile/me', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({
         rowVersion: profile.rowVersion, displayName: profile.displayName, headline: profile.headline, summary: profile.summary,
@@ -136,11 +137,11 @@ function CandidateProfilePanel() {
       }) }); setProfile(saved); setMessage('Hồ sơ đã được lưu.');
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); } })(); }}>
       <div className="profile-fields">{field('displayName','Tên hiển thị')}{field('headline','Tiêu đề nghề nghiệp')}{field('location','Địa điểm')}{field('desiredRole','Vị trí mong muốn')}
-        <label>Hình thức làm việc mong muốn<select value={profile.preferredWorkMode ?? 'unspecified'} onChange={e => setProfile(current => current ? { ...current, preferredWorkMode: e.target.value } : current)}><option value="unspecified">Chưa xác định</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option></select></label>
+        <label>Hình thức làm việc mong muốn<select name="preferredWorkMode" value={profile.preferredWorkMode ?? 'unspecified'} onChange={e => setProfile(current => current ? { ...current, preferredWorkMode: e.target.value } : current)}><option value="unspecified">Chưa xác định</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option></select></label>
         {field('contactEmail','Email liên hệ','email')}{field('contactPhone','Số điện thoại')}{field('experienceYears','Số năm kinh nghiệm','number')}</div>
-      <label>Tóm tắt<textarea value={profile.summary ?? ''} maxLength={4000} onChange={e => setProfile({ ...profile, summary: e.target.value || null })}/></label>
-      <label>Kỹ năng, ngăn cách bằng dấu phẩy<input value={skillsText} onChange={e => setSkillsText(e.target.value)}/></label>
-      <fieldset><legend>Trường nhà tuyển dụng được xem</legend>{[['display_name','Tên hiển thị'],['headline','Tiêu đề'],['summary','Tóm tắt'],['location','Địa điểm'],['desired_role','Vị trí mong muốn'],['preferred_work_mode','Hình thức làm việc'],['contact_email','Email liên hệ'],['contact_phone','Điện thoại'],['experience_years','Số năm kinh nghiệm'],['skills','Kỹ năng']].map(([key,label]) => <label className="check-option" key={key}><input type="checkbox" checked={profile.sharedFields.includes(key)} onChange={e => toggle(key,e.target.checked)}/>{label}</label>)}</fieldset>
+      <label>Tóm tắt<textarea name="summary" value={profile.summary ?? ''} maxLength={4000} onChange={e => setProfile({ ...profile, summary: e.target.value || null })}/></label>
+      <label>Kỹ năng, ngăn cách bằng dấu phẩy<input name="skills" value={skillsText} onChange={e => setSkillsText(e.target.value)}/></label>
+      <fieldset><legend>Trường nhà tuyển dụng được xem</legend>{[['display_name','Tên hiển thị'],['headline','Tiêu đề'],['summary','Tóm tắt'],['location','Địa điểm'],['desired_role','Vị trí mong muốn'],['preferred_work_mode','Hình thức làm việc'],['contact_email','Email liên hệ'],['contact_phone','Điện thoại'],['experience_years','Số năm kinh nghiệm'],['skills','Kỹ năng']].map(([key,label]) => <label className="check-option" key={key}><input name={`share_${key}`} type="checkbox" checked={profile.sharedFields.includes(key)} onChange={e => toggle(key,e.target.checked)}/>{label}</label>)}</fieldset>
       <button type="submit" disabled={busy}>{busy ? 'Đang lưu…' : 'Lưu hồ sơ'}</button>
     </ValidatedForm>{error && <p role="alert" className="error">{error}</p>}{message && <p role="status">{message}</p>}
   </section>;
@@ -169,7 +170,7 @@ function RecruiterProfileLookup({ active }: { active: boolean }) {
   },[active,candidateId,reloadTick]);
   const details=profile?.details&&typeof profile.details==='object'?Object.entries(profile.details):[];
   function text(value:unknown,depth=0):string {if(value==null)return '';if(typeof value==='string'||typeof value==='number')return String(value);if(depth>3)return '';if(Array.isArray(value))return value.slice(0,20).map(x=>text(x,depth+1)).filter(Boolean).join(' · ');if(typeof value==='object')return Object.values(value).slice(0,20).map(x=>text(x,depth+1)).filter(Boolean).join(' · ');return '';}
-  return <section className="card" id="shared-profile"><h1>Hồ sơ được chia sẻ</h1><p>Chọn ứng viên từ kho CV hoặc mở liên kết hồ sơ ứng viên gửi. Chỉ hiển thị các trường họ cho phép.</p><ValidatedForm onSubmit={e=>{e.preventDefault();if(candidateId)setReloadTick(v=>v+1);}}><label>Ứng viên<select value={candidateId} onChange={e=>{setCandidateId(e.target.value);setProfile(undefined)}} required><option value="">Chọn ứng viên</option>{candidateId&&!items.some(x=>x.candidateId===candidateId)&&<option value={candidateId}>Ứng viên từ liên kết</option>}{items.map(x=><option key={x.candidateId} value={x.candidateId}>{x.displayName}</option>)}</select></label><button type="submit" disabled={busy||!candidateId}>{busy?'Đang tải…':'Xem hồ sơ'}</button></ValidatedForm>{error&&<p role="alert" className="error">{error}</p>}{profile&&<dl>{[...Object.entries(profile).filter(([key,value])=>key!=='details'&&value!==null),...details].map(([key,value])=><React.Fragment key={key}><dt>{labels[key]??'Nội dung chia sẻ'}</dt><dd>{text(value)||'Chưa có nội dung'}</dd></React.Fragment>)}</dl>}</section>;
+  return <section className="card" id="shared-profile"><h1>Hồ sơ được chia sẻ</h1><p>Chọn ứng viên từ kho CV hoặc mở liên kết hồ sơ ứng viên gửi. Chỉ hiển thị các trường họ cho phép.</p><ValidatedForm onSubmit={e=>{e.preventDefault();if(candidateId)setReloadTick(v=>v+1);}}><label>Ứng viên<select name="candidateId" value={candidateId} onChange={e=>{setCandidateId(e.target.value);setProfile(undefined)}} required><option value="">Chọn ứng viên</option>{candidateId&&!items.some(x=>x.candidateId===candidateId)&&<option value={candidateId}>Ứng viên từ liên kết</option>}{items.map(x=><option key={x.candidateId} value={x.candidateId}>{x.displayName}</option>)}</select></label><button type="submit" disabled={busy||!candidateId}>{busy?'Đang tải…':'Xem hồ sơ'}</button></ValidatedForm>{error&&<p role="alert" className="error">{error}</p>}{profile&&<dl>{[...Object.entries(profile).filter(([key,value])=>key!=='details'&&value!==null),...details].map(([key,value])=><React.Fragment key={key}><dt>{labels[key]??'Nội dung chia sẻ'}</dt><dd>{text(value)||'Chưa có nội dung'}</dd></React.Fragment>)}</dl>}</section>;
 }
 
 function AccountDeletionPanel({ onPending }: { onPending: (purgeAfter: string) => void }) {
@@ -213,7 +214,7 @@ function AccountDeletionPendingPanel({ session, onAuthenticated }: { session: Se
         onAuthenticated(await api<Session>('/api/auth/me'));
       } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
     })(); }}>
-      <label>Mật khẩu hiện tại<input type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e => setPassword(e.target.value)}/></label>
+      <label>Mật khẩu hiện tại<input name="password" type="password" autoComplete="current-password" required maxLength={256} value={password} onChange={e => setPassword(e.target.value)}/></label>
       <button type="submit" disabled={busy}>{busy ? 'Đang hủy…' : 'Hủy yêu cầu xóa'}</button>
     </ValidatedForm>
     <button type="button" className="secondary" disabled={busy} onClick={() => void (async () => { try { sessionStorage.removeItem(`careergap:builder-recovery:${session.userId}`); await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); onAuthenticated({ authenticated: false, roles: [] }); } catch (err) { setError((err as Error).message); } })()}>Đăng xuất</button>
@@ -303,14 +304,15 @@ function App() {
     const destination = safeReturnAfterSignIn(window.location.hash, next) ?? jobReturnAfterSignIn(window.location.hash);
     if (destination && next.authenticated && !next.deletionPending) window.location.hash = destination;
   };
+  const isPublicImmediateView = ['home', 'jobs', 'job', 'community'].includes(activeView);
   return <Workspace key={session?.deletionPending ? 'deletion-pending' : session?.authenticated ? session.userId ?? 'authenticated' : 'guest'} session={session} activeView={activeView} busy={busy} onLogout={() => void action(async () => { sessionStorage.removeItem(`careergap:builder-recovery:${session?.userId}`); await api('/api/auth/logout', { method: 'POST' }); await refreshCsrf(); setSession({ authenticated: false, roles: [] }); setResumes([]); setSelectedResumeId(''); setSelectedResumeVersionId(''); setJob(undefined); setRevisions([]); pending.current = undefined; window.location.hash = 'access'; })}>
     {error && <p role="alert" className="error">{error}</p>}
-    {!loading && !session?.deletionPending && <PersistentView active={activeView === 'home'} name="home"><PublicHome active={activeView === 'home'}/></PersistentView>}
-    {!loading && !session?.deletionPending && <PersistentView active={activeView === 'community'} name="community"><Community session={session} active={activeView === 'community'}/></PersistentView>}
-    {!loading && !session?.deletionPending && <PublicJobBrowser session={session} activeView={activeView} intro={<WorkspaceIntro recruiter={session?.roles.includes('Recruiter')}/>}/>}
+    {!session?.deletionPending && <PersistentView active={activeView === 'home'} name="home"><PublicHome active={activeView === 'home'}/></PersistentView>}
+    {!session?.deletionPending && <PersistentView active={activeView === 'community'} name="community"><Suspense fallback={<StaticLoading label="Đang mở cộng đồng…"/>}><Community session={session} active={activeView === 'community'}/></Suspense></PersistentView>}
+    {!session?.deletionPending && <PublicJobBrowser session={session} activeView={activeView} intro={<WorkspaceIntro recruiter={session?.roles.includes('Recruiter')}/>}/>}
     {!loading && !session?.deletionPending && <PersistentView active={activeView === 'public-resumes'} name="public-resumes"><PublicResumeBrowser session={session}/></PersistentView>}
-    {loading ? <StaticLoading label="Đang kết nối…"/> : !session?.authenticated ? <PersistentView active={activeView === 'access'} name="access"><AccountAccess onAuthenticated={setAuthenticated}/></PersistentView> : session.deletionPending ? <PersistentView active name="account"><AccountDeletionPendingPanel session={session} onAuthenticated={setAuthenticated}/></PersistentView> : <>
-      {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <PersistentView active={activeView === 'analysis-history'} name="analysis-history"><AnalysisHistory active={activeView === 'analysis-history'}/></PersistentView>}
+    {loading ? (!isPublicImmediateView ? <StaticLoading label="Đang kết nối…"/> : null) : !session?.authenticated ? <PersistentView active={activeView === 'access'} name="access"><AccountAccess onAuthenticated={setAuthenticated}/></PersistentView> : session.deletionPending ? <PersistentView active name="account"><AccountDeletionPendingPanel session={session} onAuthenticated={setAuthenticated}/></PersistentView> : <>
+      {session.roles.some(role => role === 'Candidate' || role === 'Recruiter') && <PersistentView active={activeView === 'analysis-history'} name="analysis-history"><Suspense fallback={<StaticLoading label="Đang mở lịch sử phân tích…"/>}><AnalysisHistory active={activeView === 'analysis-history'}/></Suspense></PersistentView>}
       {session.roles.includes('Candidate') ? <><PersistentView active={activeView === 'profile'} name="profile"><CandidateProfilePanel/></PersistentView><PersistentView active={activeView === 'cv-builder'} name="cv-builder"><Suspense fallback={<section className="card"><StaticLoading label="Đang mở trình tạo CV…"/></section>}><ResumeBuilderPanel ownerId={session.userId ?? ''} resumes={resumes} onResumesUpdated={next => { setPage(1); setResumes(next); }} pdfProbe={import.meta.env.DEV ? <section className="card probe"><div><h2>Kiểm tra PDF tiếng Việt</h2><p>Xuất tài liệu mẫu để kiểm tra dấu, phân trang và khả năng chọn/copy văn bản.</p></div><button type="button" disabled={busy} className="secondary" onClick={() => void action(async () => { const { downloadProbe } = await import('./pdfProbe'); await downloadProbe(); })}>Xuất PDF mẫu</button></section> : undefined}/></Suspense></PersistentView><PersistentView active={activeView === 'private-resumes'} name="private-resumes"><div className="resume-workspace-grid"><section className="card" id="private-resumes"><h2>CV riêng của bạn</h2><p>PDF có văn bản hoặc DOCX, tối đa 4 MB. Mỗi CV có thể giữ nhiều phiên bản; file cũ không bị ghi đè và chỉ chính bạn được tải.</p>
         <ValidatedForm onSubmit={e => { e.preventDefault(); const form = e.currentTarget; const data = new FormData(form); void action(async () => {
           const path = selectedResumeId ? `/api/resumes/${selectedResumeId}/versions` : '/api/resumes';
@@ -335,7 +337,7 @@ function App() {
           {editingResumeId === r.id && <ValidatedForm className="resume-rename" onSubmit={e => { e.preventDefault(); void action(async () => {
             const saved = await api<{ id: string; title: string; rowVersion: number }> (`/api/resumes/${r.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rowVersion: r.rowVersion, title: resumeTitleDraft }) });
             setResumes(current => current.map(item => item.id === saved.id ? { ...item, title: saved.title, rowVersion: saved.rowVersion } : item)); window.dispatchEvent(new Event('resume-list-updated')); setEditingResumeId(undefined);
-          }); }}><label>Tên CV<input value={resumeTitleDraft} maxLength={200} required onChange={e => setResumeTitleDraft(e.target.value)}/></label><button type="submit" disabled={busy}>Lưu tên</button><button type="button" className="secondary" onClick={() => setEditingResumeId(undefined)}>Hủy</button></ValidatedForm>}
+          }); }}><label>Tên CV<input name="resumeTitle" value={resumeTitleDraft} maxLength={200} required onChange={e => setResumeTitleDraft(e.target.value)}/></label><button type="submit" disabled={busy}>Lưu tên</button><button type="button" className="secondary" onClick={() => setEditingResumeId(undefined)}>Hủy</button></ValidatedForm>}
           <div className="resume-version-list">{r.versions.map(version => <div className="resume-version row" key={version.id}>
             <label className="resume-version-choice"><input type="radio" name="resume-version" checked={selectedResumeVersionId === version.id} onChange={() => setSelectedResumeVersionId(version.id)}/><span><strong>Phiên bản {version.versionNo}</strong><small>{new Date(version.createdAt).toLocaleString('vi-VN')}</small></span></label>
             <div className="row"><a href={`/api/files/${version.fileId}`}>Tải file</a><button type="button" disabled={busy} onClick={() => void action(async () => {
@@ -377,7 +379,7 @@ function App() {
               </label>)}
               {!latestRevision.structuredData.skills.length && <p>Không có kỹ năng trích xuất để chọn.</p>}
             </fieldset>
-            <label>Kỹ năng bạn tự xác nhận (mỗi dòng một kỹ năng)<textarea value={userStatementSkills} maxLength={2200}
+            <label>Kỹ năng bạn tự xác nhận (mỗi dòng một kỹ năng)<textarea name="userStatementSkills" value={userStatementSkills} maxLength={2200}
               onChange={e => setUserStatementSkills(e.target.value)}/></label>
             <button type="button" disabled={busy} onClick={() => void action(async () => {
               const additions = userStatementSkills.split(/\r?\n/).map(name => name.trim()).filter(Boolean);
@@ -400,8 +402,8 @@ function App() {
           {revisionMessage && <p role="status">{revisionMessage}</p>}
         </section>}
         <button type="button" className="secondary" disabled={busy} onClick={() => void action(async () => { setPollCount(c => c + 1); setJob(await api<Job>(`/api/ai/jobs/${job.id}`)); })}>Kiểm tra lại</button>
-      </>}</section></div><FullCvReview versionId={selectedResumeVersionId} refreshKey={`${job?.id}-${job?.status}`} parentPolling={!!job && job.resumeVersionId === selectedResumeVersionId && job.schemaVersion === 'cv-fields-v3' && ['queued', 'running'].includes(job.status)}/></PersistentView></> : null}
-      {session.roles.includes('Recruiter') && <><PersistentView active={recruiterViews.includes(activeView)} name={activeView}><section className="card"><h2>Tài khoản nhà tuyển dụng</h2><p>Recruiter được mở file gốc khi ứng viên chủ động công khai hoặc từ snapshot của đơn thuộc tin mình phụ trách.</p></section><RecruiterJobManager activeView={activeView}/></PersistentView><PersistentView active={activeView === 'shared-profile'} name="shared-profile"><RecruiterProfileLookup active={activeView === 'shared-profile'}/></PersistentView></>}{session.roles.includes('Admin')&&<PersistentView active={activeView === 'administration'} name="administration"><AdminPanel/></PersistentView>}<PersistentView active={activeView === 'account'} name="account"><div id="account"><AccountSettingsPanel session={session} onSessionUpdated={patch => setSession(prev => prev ? { ...prev, ...patch } : prev)} deletionSlot={session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? <AccountDeletionPanel onPending={purgeAfter => setAuthenticated({ authenticated: true, roles: [], deletionPending: true, purgeAfter })}/> : undefined}/></div></PersistentView>
+      </>}</section></div><Suspense fallback={<StaticLoading label="Đang tải bản rà soát CV…"/>}><FullCvReview versionId={selectedResumeVersionId} refreshKey={`${job?.id}-${job?.status}`} parentPolling={!!job && job.resumeVersionId === selectedResumeVersionId && job.schemaVersion === 'cv-fields-v3' && ['queued', 'running'].includes(job.status)}/></Suspense></PersistentView></> : null}
+      {session.roles.includes('Recruiter') && <><PersistentView active={recruiterViews.includes(activeView)} name={activeView}><section className="card"><h2>Tài khoản nhà tuyển dụng</h2><p>Recruiter được mở file gốc khi ứng viên chủ động công khai hoặc từ snapshot của đơn thuộc tin mình phụ trách.</p></section><RecruiterJobManager activeView={activeView}/></PersistentView><PersistentView active={activeView === 'shared-profile'} name="shared-profile"><RecruiterProfileLookup active={activeView === 'shared-profile'}/></PersistentView></>}{session.roles.includes('Admin')&&<PersistentView active={activeView === 'administration'} name="administration"><Suspense fallback={<StaticLoading label="Đang mở trang quản trị…"/>}><AdminPanel/></Suspense></PersistentView>}<PersistentView active={activeView === 'account'} name="account"><div id="account"><Suspense fallback={<StaticLoading label="Đang mở cài đặt tài khoản…"/>}><AccountSettingsPanel session={session} onSessionUpdated={patch => setSession(prev => prev ? { ...prev, ...patch } : prev)} deletionSlot={session.roles.some(role => role === 'Candidate' || role === 'Recruiter') ? <AccountDeletionPanel onPending={purgeAfter => setAuthenticated({ authenticated: true, roles: [], deletionPending: true, purgeAfter })}/> : undefined}/></Suspense></div></PersistentView>
 
     </>}
     <footer className="workspace-footer"><span>CareerGap AI<span className="footer-dot" aria-hidden="true">·</span>Hồ sơ rõ ràng. Cơ hội phù hợp.</span><span>AI hỗ trợ. Bạn quyết định.</span></footer>

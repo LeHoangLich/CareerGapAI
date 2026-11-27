@@ -2,22 +2,8 @@ import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Eye, EyeSlash, ArrowUpRight, CheckCircle, ShieldCheck, Sparkle, UserCircle, WarningCircle } from '@phosphor-icons/react';
 import { api } from './api';
 import { Alert, Dialog, ValidatedForm } from './ui';
-
-export type AccountSession = {
-  authenticated: boolean;
-  userId?: string;
-  email?: string;
-  roles: string[];
-  displayName?: string | null;
-  avatarImageId?: string | null;
-  avatarUrl?: string | null;
-  emailConfirmed?: boolean;
-  lastLoginAt?: string | null;
-  notifyRecruitment?: boolean;
-  notifyCommunity?: boolean;
-  deletionPending?: boolean;
-  purgeAfter?: string;
-};
+import { accountInitials, type AccountSession } from './accountInitials';
+export { accountInitials, type AccountSession };
 
 type AccountTab = 'general' | 'quota' | 'security';
 
@@ -47,19 +33,6 @@ type PublicResumeSelection = {
   publishedAt: string;
   redactionVerifiedAt: string | null;
 };
-
-export function accountInitials(displayName?: string | null, email?: string | null): string {
-  const source = (displayName ?? '').trim();
-  if (source.length > 0) {
-    const parts = source.split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return source.slice(0, 2).toUpperCase();
-  }
-  const mail = (email ?? '').trim();
-  return mail ? mail.slice(0, 2).toUpperCase() : 'CG';
-}
 
 export function quotaSeverity(usedPercent: number, exhausted = false): 'normal' | 'warning' | 'danger' {
   const remaining = 100 - usedPercent;
@@ -197,6 +170,7 @@ export function AccountSettingsPanel({
   const [forgotOpen, setForgotOpen] = useState(false);
   const [forgotBusy, setForgotBusy] = useState(false);
   const [forgotStatus, setForgotStatus] = useState('');
+  const [forgotError, setForgotError] = useState('');
 
   const [logoutOthersOpen, setLogoutOthersOpen] = useState(false);
   const [logoutOthersBusy, setLogoutOthersBusy] = useState(false);
@@ -488,7 +462,7 @@ export function AccountSettingsPanel({
                     </span>
                   </div>
                   {isRecruiter && !session.emailConfirmed && (
-                    <a href="#business-identity" className="account-inline-link">
+                    <a href="#recruiter-company" className="account-inline-link">
                       Xác minh email doanh nghiệp <ArrowUpRight size={14} aria-hidden="true" />
                     </a>
                   )}
@@ -579,7 +553,7 @@ export function AccountSettingsPanel({
                         {publicResumeBusy ? 'Đang tắt…' : 'Tắt công khai'}
                       </button>
                     )}
-                    <a href="#public-resumes" className="account-inline-link">
+                    <a href="#private-resumes" className="account-inline-link">
                       Chọn CV công khai <ArrowUpRight size={14} aria-hidden="true" />
                     </a>
                   </div>
@@ -761,6 +735,7 @@ export function AccountSettingsPanel({
                   className="link-button"
                   onClick={() => {
                     setForgotStatus('');
+                    setForgotError('');
                     setForgotOpen(true);
                   }}
                 >
@@ -807,10 +782,10 @@ export function AccountSettingsPanel({
             </div>
             {logoutOthersStatus && <p role="status" className="mt-4">{logoutOthersStatus}</p>}
           </section>
-
-          {deletionSlot}
         </div>
       )}
+
+      {deletionSlot && <div className="mt-6">{deletionSlot}</div>}
 
       <Dialog
         open={forgotOpen}
@@ -821,6 +796,7 @@ export function AccountSettingsPanel({
         <p>
           Hệ thống sẽ gửi hướng dẫn đặt lại mật khẩu tới email đang đăng nhập: <strong>{session.email}</strong>.
         </p>
+        {forgotError && <p role="alert" className="error">{forgotError}</p>}
         {forgotStatus && <p role="status">{forgotStatus}</p>}
         <div className="dialog-actions">
           <button type="button" className="secondary" onClick={() => setForgotOpen(false)} disabled={forgotBusy}>
@@ -832,6 +808,8 @@ export function AccountSettingsPanel({
             onClick={() => {
               void (async () => {
                 setForgotBusy(true);
+                setForgotError('');
+                setForgotStatus('');
                 try {
                   await api('/api/auth/password/forgot', {
                     method: 'POST',
@@ -840,7 +818,7 @@ export function AccountSettingsPanel({
                   });
                   setForgotStatus('Đã gửi yêu cầu khôi phục mật khẩu tới email của bạn.');
                 } catch (err) {
-                  setForgotStatus((err as Error).message);
+                  setForgotError((err as Error).message);
                 } finally {
                   setForgotBusy(false);
                 }

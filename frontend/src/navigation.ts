@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export type WorkspaceView = 'home' | 'analysis-history' | 'community' | 'jobs' | 'job' | 'applications' | 'application' | 'notifications' | 'private-resumes' | 'cv-builder' | 'profile'
   | 'recruiter-company' | 'recruiter-applicants' | 'public-resumes' | 'account' | 'access' | 'recruiter-jobs' | 'shared-profile' | 'administration';
@@ -53,8 +53,15 @@ export function useWorkspaceNavigation(session: NavigationSession | undefined, l
     window.addEventListener('hashchange', update);
     return () => window.removeEventListener('hashchange', update);
   }, []);
+  const previousView = useRef<WorkspaceView | null>(null);
   useLayoutEffect(() => {
     if (loading) return;
+    if (previousView.current === null) {
+      previousView.current = view;
+      return;
+    }
+    if (previousView.current === view) return;
+    previousView.current = view;
     const frame = requestAnimationFrame(() => {
       document.getElementById('main-content')?.focus({ preventScroll: true });
       window.scrollTo(0, 0);

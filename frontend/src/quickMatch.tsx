@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from './api';
+import { isQuickMatchHash } from './jobLinks';
 import { careerContextLabels, PairDetails, type Pair } from './pairMatching';
 import { useViewActive } from './persistentView';
 import { ValidatedForm } from './ui';
@@ -10,7 +11,7 @@ type PublicJobOption = { id: string; version: { id: string; title: string }; com
 
 export function QuickMatchPanel({ resumes, preselectedJob, defaultOpen = false }: { resumes: Resume[]; preselectedJob?: PublicJobOption; defaultOpen?: boolean }) {
   const active = useViewActive();
-  const [open, setOpen] = useState(defaultOpen || !!preselectedJob);
+  const [open, setOpen] = useState(() => defaultOpen || !!preselectedJob || isQuickMatchHash(window.location.hash));
   const [cvSource, setCvSource] = useState<'existing' | 'paste'>('existing');
   const [resumeVersionId, setResumeVersionId] = useState('');
   const [cvText, setCvText] = useState('');
@@ -40,6 +41,15 @@ export function QuickMatchPanel({ resumes, preselectedJob, defaultOpen = false }
   useEffect(() => {
     if (!resumeVersionId && versions.length > 0) setResumeVersionId(versions[0].id);
   }, [resumeVersionId, versions]);
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      if (isQuickMatchHash(window.location.hash)) setOpen(true);
+    };
+    syncFromHash();
+    window.addEventListener('hashchange', syncFromHash);
+    return () => window.removeEventListener('hashchange', syncFromHash);
+  }, []);
 
   useEffect(() => {
     if (!preselectedJob) return;

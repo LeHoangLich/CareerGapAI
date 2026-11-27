@@ -2,9 +2,10 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from './api';
 import { Alert, ConfirmDialog, Dialog, EmptyState, PageHeader, Pagination, StaticLoading, ValidatedForm } from './ui';
 import { CommunityMarkdown } from './communityMarkdown';
-import { Bell, Briefcase, BookmarkSimple, ChatCircle, Heart, MagnifyingGlass, PencilSimple, Users, ArrowLeft, Flag, FileText, CheckCircle, CloudArrowUp, Code, CodeBlock, ImageSquare, LinkSimple, ListBullets, ListNumbers, Quotes, TextB, TextH, TextItalic, TextStrikethrough, TextUnderline, X } from '@phosphor-icons/react';
+import { Bell, BookmarkSimple, ChatCircle, Heart, MagnifyingGlass, PencilSimple, Users, ArrowLeft, Flag, FileText, CheckCircle, CloudArrowUp, Code, CodeBlock, ImageSquare, LinkSimple, ListBullets, ListNumbers, Quotes, TextB, TextH, TextItalic, TextStrikethrough, TextUnderline, X } from '@phosphor-icons/react';
 import { Spinner } from './motion';
-import {useRecruitmentLive,recruitmentConnection,recruitmentDisconnected,recruitmentSignal} from './recruitmentLive';
+import { CommunityBadge } from './communityBadge';
+export { CommunityBadge };
 import {communityTagMatch} from './communityTagMatch';
 import {CommunityTagFilter} from './communityTagFilter';
 import {communityFeedParams,communityFilterTags,communityFeedPage,communityFeedHref,communityTagHref} from './communityFeedFilters';
@@ -27,23 +28,6 @@ const date = (value: string) => new Date(value).toLocaleString('vi-VN', {dateSty
 const json = (value: unknown) => ({ headers:{'Content-Type':'application/json'}, body:JSON.stringify(value) });
 const link = (key: string, value: string) => `#community?${key}=${encodeURIComponent(value)}`;
 function Avatar({ person }: { person: { avatarId: string | null; displayName?: string; author?: string } }) { return person.avatarId ? <img className="social-avatar" src={`${base}/images/${person.avatarId}`} alt="" loading="lazy"/> : <span className="social-avatar" aria-hidden="true">{(person.displayName ?? person.author ?? '?').slice(0,1).toUpperCase()}</span>; }
-
-export function CommunityBadge({ session }: { session?: Session }) {
-  const [unread,setUnread]=useState(0);const recruitment=useRecruitmentLive(session?.userId);
-  useEffect(()=>{
-    if(!session?.authenticated || session.deletionPending || !session.userId) return;
-    const uid=session.userId;recruitmentConnection(uid,'connecting');
-    let stream:EventSource|undefined;let disposed=false;let initialized=false;let lastCommunity='';
-    const update=(event:MessageEvent<string>)=>{if(disposed)return;try {const value=JSON.parse(event.data) as {unread:number;posts:unknown;comments:unknown;count:unknown;members:unknown;recruitment:unknown};if(Number.isSafeInteger(value.unread)&&value.unread>=0)setUnread(value.unread);recruitmentSignal(uid,value.recruitment);const community=JSON.stringify([value.unread,value.posts,value.comments,value.count,value.members]);if(initialized&&community!==lastCommunity)window.dispatchEvent(new CustomEvent('community:update'));lastCommunity=community;initialized=true;}catch{/* Keep the last valid frame during reconnects. */}};
-    const connect=()=>{if(disposed)return;stream?.close();recruitmentConnection(uid,'connecting');stream=new EventSource(`${base}/events`);stream.onerror=()=>{if(!disposed)recruitmentConnection(uid,'reconnecting')};stream.addEventListener('update',update as EventListener)};
-    const offline=()=>{stream?.close();recruitmentConnection(uid,'reconnecting')};
-    window.addEventListener('online',connect);window.addEventListener('offline',offline);
-    if(navigator.onLine)connect();else offline();
-    return()=>{disposed=true;window.removeEventListener('online',connect);window.removeEventListener('offline',offline);stream?.close();recruitmentDisconnected(uid)};
-  },[session?.authenticated,session?.userId,session?.deletionPending]);
-  const liveLabel=recruitment.connection==='connected'?'Cập nhật trực tiếp':recruitment.connection==='reconnecting'?'Đang kết nối lại':'Đang kết nối';
-  return session?.authenticated&&!session.deletionPending?<div className="social-live-status" role="status" aria-atomic="true"><a href="#community?tab=notifications" className="badge social-count" aria-label={`Cộng đồng: ${unread} thông báo chưa đọc`} title="Thông báo cộng đồng"><Bell size={17} aria-hidden="true"/>{unread>0&&<span aria-hidden="true">{unread>99?'99+':unread}</span>}</a><a href="#notifications" className="badge social-count" aria-label={`Tuyển dụng: ${recruitment.unread} thông báo chưa đọc`} title={`Thông báo tuyển dụng · ${liveLabel}`}><Briefcase size={17} aria-hidden="true"/>{recruitment.unread>0&&<span aria-hidden="true">{recruitment.unread>99?'99+':recruitment.unread}</span>}</a></div>:null;
-}
 
 export function Community({ session, active }: {session?:Session;active:boolean}) {
   const [route,setRoute]=useState(()=>new URLSearchParams(location.hash.split('?')[1]??''));
@@ -94,19 +78,19 @@ export function Community({ session, active }: {session?:Session;active:boolean}
       })}
     </nav>
     <div className="social-layout"><section className="social-main" aria-label="Nội dung cộng đồng">
-      {busy&&<StaticLoading message="Đang tải hoặc lưu…"/>}
       {error&&<Alert tone="error">{error}</Alert>}{message&&<Alert tone="success">{message}</Alert>}
       {tab==='notifications'?signed?<CommunityNotifications onError={setError}/>:<LoginPrompt/>:tab==='moderation'?admin?<CommunityModeration onError={setError} onChanged={()=>void load()}/>:<LoginPrompt/>:postId?<>{post?<>
         <a className="social-back" href="#community"><ArrowLeft size={16} aria-hidden="true"/>Về cộng đồng</a>
         <PostCard post={post} detail viewer={session?.userId} admin={admin} busy={busy} onToggle={toggle} onEdit={compose} onReport={()=>signed?setReportTarget({postId:post.id}):location.hash=signInReturnHref(location.hash)} onState={(action,reason)=>act(()=>api(`${base}/posts/${post.id}/state`,{method:'POST',...json({action,reason,rowVersion:post.rowVersion})}),'Đã cập nhật trạng thái bài viết.')}/>
         {post.status==='published'&&<Comments postId={post.id} viewer={session?.userId} admin={admin} ensureProfile={needProfile} onError={setError} onReport={commentId=>setReportTarget({postId:post.id,commentId})}/>}
-      </>:!busy&&!error&&<EmptyState title="Không tìm thấy bài viết."/>}</>:<>
+      </>:busy?<StaticLoading message="Đang tải hoặc lưu…"/>:!error&&<EmptyState title="Không tìm thấy bài viết."/>}</>:<>
         {person&&<section className="card social-person"><Avatar person={person}/><div><h2>{person.displayName}</h2><p>@{person.handle}</p><p>{person.bio}</p><p>{person.followers} người theo dõi · {person.following} đang theo dõi · {person.posts} bài viết</p><Connections person={person}/></div>{person.userId!==session?.userId&&<button type="button" className="secondary" disabled={busy} onClick={()=>{if(needProfile())void act(async()=>{await api(`${base}/profiles/${person.userId}/follow`,{method:person.isFollowing?'DELETE':'PUT'});setPerson(await api<Profile>(`${base}/profiles/${person.userId}`));},person.isFollowing?'Đã bỏ theo dõi.':'Đã theo dõi.')}}>{person.isFollowing?'Bỏ theo dõi':'Theo dõi'}</button>}</section>}
         {person&&<CareerCard career={person.career} visible={person.showCareer} own={person.userId===session?.userId}/>} 
         {!['following','saved','mine'].includes(tab)||signed?<>
-          <ValidatedForm className="social-filters" onSubmit={e=>{e.preventDefault();location.hash=communityFeedHref(route,{q,page:1})}}><label>Tìm bài viết<input value={q} list="community-tags" maxLength={120} onChange={e=>setQ(e.target.value)} placeholder="Từ khóa, kinh nghiệm…"/></label><datalist id="community-tags">{suggestions.map(t=><option key={t} value={t}/>)}</datalist><label>Chủ đề<select value={category} onChange={e=>{location.hash=communityFeedHref(route,{category:e.target.value,page:1})}}><option value="">Tất cả chủ đề</option>{Object.entries(categories).map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label><label>Sắp xếp<select value={sort} onChange={e=>{location.hash=communityFeedHref(route,{sort:e.target.value,page:1})}}><option value="newest">Mới nhất</option><option value="trending">Nhiều tương tác</option><option value="views">Nhiều lượt xem</option></select></label><button type="submit" disabled={busy}><MagnifyingGlass size={17} aria-hidden="true"/>Tìm</button></ValidatedForm>
-          {trendingSearches.length>0&&<div className="chip-row social-trending-searches" aria-label="Từ khóa được tìm nhiều"><small>Tìm nhiều:</small>{trendingSearches.map(item=><button key={item.term} type="button" className="secondary" disabled={busy} onClick={()=>{setQ(item.term);location.hash=communityFeedHref(route,{q:item.term,page:1})}}>{item.term} ({item.count})</button>)}</div>}
-          <CommunityTagFilter tags={communityFilterTags(route)} disabled={busy} onChange={tags=>{location.hash=communityFeedHref(route,{tags,page:1})}}/>
+          <ValidatedForm className="social-filters" onSubmit={e=>{e.preventDefault();location.hash=communityFeedHref(route,{q,page:1})}}><label>Tìm bài viết<input name="q" value={q} list="community-tags" maxLength={120} onChange={e=>setQ(e.target.value)} placeholder="Từ khóa, kinh nghiệm…"/></label><datalist id="community-tags">{suggestions.map(t=><option key={t} value={t}/>)}</datalist><label>Chủ đề<select name="category" value={category} onChange={e=>{location.hash=communityFeedHref(route,{category:e.target.value,page:1})}}><option value="">Tất cả chủ đề</option>{Object.entries(categories).map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label><label>Sắp xếp<select name="sort" value={sort} onChange={e=>{location.hash=communityFeedHref(route,{sort:e.target.value,page:1})}}><option value="newest">Mới nhất</option><option value="trending">Nhiều tương tác</option><option value="views">Nhiều lượt xem</option></select></label><button type="submit" disabled={busy}><MagnifyingGlass size={17} aria-hidden="true"/>Tìm</button></ValidatedForm>
+          {trendingSearches.length>0&&<div className="chip-row social-trending-searches" role="group" aria-label="Từ khóa được tìm nhiều"><small>Tìm nhiều:</small>{trendingSearches.map(item=><button key={item.term} type="button" className="secondary" disabled={busy} onClick={()=>{setQ(item.term);location.hash=communityFeedHref(route,{q:item.term,page:1})}}>{item.term} ({item.count})</button>)}</div>}
+          <CommunityTagFilter active={active} tags={communityFilterTags(route)} disabled={busy} onChange={tags=>{location.hash=communityFeedHref(route,{tags,page:1})}}/>
+          {busy&&!feed&&<StaticLoading message="Đang tải hoặc lưu…"/>}
           {feed?.items.map(p=><PostCard key={p.id} post={p} selectedTags={communityFilterTags(route)} viewer={session?.userId} admin={admin} busy={busy} onToggle={toggle} onEdit={compose} onReport={()=>signed?setReportTarget({postId:p.id}):location.hash=signInReturnHref(location.hash)} onState={(action,reason)=>act(()=>api(`${base}/posts/${p.id}/state`,{method:'POST',...json({action,reason,rowVersion:p.rowVersion})}),'Đã cập nhật trạng thái bài viết.')}/>)}
           {!busy&&feed?.items.length===0&&<EmptyState icon={<Users size={32} aria-hidden="true"/>} title={tab==='following'?'Chưa có bài viết trong feed theo dõi':'Chưa có bài viết'} description={tab==='following'?'Tìm và theo dõi thành viên để xem bài của họ tại đây.':'Thử chủ đề khác hoặc bắt đầu chia sẻ trải nghiệm của bạn.'}/>}
           {feed&&<Pagination page={page} totalItems={feed.total} pageSize={12} busy={busy} ariaLabel="Phân trang cộng đồng" onPageChange={nextPage=>{location.hash=communityFeedHref(route,{page:nextPage})}}/>}
@@ -117,7 +101,7 @@ export function Community({ session, active }: {session?:Session;active:boolean}
       <section className="card">
         {signed?<div className="social-identity" style={{borderTop:0,marginTop:0,paddingTop:0}}>{mine?<><Avatar person={mine}/><a href={link('person',mine.userId)}><strong>{mine.displayName}</strong><small>@{mine.handle}</small></a><button type="button" className="link-button" onClick={()=>setEditProfile(true)}>Sửa hồ sơ cộng đồng</button></>:profileReady&&<><p>Tạo hồ sơ cộng đồng riêng để viết bài và kết nối.</p><button type="button" className="secondary" onClick={()=>setEditProfile(true)}>Tạo hồ sơ cộng đồng</button></>}</div>:<p className="hint" style={{margin:0}}>Bạn có thể đọc bài đã duyệt. <a href={signInReturnHref(location.hash)}>Đăng nhập</a> để tương tác.</p>}
       </section>
-      <People onError={setError}/><section className="card"><h3>Chia sẻ có trách nhiệm</h3><p>Viết từ trải nghiệm thật, tôn trọng người khác và giữ kín thông tin cá nhân trong CV.</p><p>Bài mới và nội dung sửa được quản trị viên duyệt trước khi công khai.</p></section></aside></div>
+      <People active={active} onError={setError}/><section className="card"><h2>Chia sẻ có trách nhiệm</h2><p>Viết từ trải nghiệm thật, tôn trọng người khác và giữ kín thông tin cá nhân trong CV.</p><p>Bài mới và nội dung sửa được quản trị viên duyệt trước khi công khai.</p></section></aside></div>
     <Dialog className="community-post-dialog" open={editor!==undefined} title={editor?'Chỉnh sửa bài viết':'Chia sẻ trải nghiệm'} busy={busy} onClose={()=>setEditor(undefined)}><PostEditor key={editor?.id??'new'} initial={editor??null} onSaving={setBusy} onCancel={()=>setEditor(undefined)} onSaved={p=>{setEditor(undefined);setMessage(p.status==='pending'?'Đã gửi bài chờ admin duyệt.':'Đã lưu bản nháp.');location.hash=link('tab','mine').slice(1);void load();}}/></Dialog>
     <Dialog open={editProfile} title={mine?'Hồ sơ cộng đồng':'Tạo hồ sơ cộng đồng'} busy={busy} onClose={()=>setEditProfile(false)}><ProfileEditor initial={mine} canShareCareer={!!canAuthor&&!admin} onSaving={setBusy} onSaved={p=>{setMine(p);setPerson(current=>current?.userId===p.userId?p:current);setEditProfile(false);setMessage('Đã lưu hồ sơ cộng đồng công khai.')}}/></Dialog>
     <Dialog open={!!reportTarget} title="Báo cáo nội dung cộng đồng" busy={busy} onClose={()=>setReportTarget(null)}><ValidatedForm onSubmit={e=>{e.preventDefault();void act(async()=>{await api(`${base}/reports`,{method:'POST',...json({...reportTarget,reason:reportReason})});setReportTarget(null);setReportReason('');},'Đã gửi báo cáo tới quản trị viên.')}}><label>Lý do báo cáo<textarea required minLength={3} maxLength={1000} value={reportReason} onChange={e=>setReportReason(e.target.value)}/></label><button type="submit" disabled={busy}>Gửi báo cáo</button></ValidatedForm></Dialog>
@@ -138,10 +122,10 @@ function PostCard({post:p,detail=false,moderating=false,selectedTags=[],viewer,a
     <ConfirmDialog open={confirmDelete} title="Xóa bài viết" message="Chuyển bài viết này vào thùng rác?" confirmLabel="Xóa bài" danger busy={busy} onClose={()=>setConfirmDelete(false)} onConfirm={async ()=>{setConfirmDelete(false);await onState('delete');}}/>
   </article>;
 }
-function People({onError}:{onError:(s:string)=>void}){
+function People({active,onError}:{active:boolean;onError:(s:string)=>void}){
   const [q,setQ]=useState('');const [people,setPeople]=useState<Person[]>([]);
-  useEffect(()=>{let disposed=false;const timer=setTimeout(()=>{void api<Person[]>(`${base}/people?q=${encodeURIComponent(q)}`).then(x=>{if(!disposed)setPeople(x)}).catch(e=>{if(!disposed)onError((e as Error).message)});},300);return()=>{disposed=true;clearTimeout(timer)};},[q,onError]);
-  return <section className="card social-people"><h3>Kết nối đồng nghiệp</h3><label>Tìm thành viên<input maxLength={80} value={q} onChange={e=>setQ(e.target.value)} placeholder="Tên hoặc @handle"/></label>{people.map(p=><a className="social-author" key={p.userId} href={link('person',p.userId)}><Avatar person={p}/><span><strong>{p.displayName}</strong><small>@{p.handle}</small></span></a>)}{people.length===0&&<p className="hint">Chưa có thành viên phù hợp.</p>}</section>
+  useEffect(()=>{if(!active)return;let disposed=false;const timer=setTimeout(()=>{void api<Person[]>(`${base}/people?q=${encodeURIComponent(q)}`).then(x=>{if(!disposed)setPeople(x)}).catch(e=>{if(!disposed)onError((e as Error).message)});},300);return()=>{disposed=true;clearTimeout(timer)};},[active,q,onError]);
+  return <section className="card social-people"><h2>Kết nối đồng nghiệp</h2><label>Tìm thành viên<input name="memberQuery" maxLength={80} value={q} onChange={e=>setQ(e.target.value)} placeholder="Tên hoặc @handle"/></label>{people.map(p=><a className="social-author" key={p.userId} href={link('person',p.userId)}><Avatar person={p}/><span><strong>{p.displayName}</strong><small>@{p.handle}</small></span></a>)}{people.length===0&&<p className="hint">Chưa có thành viên phù hợp.</p>}</section>
 }
 function Connections({person}:{person:Profile}){
   const [open,setOpen]=useState(false);const [direction,setDirection]=useState('followers');const [page,setPage]=useState(1);const [value,setValue]=useState<{items:Person[];total:number}>();const [error,setError]=useState('');
@@ -276,7 +260,7 @@ function ProfileEditor({initial,canShareCareer,onSaved,onSaving}:{initial:Profil
 function MentionSuggestions({text,onPick}:{text:string;onPick:(handle:string)=>void}){
   const term=text.match(/(?:^|\s)@([a-z0-9_]{0,23})$/i)?.[1];const [people,setPeople]=useState<Person[]>([]);
   useEffect(()=>{if(term===undefined)return;let disposed=false;const timer=setTimeout(()=>{void api<Person[]>(`${base}/people?q=${encodeURIComponent(term)}`).then(x=>{if(!disposed)setPeople(x)}).catch(()=>{});},200);return()=>{disposed=true;clearTimeout(timer)};},[term]);
-  return term!==undefined?<div className="social-mention-options" aria-label="Gợi ý nhắc tên">{people.slice(0,5).map(p=><button type="button" className="secondary" key={p.userId} onClick={()=>onPick(p.handle)}>@{p.handle} · {p.displayName}</button>)}</div>:null;
+  return term!==undefined?<div className="social-mention-options" role="group" aria-label="Gợi ý nhắc tên">{people.slice(0,5).map(p=><button type="button" className="secondary" key={p.userId} onClick={()=>onPick(p.handle)}>@{p.handle} · {p.displayName}</button>)}</div>:null;
 }
 function PostEditor({
   initial,

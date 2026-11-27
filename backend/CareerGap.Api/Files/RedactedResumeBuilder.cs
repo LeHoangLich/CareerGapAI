@@ -11,13 +11,16 @@ public sealed class RedactedResumeBuilder
 {
     public const string MethodVersion = "text-only-docx-contact-scrub-v1";
     private static readonly Regex Url = new(
-        @"(?ix)\b(?:https?://|www\.|mailto:)[^\s<>]+|\b(?:linkedin|github|gitlab|behance|portfolio)\.com(?:/[^\s<>]*)?|\b[a-z0-9-]+\.(?:com|net|org|io|vn|dev|edu|gov|co)(?:/[^\s<>]*)?",
+        @"(?ix)\b(?:https?\s*:\s*//|www\.|mailto:)[^\s<>]+|\b(?:linkedin|github|gitlab|behance|portfolio|facebook|fb)\.com(?:/[^\s<>]*)?|\b(?:zalo\.me|t\.me)(?:/[^\s<>]*)?|\b(?:[a-z0-9-]+\.)+(?:com\.vn|edu\.vn|org\.vn|net\.vn|gov\.vn|github\.io|gitlab\.io|vercel\.app|netlify\.app|pages\.dev|com|net|org|io|vn|dev|edu|gov|co|me|ai|app|tech|info)(?:/[^\s<>]*)?",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex Email = new(
         @"(?ix)\b[a-z0-9.!#$%&'*+/=?^_`{|}~-]+\s*(?:@|\[at\]|\(at\)|\sat\s)\s*[a-z0-9-]+(?:\s*(?:\.|\[dot\]|\(dot\)|\sdot\s)\s*[a-z0-9-]+)*\b",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SocialHandle = new(
+        @"(?ix)\b(?:zalo|telegram|skype|whatsapp)\s*[:/-]\s*@?[a-z0-9_.-]{3,40}\b",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex Phone = new(
-        @"(?<![\p{L}\d])(?:\+|00)?(?:\d[\s().-]*){8,15}(?!\d)",
+        @"(?<![\p{L}\d])(?:\+|00)?(?:\d[\s\u00A0().-]*){8,15}(?!\d)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex Whitespace = new(@"[\t\x0B\f ]{2,}", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private const string Mask = "[đã ẩn liên hệ]";
@@ -85,9 +88,11 @@ public sealed class RedactedResumeBuilder
     {
         var cleaned = Email.Replace(text, Mask);
         cleaned = Url.Replace(cleaned, Mask);
+        cleaned = SocialHandle.Replace(cleaned, Mask);
         cleaned = Phone.Replace(cleaned, Mask);
         return Whitespace.Replace(cleaned, " ").Trim();
     }
 
-    private static bool ContainsContact(string text) => Url.IsMatch(text) || Email.IsMatch(text) || Phone.IsMatch(text);
+    private static bool ContainsContact(string text) =>
+        Url.IsMatch(text) || Email.IsMatch(text) || SocialHandle.IsMatch(text) || Phone.IsMatch(text);
 }

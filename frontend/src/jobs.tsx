@@ -7,12 +7,12 @@ import { salaryLabel, salaryPayload, salaryPeriods } from './salary';
 import { Alert, ConfirmDialog, Dialog, EmptyState, Pagination, StaticLoading, ValidatedForm } from './ui';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, ApiError, type PagedResponse } from './api';
-import { jobHref, jobIdFromHash, jobShareUrl, jobSignInHref } from './jobLinks';
+import { isQuickMatchHash, jobHref, jobIdFromHash, jobShareUrl, jobSignInHref, sharedProfileHref, signInReturnHref } from './jobLinks';
 import { coverLetterLimit, normalizeCoverLetter } from './coverLetter';
 import { RecruiterKeywordResumeSearch } from './matching';
 import { JobDiscoveryWorkspace } from './jobDiscoveryWorkspace';
 import { PairAnalysisButton, PairRecommendations } from './pairMatching';
-import { ReportButton } from './administration';
+import { ReportButton } from './reportButton';
 import { Briefcase, MagnifyingGlass, MapPin, SlidersHorizontal, ArrowRight } from '@phosphor-icons/react';
 import { PersistentView } from './persistentView';
 import type { WorkspaceView } from './navigation';
@@ -90,7 +90,7 @@ function ShareJobLink({ jobId }: { jobId: string }) {
   const [message,setMessage]=useState('');
   const url=jobShareUrl(jobId,window.location.href);
   return <section className="job-share" aria-label="Chia sẻ việc làm">
-    <label>Liên kết chia sẻ việc làm<input readOnly value={url} onFocus={event=>event.currentTarget.select()}/></label>
+    <label>Liên kết chia sẻ việc làm<input name="shareUrl" readOnly value={url} onFocus={event=>event.currentTarget.select()}/></label>
     <button type="button" className="secondary" onClick={()=>{
       if(!navigator.clipboard){setMessage('Hãy chọn liên kết và sao chép thủ công.');return;}
       void navigator.clipboard.writeText(url).then(()=>setMessage('Đã sao chép liên kết.'),()=>setMessage('Hãy chọn liên kết và sao chép thủ công.'));
@@ -114,7 +114,7 @@ function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, res
   const resumeVersions = resumes.flatMap(resume => resume.versions.map(item => ({ ...item, resumeTitle: resume.title })));
   return <article className="job-card" data-job-id={job.id}>
     <div className="job-title-row"><div className="job-identity"><CompanyLogo name={job.company.name} url={job.company.logoUrl}/><div>{detail?<h1>{version.title}</h1>:<h3><a href={jobHref(job.id)}>{version.title}</a></h3>}<p className="company-name">{job.company.name}</p></div></div><span className={`job-status ${job.status}`}>{job.status === 'published' ? job.acceptingApplications ? 'Đang nhận hồ sơ' : job.remainingSlots === 0 ? 'Đã đủ hồ sơ' : 'Đã hết hạn' : 'Đã đóng'}</span></div>
-    {!!job.tags?.length&&<div className="row job-tags" aria-label="Tag tin tuyển dụng">{job.tags.map(tag=><span className="badge" key={tag}>{tag}</span>)}</div>}
+    {!!job.tags?.length&&<div className="row job-tags" role="group" aria-label="Tag tin tuyển dụng">{job.tags.map(tag=><span className="badge" key={tag}>{tag}</span>)}</div>}
     <div className="job-meta"><span><MapPin size={14} aria-hidden="true"/>{version.location || job.company.location || 'Chưa có địa điểm'}</span><span>{employmentLabels[version.employmentType] ?? version.employmentType}</span><span>{workModeLabels[version.workMode] ?? version.workMode}</span><span>{version.industry || 'Chưa phân ngành'}</span><span>{version.experienceMin ?? '—'}–{version.experienceMax ?? '—'} năm</span><span>{(job.viewCount ?? 0).toLocaleString('vi-VN')} lượt xem</span></div>
     <p className="job-salary"><strong>{salaryLabel(version)}</strong></p>
     {detail&&job.publishedAt&&<small>Đăng ngày {new Date(job.publishedAt).toLocaleDateString('vi-VN')}</small>}
@@ -149,6 +149,7 @@ function JobCard({ job, candidate, reportable = false, saved, onToggleSaved, res
 
 export function PublicJobBrowser({ session, activeView, intro }: { session?: Session; activeView: WorkspaceView; intro?: ReactNode }) {
   const [detailId,setDetailId]=useState(()=>jobIdFromHash(window.location.hash));
+  const [quickMatchHint,setQuickMatchHint]=useState(()=>isQuickMatchHash(window.location.hash));
   const [detailRetry,setDetailRetry]=useState(0);
   const [detail,setDetail]=useState<{id:string;job?:Job;application?:Application;saved:boolean;error?:string;missing?:boolean}>();
   const [savingJobId,setSavingJobId]=useState<string>();
@@ -180,6 +181,7 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
     const update=()=>{
       if(window.location.hash==='#main-content')return;
       setDetailId(jobIdFromHash(window.location.hash));
+      setQuickMatchHint(isQuickMatchHash(window.location.hash));
       if(window.location.hash.startsWith('#jobs?')){
         const parsed=parseJobsHash(window.location.hash);
         if(parsed){
@@ -215,6 +217,8 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
     return()=>{document.title=previous;};
   },[activeView,currentDetail?.job]);
 
+  const isCandidateJobView = ['jobs', 'job', 'applications'].includes(activeView);
+
   const refreshSaved = useCallback(async () => {
     if (!candidate) { setSaved([]); return; }
     try { setSaved((await api<Page<Saved>>('/api/saved-jobs?page=1&pageSize=50')).items); }
@@ -222,15 +226,19 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
   }, [candidate]);
 
   useEffect(() => {
+    if (activeView !== 'jobs') return;
     let active = true;
     setBusy(true); setError('');
     api<Page<Job>>(`/api/jobs?${toQuery(appliedFilters, page)}`).then(value => { if (active) setResults(value); })
       .catch(e => { if (active) setError((e as Error).message); })
       .finally(() => { if (active) setBusy(false); });
     return () => { active = false; };
-  }, [appliedFilters, page]);
+  }, [activeView, appliedFilters, page]);
 
-  useEffect(() => { void refreshSaved(); }, [refreshSaved]);
+  useEffect(() => {
+    if (!candidate || !isCandidateJobView) return;
+    void refreshSaved();
+  }, [candidate, isCandidateJobView, refreshSaved]);
   const refreshApplicationData = useCallback(async () => {
     if (!session?.authenticated) { setResumes([]); setApplications([]); return; }
     setApplicationDataState('loading');
@@ -253,11 +261,12 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
     } catch (e) { setApplicationDataState('error'); setError((e as Error).message); }
   }, [candidate, session?.authenticated]);
   useEffect(() => {
+    if (!session?.authenticated || !isCandidateJobView) return;
     const refresh = () => { void refreshApplicationData(); };
     refresh();
     window.addEventListener('resume-list-updated', refresh);
     return () => window.removeEventListener('resume-list-updated', refresh);
-  }, [refreshApplicationData]);
+  }, [isCandidateJobView, refreshApplicationData, session?.authenticated]);
   const savedIds = useMemo(() => new Set(saved.map(x => x.job.id)), [saved]);
   const activeApplications = useMemo(() => new Map(applications.filter(x => activeApplicationStatuses.includes(x.status)).map(x => [x.jobId, x])), [applications]);
   async function toggleSaved(job: Job, isSaved=savedIds.has(job.id)) {
@@ -313,10 +322,22 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
   }
   const items = results?.items ?? [];
   const jobResults = <>
+    {!candidate && quickMatchHint && (
+      <Alert
+        tone="info"
+        title="Đối chiếu nhanh CV & JD"
+        actions={!session?.authenticated ? <a className="button-link" href={signInReturnHref(window.location.hash)}>Đăng nhập ứng viên</a> : undefined}
+      >
+        {!session?.authenticated
+          ? 'Đăng nhập bằng tài khoản Ứng viên để dán hoặc chọn CV và đối chiếu trực tiếp với JD bất kỳ.'
+          : 'Công cụ Đối chiếu nhanh CV & JD dành riêng cho vai trò Ứng viên.'}
+      </Alert>
+    )}
     {error && <Alert tone="error">{error}</Alert>}
     {applicationMessage && <Alert tone="success">{applicationMessage}</Alert>}
     {busy && <StaticLoading label="Đang tìm tin…"/>}
     {!busy && !items.length && !error && <EmptyState icon={<Briefcase size={28} aria-hidden="true"/>} title="Chưa có tin công khai phù hợp." description="Thử thay đổi từ khóa hoặc mở rộng bộ lọc để tìm cơ hội khác."/>}
+    {items.length > 0 && <h2 className="sr-only">Danh sách tin tuyển dụng</h2>}
     <div className="job-list">{items.map(job => <JobCard key={job.id} coverLetter={coverLettersByJob[job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} job={job} candidate={candidate} reportable={session?.roles.includes('Recruiter')} saved={savedIds.has(job.id)} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(job.id)} selectedVersionId={selectedVersionByJob[job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === job.id}/>)}</div>
     {results && <Pagination page={page} totalItems={results.total} pageSize={results.pageSize} busy={busy} ariaLabel="Phân trang việc làm" onPageChange={nextPage => { setPage(nextPage); const nextHash = buildJobsHash(appliedFilters, nextPage); if (window.location.hash !== nextHash) window.location.hash = nextHash; }}/>}
     {candidate && saved.length > 0 && <details className="saved-jobs"><summary>Việc đã lưu ({saved.length})</summary><div className="job-list">{saved.map(x => <JobCard key={x.job.id} coverLetter={coverLettersByJob[x.job.id]??''} onCoverLetter={(jobId,value)=>setCoverLettersByJob(current=>({...current,[jobId]:value}))} job={x.job} candidate={true} saved={true} onToggleSaved={jobToSave => void toggleSaved(jobToSave)} resumes={resumes} application={activeApplications.get(x.job.id)} selectedVersionId={selectedVersionByJob[x.job.id]} onSelectVersion={(jobId, versionId) => setSelectedVersionByJob(current => ({ ...current, [jobId]: versionId }))} onApply={jobToApply => void apply(jobToApply)} applying={applyingJobId === x.job.id}/>)}</div></details>}
@@ -335,22 +356,22 @@ export function PublicJobBrowser({ session, activeView, intro }: { session?: Ses
       const nextHash = buildJobsHash(next, 1);
       if (window.location.hash !== nextHash) window.location.hash = nextHash;
     }}>
-      <label>Từ khóa<input value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} maxLength={120} placeholder="Vị trí hoặc công ty bạn quan tâm"/></label>
-      <label>Địa điểm<LocationInput value={filters.location} onChange={location=>setFilters({...filters,location})} placeholder="Tỉnh, thành phố"/></label>
+      <label>Từ khóa<input name="q" value={filters.q} onChange={e => setFilters({ ...filters, q: e.target.value })} maxLength={120} placeholder="Vị trí hoặc công ty bạn quan tâm"/></label>
+      <label>Địa điểm<LocationInput name="location" value={filters.location} onChange={location=>setFilters({...filters,location})} placeholder="Tỉnh, thành phố"/></label>
       <button type="submit" disabled={busy}><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc</button>
       <details className="advanced-job-filters" ref={advancedFilters}>
         <summary><SlidersHorizontal size={16} aria-hidden="true"/>Bộ lọc nâng cao<span className="filter-count">{[appliedFilters.tags, appliedFilters.skill, appliedFilters.industry, appliedFilters.workMode, appliedFilters.employmentType, appliedFilters.experienceYears].filter(value => value.trim()).length} đang áp dụng</span></summary>
         <div className="advanced-filter-grid">
-      <JobTagPicker label="Chọn tag để lọc việc làm" tags={filters.tags?filters.tags.split(','):[]} onChange={tags=>setFilters({...filters,tags:tags.join(',')})}/><label>Cách khớp tag<select value={filters.tagMode} onChange={e=>setFilters({...filters,tagMode:e.target.value})}><option value="all">Khớp tất cả tag</option><option value="any">Khớp ít nhất một tag</option></select></label>
-      <label>Kỹ năng<input value={filters.skill} onChange={e => setFilters({ ...filters, skill: e.target.value })} maxLength={100} placeholder="Ví dụ: PostgreSQL"/></label>
-      <label>Ngành<input value={filters.industry} onChange={e => setFilters({ ...filters, industry: e.target.value })} maxLength={100} placeholder="Tất cả ngành nghề"/></label>
-      <label>Hình thức<select value={filters.workMode} onChange={e => setFilters({ ...filters, workMode: e.target.value })}><option value="">Tất cả</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option><option value="unspecified">Chưa xác định</option></select></label>
-      <label>Loại công việc<select value={filters.employmentType} onChange={e => setFilters({ ...filters, employmentType: e.target.value })}><option value="">Tất cả</option><option value="full_time">Toàn thời gian</option><option value="part_time">Bán thời gian</option><option value="contract">Hợp đồng</option><option value="internship">Thực tập</option><option value="temporary">Tạm thời</option></select></label>
-      <label>Kinh nghiệm của bạn (năm)<input type="number" min="0" max="99.99" step="0.01" value={filters.experienceYears} onChange={e => setFilters({ ...filters, experienceYears: e.target.value })}/></label>
+      <JobTagPicker label="Chọn tag để lọc việc làm" tags={filters.tags?filters.tags.split(','):[]} onChange={tags=>setFilters({...filters,tags:tags.join(',')})}/><label>Cách khớp tag<select name="tagMode" value={filters.tagMode} onChange={e=>setFilters({...filters,tagMode:e.target.value})}><option value="all">Khớp tất cả tag</option><option value="any">Khớp ít nhất một tag</option></select></label>
+      <label>Kỹ năng<input name="skill" value={filters.skill} onChange={e => setFilters({ ...filters, skill: e.target.value })} maxLength={100} placeholder="Ví dụ: PostgreSQL"/></label>
+      <label>Ngành<input name="industry" value={filters.industry} onChange={e => setFilters({ ...filters, industry: e.target.value })} maxLength={100} placeholder="Tất cả ngành nghề"/></label>
+      <label>Hình thức<select name="workMode" value={filters.workMode} onChange={e => setFilters({ ...filters, workMode: e.target.value })}><option value="">Tất cả</option><option value="onsite">Tại văn phòng</option><option value="hybrid">Linh hoạt</option><option value="remote">Từ xa</option><option value="unspecified">Chưa xác định</option></select></label>
+      <label>Loại công việc<select name="employmentType" value={filters.employmentType} onChange={e => setFilters({ ...filters, employmentType: e.target.value })}><option value="">Tất cả</option><option value="full_time">Toàn thời gian</option><option value="part_time">Bán thời gian</option><option value="contract">Hợp đồng</option><option value="internship">Thực tập</option><option value="temporary">Tạm thời</option></select></label>
+      <label>Kinh nghiệm của bạn (năm)<input name="experienceYears" type="number" min="0" max="99.99" step="0.01" value={filters.experienceYears} onChange={e => setFilters({ ...filters, experienceYears: e.target.value })}/></label>
         </div>
       </details>
     </ValidatedForm>
-    {candidate ? <JobDiscoveryWorkspace resumes={resumes}>{jobResults}</JobDiscoveryWorkspace> : jobResults}
+    {candidate && (results !== undefined || !busy) ? <JobDiscoveryWorkspace resumes={resumes}>{jobResults}</JobDiscoveryWorkspace> : jobResults}
   </section></PersistentView><PersistentView active={activeView==='notifications'&&session?.authenticated===true} name="notifications">{session?.authenticated&&<RecruitmentNotifications key={session.userId} userId={session.userId} active={activeView==='notifications'} revision={notificationRevision}/>}</PersistentView><PersistentView active={activeView==='application'&&session?.authenticated===true} name="application"><NotificationApplicationDetail active={activeView==='application'&&session?.authenticated===true}/></PersistentView><PersistentView active={activeView==='job'} name="job">
     <section className="job-detail" aria-label="Chi tiết việc làm">
       <a className="job-detail-back" href={buildJobsHash(appliedFilters, page)}>← Quay lại danh sách việc làm</a>
@@ -816,7 +837,7 @@ export function RecruiterJobManager({ activeView }: { activeView: WorkspaceView 
             <button type="button" className="secondary" disabled={mutatingApplicationId === application.id} onClick={() => void toggleCandidateBlock(job.id, application)}>{application.candidateBlocked ? 'Bỏ chặn ứng viên' : 'Chặn ứng viên cho tin này'}</button>
             <button type="button" className="secondary" onClick={() => void toggleNotes(application)}>{expandedNotes[application.id] ? 'Ẩn ghi chú nội bộ' : 'Ghi chú nội bộ'}</button>
             <a href={`/api/applications/${application.id}/resume`}>Mở CV đã nộp</a>
-            <a href={`/?profile=${application.candidateId}#shared-profile`} target="_blank" rel="noopener noreferrer">Xem hồ sơ được chia sẻ</a>
+            <a href={sharedProfileHref(application.candidateId)} target="_blank" rel="noopener noreferrer">Xem hồ sơ được chia sẻ</a>
           </div>
           {expandedNotes[application.id] && <section className="application-notes"><strong>Ghi chú nội bộ — chỉ recruiter phụ trách tin đọc được</strong>
             {!notesByApplication[application.id]?.length ? <p>Chưa có ghi chú.</p> : <ul className="internal-note-list">{notesByApplication[application.id].map(note => <li key={note.id}><p>{note.body}</p><small>{new Date(note.createdAt).toLocaleString('vi-VN')}</small></li>)}</ul>}

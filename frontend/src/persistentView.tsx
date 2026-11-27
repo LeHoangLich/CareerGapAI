@@ -16,9 +16,11 @@ export function ViewOutlet({ children }: { children: ReactNode }) {
   </ViewOutletContext.Provider>;
 }
 
-/** Keep the React tree and native form controls alive; only the active view joins the document. */
+/** Keep the React tree and native form controls alive once visited; only the active view joins the document. */
 export function PersistentView({ active, name, children }: { active: boolean; name: string; children: ReactNode }) {
   const outlet = useContext(ViewOutletContext);
+  const [mounted, setMounted] = useState(active);
+  if (active && !mounted) setMounted(true);
   const [container] = useState(() => {
     const element = document.createElement('div');
     element.className = 'workspace-view';
@@ -31,5 +33,6 @@ export function PersistentView({ active, name, children }: { active: boolean; na
     outlet.appendChild(container);
     return () => { container.remove(); };
   }, [active, outlet, container, name]);
+  if (!mounted) return null;
   return createPortal(<ViewActiveContext.Provider value={active}>{children}</ViewActiveContext.Provider>, container);
 }

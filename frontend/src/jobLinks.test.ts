@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { jobHref, jobIdFromHash, jobReturnAfterSignIn, jobShareUrl, jobSignInHref, safeReturnAfterSignIn, signInReturnHref } from './jobLinks';
+import { isQuickMatchHash, jobHref, jobIdFromHash, jobReturnAfterSignIn, jobShareUrl, jobSignInHref, safeReturnAfterSignIn, sharedProfileHref, signInReturnHref } from './jobLinks';
 
 const id = '6ca345b3-74a9-44dd-a413-c16e1413670e';
 const candidate = { authenticated: true, roles: ['Candidate'] };
@@ -33,5 +33,15 @@ describe('public job links', () => {
     expect(safeReturnAfterSignIn(`#access?returnTo=${encodeURIComponent('#administration')}`, candidate)).toBeNull();
     expect(safeReturnAfterSignIn(`#access?returnTo=${encodeURIComponent('https://evil.invalid')}`, candidate)).toBeNull();
     expect(safeReturnAfterSignIn(`#access?returnTo=${encodeURIComponent('//evil.invalid')}`, candidate)).toBeNull();
+  });
+  it('preserves shared profile query inside hash and detects quickMatch deep links', () => {
+    const profileRoute = sharedProfileHref(id);
+    expect(profileRoute).toBe(`#shared-profile?profile=${id}`);
+    expect(safeReturnAfterSignIn(signInReturnHref(profileRoute), recruiter)).toBe(profileRoute);
+    expect(safeReturnAfterSignIn(signInReturnHref(profileRoute), candidate)).toBeNull();
+    expect(isQuickMatchHash('#jobs?quickMatch=1')).toBe(true);
+    expect(isQuickMatchHash('#jobs?q=dotnet&quickMatch=1')).toBe(true);
+    expect(isQuickMatchHash('#jobs')).toBe(false);
+    expect(isQuickMatchHash('#home?quickMatch=1')).toBe(false);
   });
 });

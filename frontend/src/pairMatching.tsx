@@ -48,9 +48,9 @@ export function PairDetails({ pair, jobId }: { pair: Pair; jobId?: string }) {
   const targetJobId = jobId && jobId !== currentJobId ? jobId : undefined;
   return <div className="pair-result">
     <AiBadge>{pair.provider === 'Fake' ? 'AI mô phỏng · cần đối chiếu' : 'AI đối chiếu · cần rà soát'}</AiBadge>
-    <div className="kpi-strip" aria-label="Tổng hợp kết quả đối chiếu">
+    <div className="kpi-strip" role="group" aria-label="Tổng hợp kết quả đối chiếu">
       <div className="kpi-card">
-        <span className="kpi-label">Điểm đối chiếu</span>
+        <span className="kpi-label">Điểm đối chiếu</span>{' '}
         <strong className="kpi-value">{pair.score?.toFixed(2) ?? '0.00'}/100</strong>
         <span className="kpi-sub">{pair.careerContext ? careerContextLabels[pair.careerContext] ?? pair.careerContext : 'Thang chấm tiêu chí'}</span>
       </div>

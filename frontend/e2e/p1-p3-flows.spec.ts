@@ -48,10 +48,11 @@ test('[mock] P1-P3 flows: PublicHome grid, Community sub-tabs & ConfirmDialog, A
 
   // 1. PublicHome (#home)
   await page.goto('/#home');
-  await expect(page.getByRole('heading', { name: 'Kết nối hồ sơ minh bạch, đối chiếu bằng chứng CV–JD.' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Biết chính xác khoảng trống kỹ năng trước khi nộp CV.' })).toBeVisible();
   await expect(page.locator('.public-home .card-grid-3 > article')).toHaveCount(3);
   await page.getByRole('link', { name: 'Thử đối chiếu CV–JD', exact: true }).click();
   await expect(page).toHaveURL(/#jobs\?quickMatch=1$/);
+  await expect(page.getByRole('button', { name: 'Thu gọn form đối chiếu nhanh', exact: true })).toBeVisible();
 
   // 2. Community (#community) uses horizontal sub-tabs instead of dual sidebar and ConfirmDialog for delete
   await page.goto('/#community');

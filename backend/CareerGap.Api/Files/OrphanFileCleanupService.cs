@@ -6,6 +6,7 @@ namespace CareerGap.Api.Files;
 public sealed class OrphanFileCleanupService(AppDb db, IFileStorage storage, TimeProvider clock)
 {
     internal static readonly TimeSpan GracePeriod = TimeSpan.FromHours(24);
+    internal static readonly TimeSpan FailedRetentionPeriod = TimeSpan.FromDays(7);
     internal const int BatchSize = 5;
     private static readonly TimeSpan LeaseDuration = TimeSpan.FromMinutes(5);
 
@@ -13,12 +14,14 @@ public sealed class OrphanFileCleanupService(AppDb db, IFileStorage storage, Tim
     {
         var now = clock.GetUtcNow();
         var cutoff = now - GracePeriod;
+        var failedCutoff = now - FailedRetentionPeriod;
         List<StoredFile> claimed;
         await using (var transaction = await db.Database.BeginTransactionAsync(ct))
         {
             claimed = await db.StoredFiles.FromSqlInterpolated($"""
                 SELECT * FROM stored_files
-                WHERE status IN ('pending','delete_pending') AND created_at <= {cutoff}
+                WHERE ((status IN ('pending','delete_pending') AND created_at <= {cutoff})
+                    OR (status = 'failed' AND created_at <= {failedCutoff}))
                   AND (cleanup_next_attempt_at IS NULL OR cleanup_next_attempt_at <= {now})
                   AND (cleanup_lease_until IS NULL OR cleanup_lease_until <= {now})
                   AND NOT EXISTS (SELECT 1 FROM resume_versions rv WHERE rv.file_id = stored_files.id)

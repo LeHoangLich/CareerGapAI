@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ReportButton } from './administration';
+import { ReportButton } from './reportButton';
 import { api, type PagedResponse } from './api';
+import { sharedProfileHref } from './jobLinks';
 import { Alert, ConfirmDialog, EmptyState, PageHeader, Pagination, StaticLoading } from './ui';
 
 type Resume = { id: string; title: string; versions: { id: string; versionNo: number }[] };
@@ -86,7 +87,7 @@ export function PublicResumeBrowser({ session }: { session?: Session }) {
       <div><strong>{item.displayName}</strong>{item.headline && <small>{item.headline}</small>}<small>CV phiên bản {item.versionNo} · công khai {new Date(item.publishedAt).toLocaleDateString('vi-VN')}</small></div>
       <a href={`/api/public/resumes/${item.candidateId}/${item.resumeVersionId}/file`} target="_blank" rel="noreferrer">Mở CV</a>
       <ReportButton targetType="public_resume" targetId={item.resumeVersionId}/>
-      {isRecruiter && <a href={`/?profile=${item.candidateId}#shared-profile`}>Xem hồ sơ được chia sẻ</a>}
+      {isRecruiter && <a href={sharedProfileHref(item.candidateId)}>Xem hồ sơ được chia sẻ</a>}
       {isRecruiter && item.redactionStatus !== 'ready' && <small>Bản dành cho ứng viên khác chưa sẵn sàng.</small>}
     </li>)}</ul>
     {!loading && !items.length && !error && <EmptyState title="Chưa có CV công khai trong trang này."/>}

@@ -164,6 +164,36 @@ public sealed class PublicResumeTests(FoundationFixture fixture) : IClassFixture
     }
 
     [Fact]
+    public async Task LIM04_RedactedResumeScrubsVietnameseDomainsSocialHandlesAndFormattedPhones()
+    {
+        var (owner, ownerId) = await fixture.User();
+        var (otherCandidate, _) = await fixture.User();
+        var original = ContactRichDocx(
+            "Backend Developer C# PostgreSQL Docker. Portfolio my-profile.com.vn va devsite.vercel.app. " +
+            "Lien he Zalo: @nguyen_van_a, link zalo.me/0912345678, dien thoai (+84)\u00A0912.345.678.");
+        var uploaded = await FoundationFixture.Upload(owner, original, "lim04-contact.docx");
+        var versionId = uploaded.GetProperty("versionId").GetGuid();
+
+        using var publish = await owner.PostAsJsonAsync("/api/resumes/public", new { resumeVersionId = versionId, expectedRowVersion = (long?)null });
+        Assert.Equal(HttpStatusCode.OK, publish.StatusCode);
+        var selection = await publish.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal("ready", selection.GetProperty("status").GetString());
+
+        using var candidateFile = await otherCandidate.GetAsync($"/api/public/resumes/{ownerId}/{versionId}/file");
+        Assert.Equal(HttpStatusCode.OK, candidateFile.StatusCode);
+        var derivative = await candidateFile.Content.ReadAsByteArrayAsync();
+        using var archive = new ZipArchive(new MemoryStream(derivative), ZipArchiveMode.Read);
+        using var reader = new StreamReader(archive.GetEntry("word/document.xml")!.Open());
+        var text = await reader.ReadToEndAsync();
+        Assert.DoesNotContain("my-profile.com.vn", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("devsite.vercel.app", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("nguyen_van_a", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("zalo.me", text, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("912.345.678", text, StringComparison.Ordinal);
+        Assert.Contains("PostgreSQL", text, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task UnreadyDerivativeNeverFallsBackToSourceForAnotherCandidate()
     {
         var (owner, ownerId) = await fixture.User();

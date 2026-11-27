@@ -87,15 +87,15 @@ export function PublicHome({ active }: { active: boolean }) {
             description="Tìm việc làm theo tag & địa điểm chuẩn, đối chiếu từng tiêu chí tuyển dụng có trích dẫn nguyên văn và xây dựng lộ trình học thực tế."
           />
           <ValidatedForm className="job-filters job-search-bar" onSubmit={searchJobs}>
-            <label>Từ khóa việc làm<input value={q} maxLength={120} onChange={e => setQ(e.target.value)} placeholder="Vị trí, kỹ năng hoặc công ty…"/></label>
-            <label>Địa điểm<LocationInput value={location} onChange={setLocation} placeholder="Tỉnh, thành phố"/></label>
+            <label>Từ khóa việc làm<input name="q" value={q} maxLength={120} onChange={e => setQ(e.target.value)} placeholder="Vị trí, kỹ năng hoặc công ty…"/></label>
+            <label>Địa điểm<LocationInput name="location" value={location} onChange={setLocation} placeholder="Tỉnh, thành phố"/></label>
             <button type="submit"><MagnifyingGlass size={17} aria-hidden="true"/>Tìm việc ngay</button>
           </ValidatedForm>
-          <div className="chip-row" aria-label="Tag việc làm phổ biến">
+          <div className="chip-row" role="group" aria-label="Tag việc làm phổ biến">
             <strong>Tag phổ biến:</strong>
             {featuredTags.map(tag => <a key={tag} className="badge" href={`#jobs?tags=${encodeURIComponent(tag)}`}>{tag}</a>)}
           </div>
-          <div className="chip-row" aria-label="Địa điểm phổ biến">
+          <div className="chip-row" role="group" aria-label="Địa điểm phổ biến">
             <strong>Địa điểm:</strong>
             {featuredLocations.map(loc => <a key={loc} className="badge" href={`#jobs?location=${encodeURIComponent(loc)}`}>{loc}</a>)}
           </div>
@@ -126,7 +126,7 @@ export function PublicHome({ active }: { active: boolean }) {
         <a href="#jobs">Xem tất cả việc làm <ArrowRight className="icon-nudge" size={15} aria-hidden="true"/></a>
       </div>
       {loading && jobs.length === 0 && <StaticLoading variant="cards" message="Đang tải việc làm nổi bật…"/>}
-      {!loading && jobs.length === 0 && <EmptyState title="Chưa có tin tuyển dụng công khai nào."/>}
+      {!loading && jobs.length === 0 && <EmptyState headingLevel="h3" title="Chưa có tin tuyển dụng công khai nào."/>}
       <div className="card-grid-2">
         {jobs.map(job => <article className="job-card" key={job.id}>
           <div className="job-title-row">

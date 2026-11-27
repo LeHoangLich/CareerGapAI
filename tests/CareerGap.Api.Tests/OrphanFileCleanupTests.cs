@@ -64,6 +64,45 @@ public sealed class OrphanFileCleanupTests(FoundationFixture fixture) : IClassFi
             await fixture.App.Services.GetRequiredService<IFileStorage>().ReadAsync(key, default));
     }
 
+    [Fact]
+    public async Task ExpiredFailedFilesAreDeletedAfterSevenDaysWhileRecentFailedFilesAreKept()
+    {
+        var (_, ownerId) = await fixture.User();
+        var expiredKey = Guid.NewGuid().ToString("N");
+        var recentKey = Guid.NewGuid().ToString("N");
+        using (var scope = fixture.App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+            var storage = scope.ServiceProvider.GetRequiredService<IFileStorage>();
+            db.StoredFiles.Add(new StoredFile
+            {
+                OwnerUserId = ownerId, ObjectKey = expiredKey, Provider = "Local", OriginalName = "expired-failed.pdf",
+                MimeType = "application/pdf", SizeBytes = 3, Status = "failed",
+                CreatedAt = fixture.Clock.GetUtcNow().AddDays(-7).AddMinutes(-5)
+            });
+            db.StoredFiles.Add(new StoredFile
+            {
+                OwnerUserId = ownerId, ObjectKey = recentKey, Provider = "Local", OriginalName = "recent-failed.pdf",
+                MimeType = "application/pdf", SizeBytes = 3, Status = "failed",
+                CreatedAt = fixture.Clock.GetUtcNow().AddDays(-3)
+            });
+            await db.SaveChangesAsync();
+            await storage.PutAsync(expiredKey, [4, 5, 6], "application/pdf", default);
+            await storage.PutAsync(recentKey, [7, 8, 9], "application/pdf", default);
+        }
+
+        await RunCleanup();
+        using (var scope = fixture.App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+            Assert.False(await db.StoredFiles.AnyAsync(x => x.ObjectKey == expiredKey));
+            Assert.True(await db.StoredFiles.AnyAsync(x => x.ObjectKey == recentKey && x.Status == "failed"));
+        }
+
+        await Assert.ThrowsAsync<FileNotFoundException>(async () =>
+            await fixture.App.Services.GetRequiredService<IFileStorage>().ReadAsync(expiredKey, default));
+    }
+
     private async Task RunCleanup()
     {
         using var scope = fixture.App.Services.CreateScope();

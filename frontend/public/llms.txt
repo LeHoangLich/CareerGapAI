@@ -1,0 +1,12 @@
+# CareerGap AI
+
+> Nền tảng tuyển dụng và phát triển nghề nghiệp có kiểm chứng bằng chứng cho ứng viên và nhà tuyển dụng tại Việt Nam.
+
+CareerGap AI hỗ trợ chuẩn hóa hồ sơ (CV PDF/DOCX và trình tạo CV), đối chiếu CV–JD theo tiêu chí có trích dẫn nguồn, gợi ý lộ trình bổ sung kỹ năng theo tuần, khám phá cơ hội việc làm đã xác minh và kết nối cộng đồng nghề nghiệp.
+
+## Khu vực công khai
+
+- [Trang chủ tổng hợp](https://careergapai.vercel.app/#home): Tìm kiếm nhanh việc làm, chủ đề kỹ năng nổi bật và bài viết cộng đồng mới.
+- [Khám phá việc làm](https://careergapai.vercel.app/#jobs): Danh sách tin tuyển dụng công khai từ doanh nghiệp đã xác minh và công cụ đối chiếu nhanh CV–JD.
+- [Cộng đồng nghề nghiệp](https://careergapai.vercel.app/#community): Bài viết chia sẻ kinh nghiệm thực tế, lọc theo chủ đề và tag chuyên môn.
+- [Đăng nhập & Đăng ký](https://careergapai.vercel.app/#access): Dành cho Ứng viên và Nhà tuyển dụng.

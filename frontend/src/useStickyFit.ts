@@ -12,7 +12,7 @@ export function useStickyFit() {
       const fits = rect.height > 0 && rect.height <= window.innerHeight - 48;
       element.dataset.stickyFits = String(fits);
       element.dataset.stickyActive = String(fits && window.matchMedia('(min-width: 1024px)').matches
-        && rect.top <= 24 && window.scrollY > 0);
+        && Math.round(rect.top) <= 25 && window.scrollY > 0);
     };
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; update(); }); };
     const observer = new ResizeObserver(update);

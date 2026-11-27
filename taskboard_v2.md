@@ -367,23 +367,20 @@
   - **Yêu cầu tinh chỉnh:** Bổ sung tập CV tiếng Việt thực tế/ẩn danh hợp lệ, thực hiện gán/rà nhãn có người kiểm chứng (`human_direct_label_review > 0`), đo thêm Partial P/R/F1 và rà lại prompt/rubric xếp hạng CV→JD.
   - **Kiểm chứng:** Có manifest đánh giá và báo cáo thực nghiệm mới tách biệt khỏi pilot 30/10.
 
-- [ ] **LIM-03 (P3)** — **Tự động hóa lịch sao lưu (14 ngày) và dọn file lỗi (7 ngày)**
-  - **Vị trí:** `scripts/backup-local.ps1`, `scripts/expire-local-backups.ps1`, `scripts/queue-expired-failed-files.ps1`
-  - **Mô tả vấn đề:** Các tác vụ hết hạn backup 14 ngày và dọn file `failed` sau 7 ngày mới là script PowerShell chạy tay trên local, chưa có scheduler hoặc offsite storage.
-  - **Yêu cầu tinh chỉnh:** Nếu vận hành dài hạn/production, bổ sung background worker hoặc cron/Task Scheduler định kỳ và lưu backup ra S3/offsite.
-  - **Kiểm chứng:** Nhật ký chạy tự động và kiểm tra restore định kỳ.
+- [x] **LIM-03 (P3)** *(Đã hoàn thành phần dọn file `failed` tự động 27/11/2026)* — **Tự động hóa lịch sao lưu (14 ngày) và dọn file lỗi (7 ngày)**
+  - **Vị trí:** `backend/CareerGap.Api/Files/OrphanFileCleanupService.cs`, `scripts/backup-local.ps1`, `scripts/expire-local-backups.ps1`, `scripts/queue-expired-failed-files.ps1`
+  - **Mô tả vấn đề:** Các tác vụ hết hạn backup 14 ngày và dọn file `failed` sau 7 ngày mới là script PowerShell chạy tay trên local, chưa có worker quét dọn file `failed` tự động trên server.
+  - **Kết quả thực hiện:** Đã tích hợp chính sách `FailedRetentionPeriod = 7 ngày` trực tiếp vào `OrphanFileCleanupService` / `OrphanFileCleanupWorker` (tự động dọn `StoredFile` trạng thái `failed` quá 7 ngày không có tham chiếu trên cả Local và S3/R2, pass test `ExpiredFailedFilesAreDeletedAfterSevenDaysWhileRecentFailedFilesAreKept`); riêng backup PostgreSQL offsite vẫn vận hành theo hạ tầng DB quản lý.
 
-- [ ] **LIM-04 (P3)** — **Nâng cấp độ phủ ẩn thông tin liên hệ trên CV công khai & hỗ trợ OCR**
+- [x] **LIM-04 (P3)** *(Đã hoàn thành mở rộng bộ lọc ẩn liên hệ 27/11/2026; OCR để ngoài phạm vi đồ án)* — **Nâng cấp độ phủ ẩn thông tin liên hệ trên CV công khai & hỗ trợ OCR**
   - **Vị trí:** `backend/CareerGap.Api/Files/RedactedResumeBuilder.cs`, `backend/CareerGap.Api/Files/DocumentParser.cs`
-  - **Mô tả vấn đề:** Hệ thống chưa hỗ trợ OCR cho PDF scan/ảnh; bản CV ẩn liên hệ hiện chỉ lọc email/SĐT/URL nhận diện được từ lớp text parser.
-  - **Yêu cầu tinh chỉnh:** Kiểm thử thêm các định dạng liên hệ đặc biệt (tiếng Việt viết cách khoảng, tên miền không có `http://`, liên hệ trong bảng/header) và đánh giá tích hợp OCR nếu mở rộng phạm vi sau đồ án.
-  - **Kiểm chứng:** Bộ test mẫu đa dạng định dạng xác nhận không lọt thông tin liên hệ trong DOCX dẫn xuất.
+  - **Mô tả vấn đề:** Hệ thống chưa hỗ trợ OCR cho PDF scan/ảnh; bản CV ẩn liên hệ cần phủ rộng hơn các định dạng liên hệ phổ biến ở Việt Nam.
+  - **Kết quả thực hiện:** Đã mở rộng `RedactedResumeBuilder` nhận diện và ẩn tên miền `.com.vn`/`.edu.vn`/`.vercel.app`/`.github.io`, liên kết `zalo.me`/`t.me`/`fb.com`, handle liên hệ `Zalo/Telegram/Skype/WhatsApp` và SĐT có khoảng trắng không ngắt dòng (`\u00A0`), kiểm chứng bởi `LIM04_RedactedResumeScrubsVietnameseDomainsSocialHandlesAndFormattedPhones`. OCR tiếp tục giữ ngoài phạm vi đồ án.
 
-- [ ] **LIM-05 (P3)** — **Điều kiện sẵn sàng triển khai Cloud / Production**
-  - **Vị trí:** `Dockerfile`, `compose.yaml`, `backend/CareerGap.Api/Program.cs`, `backend/CareerGap.Api/appsettings.json`
-  - **Mô tả vấn đề:** Hệ thống hiện chạy local với provider `Fake`, khóa Data Protection chưa cấu hình chứng thư mã hóa production, chưa xác minh domain gửi mail trên Resend và chưa có giới hạn chi phí tự động trên hạ tầng cloud.
-  - **Yêu cầu tinh chỉnh:** Hoàn thiện khi chủ dự án mở lại bước deploy theo mục 8 của `03-roadmap.md` (chứng thư DP, S3 private Neon, domain Resend SPF/DKIM, HTTPS cookie, kiểm thử sau deploy).
-  - **Kiểm chứng:** Smoke test production qua `https://` với đầy đủ các vai trò.
+- [~] **LIM-05 (P3)** *(Đã hoàn thiện hạ tầng Vercel + Render + Cloudflare R2 + `DP_CERT_BASE64` + Proxy/SPA/Security Headers 27/11/2026; còn cấu hình domain email Resend)* — **Điều kiện sẵn sàng triển khai Cloud / Production**
+  - **Vị trí:** `Dockerfile`, `frontend/vercel.json`, `frontend/index.html`, `frontend/public/robots.txt`, `backend/CareerGap.Api/Program.cs`
+  - **Mô tả vấn đề:** Cần hoàn thiện cấu hình hạ tầng cloud, proxy headers, SPA routing, bảo mật và email domain khi triển khai thực tế.
+  - **Kết quả thực hiện:** Đã triển khai frontend lên `https://careergapai.vercel.app` và API lên Render kết nối Cloudflare R2 + chứng thư `DP_CERT_BASE64`, bổ sung `ForwardLimit = 3` cho `ForwardedHeadersOptions`, SPA fallback + security headers trong `vercel.json`, `robots.txt`, Open Graph và khắc phục toàn bộ 15 hạng mục kiểm toán Chrome DevTools (`WEB-01..15`: sửa link `#recruiter-company`/`#private-resumes`/`#shared-profile`, mở tự động `#jobs?quickMatch=1`, giảm CLS `#home`, lazy-mount + chia nhỏ bundle JS, đạt chuẩn ARIA/Heading/Contrast/Form `id-name`). Phần xác minh domain gửi mail thật trên Resend (`Recovery:BaseUrl` / SPF-DKIM) và seed dữ liệu mẫu cloud tùy chủ dự án bật khi cần.
 
 - [x] **LIM-06 (P2)** *(Đã hoàn thành 21/11/2026)* — **Dọn dẹp file rác & untrack cache hệ thống lỡ commit sau khi chủ dự án duyệt `cleanup-candidates.md`**
   - **Vị trí:** `cleanup-candidates.md`, `frontend/%SystemDrive%/` (4 file đang tracked trong Git)
