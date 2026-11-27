@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { api } from './api';
 import { Alert, ConfirmDialog, Dialog, EmptyState, PageHeader, Pagination, StaticLoading, ValidatedForm } from './ui';
 import { CommunityMarkdown } from './communityMarkdown';
-import { Bell, Briefcase, BookmarkSimple, ChatCircle, Heart, MagnifyingGlass, PencilSimple, Users, ArrowLeft, Flag, FileText, CheckCircle } from '@phosphor-icons/react';
+import { Bell, Briefcase, BookmarkSimple, ChatCircle, Heart, MagnifyingGlass, PencilSimple, Users, ArrowLeft, Flag, FileText, CheckCircle, CloudArrowUp, Code, CodeBlock, ImageSquare, LinkSimple, ListBullets, ListNumbers, Quotes, TextB, TextH, TextItalic, TextStrikethrough, TextUnderline, X } from '@phosphor-icons/react';
+import { Spinner } from './motion';
 import {useRecruitmentLive,recruitmentConnection,recruitmentDisconnected,recruitmentSignal} from './recruitmentLive';
 import {communityTagMatch} from './communityTagMatch';
 import {CommunityTagFilter} from './communityTagFilter';
@@ -117,7 +118,7 @@ export function Community({ session, active }: {session?:Session;active:boolean}
         {signed?<div className="social-identity" style={{borderTop:0,marginTop:0,paddingTop:0}}>{mine?<><Avatar person={mine}/><a href={link('person',mine.userId)}><strong>{mine.displayName}</strong><small>@{mine.handle}</small></a><button type="button" className="link-button" onClick={()=>setEditProfile(true)}>Sửa hồ sơ cộng đồng</button></>:profileReady&&<><p>Tạo hồ sơ cộng đồng riêng để viết bài và kết nối.</p><button type="button" className="secondary" onClick={()=>setEditProfile(true)}>Tạo hồ sơ cộng đồng</button></>}</div>:<p className="hint" style={{margin:0}}>Bạn có thể đọc bài đã duyệt. <a href={signInReturnHref(location.hash)}>Đăng nhập</a> để tương tác.</p>}
       </section>
       <People onError={setError}/><section className="card"><h3>Chia sẻ có trách nhiệm</h3><p>Viết từ trải nghiệm thật, tôn trọng người khác và giữ kín thông tin cá nhân trong CV.</p><p>Bài mới và nội dung sửa được quản trị viên duyệt trước khi công khai.</p></section></aside></div>
-    <Dialog open={editor!==undefined} title={editor?'Chỉnh sửa bài viết':'Chia sẻ trải nghiệm'} busy={busy} onClose={()=>setEditor(undefined)}><PostEditor key={editor?.id??'new'} initial={editor??null} onSaving={setBusy} onSaved={p=>{setEditor(undefined);setMessage(p.status==='pending'?'Đã gửi bài chờ admin duyệt.':'Đã lưu bản nháp.');location.hash=link('tab','mine').slice(1);void load();}}/></Dialog>
+    <Dialog className="community-post-dialog" open={editor!==undefined} title={editor?'Chỉnh sửa bài viết':'Chia sẻ trải nghiệm'} busy={busy} onClose={()=>setEditor(undefined)}><PostEditor key={editor?.id??'new'} initial={editor??null} onSaving={setBusy} onCancel={()=>setEditor(undefined)} onSaved={p=>{setEditor(undefined);setMessage(p.status==='pending'?'Đã gửi bài chờ admin duyệt.':'Đã lưu bản nháp.');location.hash=link('tab','mine').slice(1);void load();}}/></Dialog>
     <Dialog open={editProfile} title={mine?'Hồ sơ cộng đồng':'Tạo hồ sơ cộng đồng'} busy={busy} onClose={()=>setEditProfile(false)}><ProfileEditor initial={mine} canShareCareer={!!canAuthor&&!admin} onSaving={setBusy} onSaved={p=>{setMine(p);setPerson(current=>current?.userId===p.userId?p:current);setEditProfile(false);setMessage('Đã lưu hồ sơ cộng đồng công khai.')}}/></Dialog>
     <Dialog open={!!reportTarget} title="Báo cáo nội dung cộng đồng" busy={busy} onClose={()=>setReportTarget(null)}><ValidatedForm onSubmit={e=>{e.preventDefault();void act(async()=>{await api(`${base}/reports`,{method:'POST',...json({...reportTarget,reason:reportReason})});setReportTarget(null);setReportReason('');},'Đã gửi báo cáo tới quản trị viên.')}}><label>Lý do báo cáo<textarea required minLength={3} maxLength={1000} value={reportReason} onChange={e=>setReportReason(e.target.value)}/></label><button type="submit" disabled={busy}>Gửi báo cáo</button></ValidatedForm></Dialog>
   </div>;
@@ -147,9 +148,82 @@ function Connections({person}:{person:Profile}){
   useEffect(()=>{if(!open)return;let disposed=false;void api<{items:Person[];total:number}>(`${base}/profiles/${person.userId}/connections?direction=${direction}&page=${page}`).then(x=>{if(!disposed)setValue(x)}).catch(e=>setError((e as Error).message));return()=>{disposed=true};},[open,direction,page,person.userId]);
   return <><button type="button" className="link-button" onClick={()=>setOpen(true)}>Xem kết nối</button><Dialog open={open} title={`Kết nối của ${person.displayName}`} onClose={()=>setOpen(false)}><label>Danh sách<select value={direction} onChange={e=>{setDirection(e.target.value);setPage(1)}}><option value="followers">Người theo dõi</option><option value="following">Đang theo dõi</option></select></label>{error&&<Alert tone="error">{error}</Alert>}{value?.items.map(p=><a className="social-author" href={link('person',p.userId)} key={p.userId}><Avatar person={p}/><span>{p.displayName} · @{p.handle}</span></a>)}{value&&<Pagination page={page} totalItems={value.total} pageSize={20} onPageChange={setPage}/>}</Dialog></>;
 }
-function ImageInput({value,onChange,onError}:{value:string|null;onChange:(v:string|null)=>void;onError:(v:string)=>void}){
-  const [busy,setBusy]=useState(false);
-  return <div className="social-image-input">{value&&<img src={`${base}/images/${value}`} alt="Ảnh đang chọn"/>}<label>Ảnh PNG hoặc JPEG, tối đa 2 MB<input type="file" accept="image/png,image/jpeg" disabled={busy} onChange={e=>{const file=e.target.files?.[0];if(!file)return;if(file.size>2*1024*1024){onError('Ảnh tối đa 2 MB.');return;}const form=new FormData();form.append('file',file);setBusy(true);void api<{id:string}>(`${base}/images`,{method:'POST',body:form}).then(x=>onChange(x.id)).catch(x=>onError((x as Error).message)).finally(()=>setBusy(false));}}/></label>{value&&<button type="button" className="secondary" onClick={()=>onChange(null)}>Bỏ ảnh</button>}{busy&&<p role="status">Đang xử lý ảnh…</p>}</div>;
+function ImageInput({
+  value,
+  onChange,
+  onError,
+  label = 'Ảnh đại diện',
+  optional = false,
+}: {
+  value: string | null;
+  onChange: (v: string | null) => void;
+  onError: (v: string) => void;
+  label?: string;
+  optional?: boolean;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
+
+  function uploadFile(file: File | undefined) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) {
+      onError('Ảnh phải là PNG hoặc JPEG, tối đa 2 MB.');
+      return;
+    }
+    const form = new FormData();
+    form.append('file', file);
+    setBusy(true);
+    void api<{ id: string }>(`${base}/images`, { method: 'POST', body: form })
+      .then(x => onChange(x.id))
+      .catch(x => onError((x as Error).message))
+      .finally(() => setBusy(false));
+  }
+
+  return (
+    <div className="post-field">
+      <div className="post-field-head">
+        <span>
+          {label}
+          {optional && <span className="field-optional"> (Không bắt buộc)</span>}
+        </span>
+      </div>
+      {value ? (
+        <div className="social-cover-preview">
+          <div className="social-cover-preview-info">
+            <img src={`${base}/images/${value}`} alt={`${label} đang chọn`} />
+            <span className="post-field-hint">Đã tải lên {label.toLowerCase()} (PNG/JPEG, ≤ 2 MB)</span>
+          </div>
+          <div className="social-cover-preview-actions">
+            <label>
+              {busy ? 'Đang tải…' : 'Đổi ảnh'}
+              <input type="file" accept="image/png,image/jpeg" disabled={busy} onChange={e => uploadFile(e.target.files?.[0])} />
+            </label>
+            <button type="button" className="secondary" disabled={busy} onClick={() => onChange(null)}>Xóa ảnh</button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`social-cover-dropzone${dragging ? ' is-dragging' : ''}`}
+          onDragOver={e => { if (!busy) { e.preventDefault(); setDragging(true); } }}
+          onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDragging(false); }}
+          onDrop={e => { e.preventDefault(); setDragging(false); if (!busy) uploadFile(e.dataTransfer.files?.[0]); }}
+        >
+          <input
+            type="file"
+            accept="image/png,image/jpeg"
+            disabled={busy}
+            aria-label={label}
+            onChange={e => uploadFile(e.target.files?.[0])}
+          />
+          <CloudArrowUp size={22} className="social-cover-icon" aria-hidden="true" />
+          <div className="social-cover-text">
+            <strong>{busy ? 'Đang tải ảnh lên…' : 'Nhấn để chọn ảnh hoặc kéo thả vào đây'}</strong>
+            <small>Định dạng PNG, JPG · Tối đa 2 MB</small>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 function ProfileEditor({initial,canShareCareer,onSaved,onSaving}:{initial:Profile|null;canShareCareer:boolean;onSaving:(v:boolean)=>void;onSaved:(p:Profile)=>void}){
   const [showCareer,setShowCareer]=useState(initial?.showCareer??false);const [handle,setHandle]=useState(initial?.handle??'');const [displayName,setDisplayName]=useState(initial?.displayName??'');const [bio,setBio]=useState(initial?.bio??'');const [avatarId,setAvatarId]=useState<string|null>(initial?.avatarId??null);const [mentions,setMentions]=useState(initial?.allowMentions??true);const [busy,setBusy]=useState(false);const [error,setError]=useState('');const [images,setImages]=useState<{id:string;createdAt:string}[]>([]);
@@ -161,15 +235,293 @@ function MentionSuggestions({text,onPick}:{text:string;onPick:(handle:string)=>v
   useEffect(()=>{if(term===undefined)return;let disposed=false;const timer=setTimeout(()=>{void api<Person[]>(`${base}/people?q=${encodeURIComponent(term)}`).then(x=>{if(!disposed)setPeople(x)}).catch(()=>{});},200);return()=>{disposed=true;clearTimeout(timer)};},[term]);
   return term!==undefined?<div className="social-mention-options" aria-label="Gợi ý nhắc tên">{people.slice(0,5).map(p=><button type="button" className="secondary" key={p.userId} onClick={()=>onPick(p.handle)}>@{p.handle} · {p.displayName}</button>)}</div>:null;
 }
-function PostEditor({initial,onSaved,onSaving}:{initial:Post|null;onSaving:(v:boolean)=>void;onSaved:(p:Post)=>void}){
-  const [title,setTitle]=useState(initial?.title??'');const [summary,setSummary]=useState(initial?.summary??'');const [body,setBody]=useState(initial?.body??'');const [category,setCategory]=useState(initial?.category??'career');const [tags,setTags]=useState(initial?.tags.join(', ')??'');const [thumbnailId,setThumbnailId]=useState(initial?.thumbnailId??null);const [version,setVersion]=useState(initial?.rowVersion??0);const [preview,setPreview]=useState(false);const [busy,setBusy]=useState(false);const [uploadingImage,setUploadingImage]=useState(false);const [ready,setReady]=useState(!initial||initial.body!==null);const [error,setError]=useState('');const textRef=useRef<HTMLTextAreaElement>(null);const inlineImageRef=useRef<HTMLInputElement>(null);
-  useEffect(()=>{if(!initial||initial.body!==null)return;let disposed=false;void api<Post>(`${base}/posts/${initial.id}`).then(p=>{if(!disposed){setBody(p.body??'');setVersion(p.rowVersion);setReady(true)}}).catch(e=>setError((e as Error).message));return()=>{disposed=true};},[initial]);
-  function format(before:string,after=''){const el=textRef.current;if(!el)return;const start=el.selectionStart,end=el.selectionEnd;setBody(body.slice(0,start)+before+body.slice(start,end)+after+body.slice(end));requestAnimationFrame(()=>{el.focus();el.setSelectionRange(start+before.length,end+before.length)})}
-  async function insertInlineImage(file:File|undefined){if(!file)return;if(file.size>2*1024*1024||!['image/png','image/jpeg'].includes(file.type)){setError('Ảnh chèn vào bài phải là PNG hoặc JPEG, tối đa 2 MB.');return;}setUploadingImage(true);setError('');try{const form=new FormData();form.append('file',file);const res=await api<{id:string}>(`${base}/images`,{method:'POST',body:form});format(`\n![Ảnh minh họa](${base}/images/${res.id})\n`);}catch(x){setError((x as Error).message)}finally{setUploadingImage(false);if(inlineImageRef.current)inlineImageRef.current.value=''}}
-  async function save(e:FormEvent<HTMLFormElement>){e.preventDefault();const submitter=(e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement|null;setBusy(true);onSaving(true);setError('');try{onSaved(await api<Post>(`${base}/posts${initial?'/'+initial.id:''}`,{method:initial?'PUT':'POST',...json({title,summary,body,category,tags:tags.split(',').map(t=>t.trim()).filter(Boolean),thumbnailId,submit:submitter?.value!=='draft',rowVersion:version})}));}catch(x){setError((x as Error).message)}finally{setBusy(false);onSaving(false)}}
-  return <ValidatedForm onSubmit={e=>void save(e)}>{initial?.status==='published'&&<p className="hint">Lưu thay đổi sẽ đưa bài về nháp hoặc chờ duyệt; bản sửa chưa được công khai ngay.</p>}<label>Tiêu đề<input required minLength={5} maxLength={200} value={title} onChange={e=>setTitle(e.target.value)}/></label><label>Tóm tắt<textarea maxLength={500} value={summary} onChange={e=>setSummary(e.target.value)}/></label><div className="row"><label>Chủ đề<select value={category} onChange={e=>setCategory(e.target.value)}>{Object.entries(categories).map(([v,t])=><option key={v} value={v}>{t}</option>)}</select></label><label>Tag, phân cách bằng dấu phẩy<input value={tags} maxLength={327} onChange={e=>setTags(e.target.value)} placeholder="React, nghề nghiệp…"/><small>Tối đa 8 tag, mỗi tag 40 ký tự.</small></label></div><ImageInput value={thumbnailId} onChange={setThumbnailId} onError={setError}/>
-    <div className="social-editor-toolbar" role="group" aria-label="Định dạng bài viết"><button type="button" className="secondary" onClick={()=>format('**','**')}>In đậm</button><button type="button" className="secondary" onClick={()=>format('*','*')}>In nghiêng</button><button type="button" className="secondary" onClick={()=>format('++','++')}>Gạch chân</button><button type="button" className="secondary" onClick={()=>format('~~','~~')}>Gạch ngang</button><button type="button" className="secondary" onClick={()=>format('\n## ')}>Tiêu đề mục</button><button type="button" className="secondary" onClick={()=>format('\n- ')}>Danh sách</button><button type="button" className="secondary" onClick={()=>format('\n1. ')}>Danh sách số</button><button type="button" className="secondary" onClick={()=>format('\n> ')}>Trích dẫn</button><button type="button" className="secondary" onClick={()=>format('`','`')}>Code</button><button type="button" className="secondary" onClick={()=>format('\n```\n','\n```\n')}>Code block</button><button type="button" className="secondary" onClick={()=>format('[','](https://example.com)')}>Liên kết</button><button type="button" className="secondary" disabled={uploadingImage||!ready} onClick={()=>inlineImageRef.current?.click()}>{uploadingImage?'Đang tải ảnh…':'Chèn ảnh'}</button><input ref={inlineImageRef} type="file" accept="image/png,image/jpeg" hidden onChange={e=>void insertInlineImage(e.target.files?.[0])}/><button type="button" className="secondary" aria-pressed={preview} onClick={()=>setPreview(!preview)}>Xem trước</button></div>
-    <label>Nội dung<textarea className="social-body-editor" ref={textRef} required minLength={20} maxLength={30000} value={body} disabled={!ready} onChange={e=>setBody(e.target.value)}/><small>Nhập @handle để nhắc tên. Hỗ trợ định dạng ở thanh công cụ; HTML được hiển thị như văn bản.</small></label><MentionSuggestions text={body} onPick={h=>setBody(body.replace(/@([a-z0-9_]{0,23})$/i,'@'+h+' '))}/>{preview&&<section className="card social-preview"><h3>Xem trước</h3><CommunityMarkdown text={body}/></section>}{error&&<p role="alert" className="error">{error}</p>}<div className="dialog-actions"><button className="secondary" type="submit" value="draft" disabled={busy||!ready}>Lưu nháp</button><button type="submit" value="submit" disabled={busy||!ready}>{busy?'Đang lưu…':'Gửi admin duyệt'}</button></div></ValidatedForm>;
+function PostEditor({
+  initial,
+  onSaved,
+  onSaving,
+  onCancel,
+}: {
+  initial: Post | null;
+  onSaving: (v: boolean) => void;
+  onSaved: (p: Post) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [summary, setSummary] = useState(initial?.summary ?? '');
+  const [body, setBody] = useState(initial?.body ?? '');
+  const [category, setCategory] = useState(initial?.category ?? 'career');
+  const [tagList, setTagList] = useState<string[]>(initial?.tags ?? []);
+  const [tagDraft, setTagDraft] = useState('');
+  const [thumbnailId, setThumbnailId] = useState(initial?.thumbnailId ?? null);
+  const [version, setVersion] = useState(initial?.rowVersion ?? 0);
+  const [preview, setPreview] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [ready, setReady] = useState(!initial || initial.body !== null);
+  const [error, setError] = useState('');
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const inlineImageRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!initial || initial.body !== null) return;
+    let disposed = false;
+    void api<Post>(`${base}/posts/${initial.id}`)
+      .then(p => {
+        if (!disposed) {
+          setBody(p.body ?? '');
+          setVersion(p.rowVersion);
+          setReady(true);
+        }
+      })
+      .catch(e => setError((e as Error).message));
+    return () => { disposed = true; };
+  }, [initial]);
+
+  function addTagsFromRaw(raw: string) {
+    const parts = raw.split(',').map(t => t.trim().slice(0, 40)).filter(Boolean);
+    if (!parts.length) return;
+    setTagList(current => {
+      const next = [...current];
+      for (const p of parts) {
+        if (next.length >= 8) break;
+        if (!next.some(t => t.toLowerCase() === p.toLowerCase())) next.push(p);
+      }
+      return next;
+    });
+  }
+
+  function format(before: string, after = '') {
+    const el = textRef.current;
+    if (!el) return;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    setBody(body.slice(0, start) + before + body.slice(start, end) + after + body.slice(end));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(start + before.length, end + before.length);
+    });
+  }
+
+  async function insertInlineImage(file: File | undefined) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) {
+      setError('Ảnh chèn vào bài phải là PNG hoặc JPEG, tối đa 2 MB.');
+      return;
+    }
+    setUploadingImage(true);
+    setError('');
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await api<{ id: string }>(`${base}/images`, { method: 'POST', body: form });
+      format(`\n![Ảnh minh họa](${base}/images/${res.id})\n`);
+    } catch (x) {
+      setError((x as Error).message);
+    } finally {
+      setUploadingImage(false);
+      if (inlineImageRef.current) inlineImageRef.current.value = '';
+    }
+  }
+
+  async function save(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const pendingTags = tagDraft.split(',').map(t => t.trim().slice(0, 40)).filter(Boolean);
+    const mergedTags = [...tagList];
+    for (const p of pendingTags) {
+      if (mergedTags.length >= 8) break;
+      if (!mergedTags.some(t => t.toLowerCase() === p.toLowerCase())) mergedTags.push(p);
+    }
+    setBusy(true);
+    onSaving(true);
+    setError('');
+    try {
+      onSaved(
+        await api<Post>(`${base}/posts${initial ? '/' + initial.id : ''}`, {
+          method: initial ? 'PUT' : 'POST',
+          ...json({
+            title,
+            summary,
+            body,
+            category,
+            tags: mergedTags,
+            thumbnailId,
+            submit: submitter?.value !== 'draft',
+            rowVersion: version,
+          }),
+        })
+      );
+    } catch (x) {
+      setError((x as Error).message);
+    } finally {
+      setBusy(false);
+      onSaving(false);
+    }
+  }
+
+  return (
+    <ValidatedForm className="post-editor-form" onSubmit={e => void save(e)}>
+      <div className="post-editor-body">
+        {initial?.status === 'published' && (
+          <p className="hint m-0">Lưu thay đổi sẽ đưa bài về nháp hoặc chờ duyệt; bản sửa chưa được công khai ngay.</p>
+        )}
+
+        <label className="post-field">
+          <span className="post-field-head">
+            <span>Tiêu đề<span className="field-required" aria-hidden="true">*</span></span>
+          </span>
+          <input
+            required
+            minLength={5}
+            maxLength={200}
+            value={title}
+            placeholder="VD: Kinh nghiệm phỏng vấn Frontend Fresher sau 3 tháng ôn..."
+            onChange={e => setTitle(e.target.value)}
+          />
+        </label>
+
+        <label className="post-field">
+          <span className="post-field-head">
+            <span>Tóm tắt<span className="field-optional"> (Không bắt buộc)</span></span>
+            <span className="field-counter">{summary.length}/500</span>
+          </span>
+          <textarea
+            className="post-summary-input"
+            rows={2}
+            maxLength={500}
+            value={summary}
+            placeholder="Mô tả ngắn 1–2 câu về nội dung bài viết của bạn..."
+            onChange={e => setSummary(e.target.value)}
+          />
+        </label>
+
+        <div className="post-meta-grid">
+          <label className="post-field">
+            <span className="post-field-head">
+              <span>Chủ đề<span className="field-required" aria-hidden="true">*</span></span>
+            </span>
+            <select value={category} onChange={e => setCategory(e.target.value)}>
+              {Object.entries(categories).map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+            </select>
+          </label>
+
+          <div className="post-field">
+            <label className="post-field-head" htmlFor="post-tag-input">
+              <span>Thẻ (Tags)</span>
+              <span className="field-counter">{tagList.length}/8</span>
+            </label>
+            <div className="post-tag-box">
+              {tagList.map(tag => (
+                <span className="post-tag-chip" key={tag}>
+                  <span>{tag}</span>
+                  <button
+                    type="button"
+                    aria-label={`Xóa thẻ ${tag}`}
+                    onClick={() => setTagList(current => current.filter(t => t !== tag))}
+                  >
+                    <X size={12} aria-hidden="true" />
+                  </button>
+                </span>
+              ))}
+              <input
+                id="post-tag-input"
+                value={tagDraft}
+                maxLength={40}
+                disabled={tagList.length >= 8}
+                placeholder={tagList.length >= 8 ? 'Đã đủ 8 thẻ' : 'React, phỏng vấn…'}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val.includes(',')) {
+                    addTagsFromRaw(val);
+                    setTagDraft('');
+                  } else {
+                    setTagDraft(val);
+                  }
+                }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTagsFromRaw(tagDraft);
+                    setTagDraft('');
+                  } else if (e.key === 'Backspace' && !tagDraft && tagList.length) {
+                    setTagList(current => current.slice(0, -1));
+                  }
+                }}
+              />
+            </div>
+            <span className="post-field-hint">Nhấn Enter hoặc dấu phẩy để thêm thẻ (tối đa 8 thẻ).</span>
+          </div>
+        </div>
+
+        <ImageInput label="Ảnh bìa" optional value={thumbnailId} onChange={setThumbnailId} onError={setError} />
+
+        <div className="post-field">
+          <div className="post-field-head">
+            <span>Nội dung<span className="field-required" aria-hidden="true">*</span></span>
+          </div>
+          <div className="post-markdown-box">
+            <div className="post-markdown-toolbar">
+              <div className="post-mode-tabs" role="group" aria-label="Chế độ soạn thảo">
+                <button type="button" aria-pressed={!preview} onClick={() => setPreview(false)}>Viết</button>
+                <button type="button" aria-pressed={preview} onClick={() => setPreview(true)}>Xem trước</button>
+              </div>
+              {!preview && (
+                <div className="post-toolbar-icons" role="group" aria-label="Định dạng bài viết">
+                  <button type="button" title="In đậm" aria-label="In đậm" onClick={() => format('**', '**')}><TextB size={16} aria-hidden="true" /></button>
+                  <button type="button" title="In nghiêng" aria-label="In nghiêng" onClick={() => format('*', '*')}><TextItalic size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Gạch chân" aria-label="Gạch chân" onClick={() => format('++', '++')}><TextUnderline size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Gạch ngang" aria-label="Gạch ngang" onClick={() => format('~~', '~~')}><TextStrikethrough size={16} aria-hidden="true" /></button>
+                  <span className="post-toolbar-sep" aria-hidden="true" />
+                  <button type="button" title="Tiêu đề mục" aria-label="Tiêu đề mục" onClick={() => format('\n## ')}><TextH size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Danh sách" aria-label="Danh sách" onClick={() => format('\n- ')}><ListBullets size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Danh sách số" aria-label="Danh sách số" onClick={() => format('\n1. ')}><ListNumbers size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Trích dẫn" aria-label="Trích dẫn" onClick={() => format('\n> ')}><Quotes size={16} aria-hidden="true" /></button>
+                  <span className="post-toolbar-sep" aria-hidden="true" />
+                  <button type="button" title="Code nội dòng" aria-label="Code" onClick={() => format('`', '`')}><Code size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Khối code" aria-label="Code block" onClick={() => format('\n```\n', '\n```\n')}><CodeBlock size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Chèn liên kết" aria-label="Liên kết" onClick={() => format('[', '](https://example.com)')}><LinkSimple size={16} aria-hidden="true" /></button>
+                  <button type="button" title="Chèn ảnh" aria-label="Chèn ảnh" disabled={uploadingImage || !ready} onClick={() => inlineImageRef.current?.click()}><ImageSquare size={16} aria-hidden="true" /></button>
+                </div>
+              )}
+              <input ref={inlineImageRef} type="file" accept="image/png,image/jpeg" hidden onChange={e => void insertInlineImage(e.target.files?.[0])} />
+            </div>
+            {preview ? (
+              <div className="post-markdown-preview">
+                {body.trim() ? <CommunityMarkdown text={body} /> : <p className="hint m-0">Chưa có nội dung để xem trước.</p>}
+              </div>
+            ) : (
+              <textarea
+                className="post-markdown-textarea"
+                ref={textRef}
+                required
+                minLength={20}
+                maxLength={30000}
+                value={body}
+                disabled={!ready}
+                placeholder="Chia sẻ câu chuyện, bài học hoặc góc nhìn của bạn..."
+                onChange={e => setBody(e.target.value)}
+              />
+            )}
+            <div className="post-markdown-footer">
+              Gõ @handle để nhắc tên • Hỗ trợ định dạng cơ bản • HTML được hiển thị như văn bản
+            </div>
+          </div>
+          <MentionSuggestions text={body} onPick={h => setBody(body.replace(/@([a-z0-9_]{0,23})$/i, '@' + h + ' '))} />
+        </div>
+
+        {error && <p role="alert" className="error m-0">{error}</p>}
+      </div>
+
+      <div className="post-editor-footer">
+        <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Hủy</button>
+        <button type="submit" value="draft" className="secondary" disabled={busy || !ready}>Lưu nháp</button>
+        <button type="submit" value="submit" disabled={busy || !ready}>
+          {busy && <Spinner size={15} />}
+          {busy ? 'Đang gửi…' : 'Đăng bài viết'}
+        </button>
+      </div>
+    </ValidatedForm>
+  );
 }
 function Comments({postId,viewer,admin,ensureProfile,onError,onReport}:{postId:string;viewer?:string;admin:boolean;ensureProfile:()=>boolean;onError:(s:string)=>void;onReport:(id:string)=>void}){
   const [page,setPage]=useState(1);const [data,setData]=useState<Page<Comment>>();const [body,setBody]=useState('');const [reply,setReply]=useState<Comment|null>(null);const [editing,setEditing]=useState<Comment|null>(null);const [confirmDeleteComment,setConfirmDeleteComment]=useState<Comment|null>(null);const [busy,setBusy]=useState(false);const [refresh,setRefresh]=useState(0);

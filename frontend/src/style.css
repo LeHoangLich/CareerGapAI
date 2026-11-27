@@ -648,7 +648,8 @@
   .app-dialog::backdrop { background: var(--color-backdrop); }
   .dialog-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
   .dialog-heading h2 { margin: 4px 0 12px; font-size: var(--font-size-xl); }
-  .dialog-close { flex-shrink: 0; min-width: 44px; min-height: 44px; padding: 10px; }
+  .dialog-close { flex-shrink: 0; min-width: 36px; min-height: 36px; padding: 6px; border-radius: 999px; background: transparent; border: 1px solid transparent; color: var(--color-text-secondary); }
+  .dialog-close:hover { background: var(--color-surface-hover); color: var(--color-text-primary); border-color: transparent; }
   .dialog-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 24px; }
   .navigation-drawer { width: min(320px,calc(100vw - 40px)); height: 100dvh; max-height: 100dvh; margin: 0; padding: 0; border: 0; border-right: 1px solid var(--color-border); border-radius: 0; }
   .navigation-drawer .dialog-heading { padding: 16px 20px 0; }
