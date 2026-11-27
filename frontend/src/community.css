@@ -359,6 +359,17 @@
     color: var(--color-text-muted);
     line-height: 1.5;
   }
+  .post-inline-error {
+    margin: 4px 0 0;
+    font-size: var(--font-size-xs);
+  }
+  .post-editor-error {
+    margin: 0;
+    padding: 10px 24px;
+    border-top: 1px solid var(--color-danger-border);
+    background: var(--color-danger-bg);
+    font-size: var(--font-size-sm);
+  }
 
   /* Vietnamese Compact Cover Image Dropzone */
   .social-cover-dropzone {

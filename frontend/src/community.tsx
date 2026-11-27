@@ -163,19 +163,39 @@ function ImageInput({
 }) {
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [localError, setLocalError] = useState('');
+
+  function fail(msg: string) {
+    setLocalError(msg);
+    onError(msg);
+  }
 
   function uploadFile(file: File | undefined) {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024 || !['image/png', 'image/jpeg'].includes(file.type)) {
-      onError('Ảnh phải là PNG hoặc JPEG, tối đa 2 MB.');
+    const validType = ['image/png', 'image/jpeg'].includes(file.type)
+      || (!file.type && /\.(png|jpe?g)$/i.test(file.name));
+    if (!validType) {
+      fail('Chỉ hỗ trợ ảnh định dạng PNG hoặc JPG.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      fail('Ảnh vượt quá dung lượng tối đa 2 MB.');
       return;
     }
     const form = new FormData();
     form.append('file', file);
     setBusy(true);
+    setLocalError('');
+    onError('');
     void api<{ id: string }>(`${base}/images`, { method: 'POST', body: form })
-      .then(x => onChange(x.id))
-      .catch(x => onError((x as Error).message))
+      .then(x => {
+        if (!x?.id) {
+          fail('Máy chủ không trả về mã ảnh hợp lệ.');
+          return;
+        }
+        onChange(x.id);
+      })
+      .catch(x => fail((x as Error).message))
       .finally(() => setBusy(false));
   }
 
@@ -196,9 +216,28 @@ function ImageInput({
           <div className="social-cover-preview-actions">
             <label>
               {busy ? 'Đang tải…' : 'Đổi ảnh'}
-              <input type="file" accept="image/png,image/jpeg" disabled={busy} onChange={e => uploadFile(e.target.files?.[0])} />
+              <input
+                type="file"
+                accept="image/png,image/jpeg"
+                disabled={busy}
+                onChange={e => {
+                  const file = e.currentTarget.files?.[0];
+                  e.currentTarget.value = '';
+                  uploadFile(file);
+                }}
+              />
             </label>
-            <button type="button" className="secondary" disabled={busy} onClick={() => onChange(null)}>Xóa ảnh</button>
+            <button
+              type="button"
+              className="secondary"
+              disabled={busy}
+              onClick={() => {
+                setLocalError('');
+                onChange(null);
+              }}
+            >
+              Xóa ảnh
+            </button>
           </div>
         </div>
       ) : (
@@ -213,7 +252,11 @@ function ImageInput({
             accept="image/png,image/jpeg"
             disabled={busy}
             aria-label={label}
-            onChange={e => uploadFile(e.target.files?.[0])}
+            onChange={e => {
+              const file = e.currentTarget.files?.[0];
+              e.currentTarget.value = '';
+              uploadFile(file);
+            }}
           />
           <CloudArrowUp size={22} className="social-cover-icon" aria-hidden="true" />
           <div className="social-cover-text">
@@ -222,6 +265,7 @@ function ImageInput({
           </div>
         </div>
       )}
+      {localError && <p role="alert" className="error post-inline-error">{localError}</p>}
     </div>
   );
 }
@@ -508,9 +552,9 @@ function PostEditor({
           </div>
           <MentionSuggestions text={body} onPick={h => setBody(body.replace(/@([a-z0-9_]{0,23})$/i, '@' + h + ' '))} />
         </div>
-
-        {error && <p role="alert" className="error m-0">{error}</p>}
       </div>
+
+      {error && <p role="alert" className="error post-editor-error">{error}</p>}
 
       <div className="post-editor-footer">
         <button type="button" className="secondary" disabled={busy} onClick={onCancel}>Hủy</button>
