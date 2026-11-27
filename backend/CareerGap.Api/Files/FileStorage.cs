@@ -1,3 +1,4 @@
+using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.S3.Model;
 
@@ -45,12 +46,27 @@ public sealed class S3FileStorage : IFileStorage, IDisposable
         if (endpoint.Scheme != "https") throw new InvalidOperationException("Storage requires HTTPS");
         bucket = config["Storage:Bucket"] ?? throw new InvalidOperationException("Private bucket required");
         client = new AmazonS3Client(config["Storage:AccessKey"], config["Storage:SecretKey"],
-            new AmazonS3Config { ServiceURL = endpoint.ToString(), ForcePathStyle = true });
+            new AmazonS3Config
+            {
+                ServiceURL = endpoint.ToString(),
+                ForcePathStyle = true,
+                RequestChecksumCalculation = RequestChecksumCalculation.WHEN_REQUIRED,
+                ResponseChecksumValidation = ResponseChecksumValidation.WHEN_REQUIRED,
+            });
     }
     public async Task PutAsync(string key, byte[] bytes, string contentType, CancellationToken ct)
     {
         using var stream = new MemoryStream(bytes, false);
-        await client.PutObjectAsync(new PutObjectRequest { BucketName = bucket, Key = key, InputStream = stream, ContentType = contentType, IfNoneMatch = "*" }, ct);
+        await client.PutObjectAsync(new PutObjectRequest
+        {
+            BucketName = bucket,
+            Key = key,
+            InputStream = stream,
+            ContentType = contentType,
+            DisablePayloadSigning = true,
+            DisableDefaultChecksumValidation = true,
+            IfNoneMatch = "*",
+        }, ct);
     }
     public async Task<byte[]> ReadAsync(string key, CancellationToken ct)
     {
