@@ -3,107 +3,177 @@ using System.Text.Json;
 using CareerGap.Api.Recruitment;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace CareerGap.Api.Data;
 
 public static class ProductionSchemaReconciler
 {
-    public static async Task ReconcileAndSeedAsync(AppDb db, ILogger logger, bool seedShowcaseIfEmpty, CancellationToken ct = default)
+    public static async Task PrepareDatabaseAsync(string connectionString, AppDbSchemaOptions schemaOptions,
+        IServiceProvider services, ILogger logger, bool seedShowcaseIfEmpty, CancellationToken ct = default)
     {
-        await SafeStepAsync("reconcile_community_searches", () => db.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-              CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
-                "MigrationId" character varying(150) NOT NULL PRIMARY KEY,
-                "ProductVersion" character varying(32) NOT NULL
-              );
-              IF to_regclass('public.community_searchs') IS NOT NULL THEN
-                IF to_regclass('public.community_searches') IS NULL THEN
-                  ALTER TABLE community_searchs DROP CONSTRAINT IF EXISTS "PK_community_searchs";
-                  ALTER TABLE community_searchs RENAME TO community_searches;
-                ELSE
-                  EXECUTE 'INSERT INTO community_searches (term, viewer, day) SELECT term, viewer, day FROM community_searchs ON CONFLICT DO NOTHING';
-                  EXECUTE 'DROP TABLE community_searchs';
-                END IF;
-              END IF;
-              IF to_regclass('public.community_searches') IS NOT NULL THEN
-                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = to_regclass('public.community_searches') AND contype = 'p') THEN
-                  ALTER TABLE community_searches ADD CONSTRAINT "PK_community_searches" PRIMARY KEY (term, viewer, day);
-                END IF;
-                IF to_regclass('public."IX_community_searchs_term_day"') IS NOT NULL AND to_regclass('public."IX_community_searches_term_day"') IS NULL THEN
-                  ALTER INDEX "IX_community_searchs_term_day" RENAME TO "IX_community_searches_term_day";
-                END IF;
-                CREATE INDEX IF NOT EXISTS "IX_community_searches_term_day" ON community_searches (term, day);
-              END IF;
-            END $$;
-            """, ct), logger);
+        await TryRawDdlReconciliationAsync(connectionString, logger, ct);
+        schemaOptions.HasExtendedUserColumns = await ProbeExtendedUserColumnsAsync(connectionString, logger, ct);
 
-        await SafeStepAsync("reconcile_saved_roadmaps", () => db.Database.ExecuteSqlRawAsync("""
-            DO $$
-            BEGIN
-              IF to_regclass('public.saved_roadmaps') IS NOT NULL THEN
-                ALTER TABLE saved_roadmaps DROP CONSTRAINT IF EXISTS "FK_saved_roadmaps_match_inputs_PairId";
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='PairId')
-                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='pair_id') THEN
-                  ALTER TABLE saved_roadmaps RENAME COLUMN "PairId" TO pair_id;
-                END IF;
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='Plan')
-                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='plan') THEN
-                  ALTER TABLE saved_roadmaps RENAME COLUMN "Plan" TO plan;
-                END IF;
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='Completed')
-                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='completed') THEN
-                  ALTER TABLE saved_roadmaps RENAME COLUMN "Completed" TO completed;
-                END IF;
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='UpdatedAt')
-                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='updated_at') THEN
-                  ALTER TABLE saved_roadmaps RENAME COLUMN "UpdatedAt" TO updated_at;
-                END IF;
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='RowVersion')
-                   AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='row_version') THEN
-                  ALTER TABLE saved_roadmaps RENAME COLUMN "RowVersion" TO row_version;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_saved_roadmaps_match_inputs_pair_id') THEN
-                  ALTER TABLE saved_roadmaps ADD CONSTRAINT "FK_saved_roadmaps_match_inputs_pair_id"
-                    FOREIGN KEY (pair_id) REFERENCES match_inputs (ai_job_id) ON DELETE CASCADE;
-                END IF;
-              END IF;
-            END $$;
-            """, ct), logger);
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDb>();
 
-        await SafeStepAsync("reconcile_account_identity_columns", () => db.Database.ExecuteSqlRawAsync("""
-            ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "AvatarImageId" uuid;
-            ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "DisplayName" character varying(150);
-            ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "NotifyCommunity" boolean NOT NULL DEFAULT TRUE;
-            ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "NotifyRecruitment" boolean NOT NULL DEFAULT TRUE;
-            CREATE INDEX IF NOT EXISTS "IX_AspNetUsers_AvatarImageId" ON "AspNetUsers" ("AvatarImageId");
-            DO $$
-            BEGIN
-              IF to_regclass('public.community_images') IS NOT NULL AND NOT EXISTS (
-                SELECT 1 FROM pg_constraint WHERE conname = 'FK_AspNetUsers_community_images_AvatarImageId'
-              ) THEN
-                ALTER TABLE "AspNetUsers" ADD CONSTRAINT "FK_AspNetUsers_community_images_AvatarImageId"
-                  FOREIGN KEY ("AvatarImageId") REFERENCES community_images (id) ON DELETE SET NULL;
-              END IF;
-            END $$;
-            INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion") VALUES
-              ('20261126134034_NormalizeSavedRoadmapsAndCommunitySearches', '10.0.13'),
-              ('20261127151343_AccountIdentityAndPreferences', '10.0.13')
-            ON CONFLICT DO NOTHING;
-            """, ct), logger);
-
-        await SafeStepAsync("ef_migrate_pending", async () =>
+        if (schemaOptions.HasExtendedUserColumns)
         {
-            var pending = (await db.Database.GetPendingMigrationsAsync(ct)).ToArray();
-            if (pending.Length > 0)
+            await SafeStepAsync("ef_migrate_pending", async () =>
             {
-                logger.LogInformation("Applying {Count} pending EF Core migration(s).", pending.Length);
-                await db.Database.MigrateAsync(ct);
-            }
-        }, logger);
+                var pending = (await db.Database.GetPendingMigrationsAsync(ct)).ToArray();
+                if (pending.Length > 0)
+                {
+                    logger.LogInformation("Applying {Count} pending EF Core migration(s).", pending.Length);
+                    await db.Database.MigrateAsync(ct);
+                }
+            }, logger);
+        }
+        else
+        {
+            logger.LogWarning("AspNetUsers extended columns are not yet migrated (restricted runtime role); operating in compatible DML fallback mode.");
+        }
 
         if (seedShowcaseIfEmpty)
             await SafeStepAsync("seed_showcase_if_empty", () => SeedShowcaseIfEmptyCoreAsync(db, logger, ct), logger);
+    }
+
+    public static async Task ReconcileAndSeedAsync(AppDb db, ILogger logger, bool seedShowcaseIfEmpty, CancellationToken ct = default)
+    {
+        var connStr = db.Database.GetConnectionString() ?? throw new InvalidOperationException("Missing connection string");
+        await TryRawDdlReconciliationAsync(connStr, logger, ct);
+        await SafeStepAsync("ef_migrate_pending", async () =>
+        {
+            var pending = (await db.Database.GetPendingMigrationsAsync(ct)).ToArray();
+            if (pending.Length > 0) await db.Database.MigrateAsync(ct);
+        }, logger);
+        if (seedShowcaseIfEmpty)
+            await SafeStepAsync("seed_showcase_if_empty", () => SeedShowcaseIfEmptyCoreAsync(db, logger, ct), logger);
+    }
+
+    public static async Task<bool> ProbeExtendedUserColumnsAsync(string connectionString, ILogger logger, CancellationToken ct = default)
+    {
+        try
+        {
+            await using var conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new NpgsqlCommand("""
+                SELECT count(*) FROM information_schema.columns
+                WHERE table_schema = 'public' AND table_name = 'AspNetUsers'
+                  AND column_name IN ('DisplayName', 'AvatarImageId', 'NotifyCommunity', 'NotifyRecruitment')
+                """, conn);
+            var count = Convert.ToInt64(await cmd.ExecuteScalarAsync(ct));
+            return count == 4;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to probe AspNetUsers extended columns.");
+            return true;
+        }
+    }
+
+    private static async Task TryRawDdlReconciliationAsync(string connectionString, ILogger logger, CancellationToken ct)
+    {
+        await SafeStepAsync("reconcile_community_searches", async () =>
+        {
+            await using var conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new NpgsqlCommand("""
+                DO $$
+                BEGIN
+                  CREATE TABLE IF NOT EXISTS "__EFMigrationsHistory" (
+                    "MigrationId" character varying(150) NOT NULL PRIMARY KEY,
+                    "ProductVersion" character varying(32) NOT NULL
+                  );
+                  IF to_regclass('public.community_searchs') IS NOT NULL THEN
+                    IF to_regclass('public.community_searches') IS NULL THEN
+                      ALTER TABLE community_searchs DROP CONSTRAINT IF EXISTS "PK_community_searchs";
+                      ALTER TABLE community_searchs RENAME TO community_searches;
+                    ELSE
+                      EXECUTE 'INSERT INTO community_searches (term, viewer, day) SELECT term, viewer, day FROM community_searchs ON CONFLICT DO NOTHING';
+                      EXECUTE 'DROP TABLE community_searchs';
+                    END IF;
+                  END IF;
+                  IF to_regclass('public.community_searches') IS NOT NULL THEN
+                    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conrelid = to_regclass('public.community_searches') AND contype = 'p') THEN
+                      ALTER TABLE community_searches ADD CONSTRAINT "PK_community_searches" PRIMARY KEY (term, viewer, day);
+                    END IF;
+                    IF to_regclass('public."IX_community_searchs_term_day"') IS NOT NULL AND to_regclass('public."IX_community_searches_term_day"') IS NULL THEN
+                      ALTER INDEX "IX_community_searchs_term_day" RENAME TO "IX_community_searches_term_day";
+                    END IF;
+                    CREATE INDEX IF NOT EXISTS "IX_community_searches_term_day" ON community_searches (term, day);
+                  END IF;
+                END $$;
+                """, conn);
+            await cmd.ExecuteNonQueryAsync(ct);
+        }, logger);
+
+        await SafeStepAsync("reconcile_saved_roadmaps", async () =>
+        {
+            await using var conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new NpgsqlCommand("""
+                DO $$
+                BEGIN
+                  IF to_regclass('public.saved_roadmaps') IS NOT NULL THEN
+                    ALTER TABLE saved_roadmaps DROP CONSTRAINT IF EXISTS "FK_saved_roadmaps_match_inputs_PairId";
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='PairId')
+                       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='pair_id') THEN
+                      ALTER TABLE saved_roadmaps RENAME COLUMN "PairId" TO pair_id;
+                    END IF;
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='Plan')
+                       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='plan') THEN
+                      ALTER TABLE saved_roadmaps RENAME COLUMN "Plan" TO plan;
+                    END IF;
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='Completed')
+                       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='completed') THEN
+                      ALTER TABLE saved_roadmaps RENAME COLUMN "Completed" TO completed;
+                    END IF;
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='UpdatedAt')
+                       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='updated_at') THEN
+                      ALTER TABLE saved_roadmaps RENAME COLUMN "UpdatedAt" TO updated_at;
+                    END IF;
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='RowVersion')
+                       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='saved_roadmaps' AND column_name='row_version') THEN
+                      ALTER TABLE saved_roadmaps RENAME COLUMN "RowVersion" TO row_version;
+                    END IF;
+                    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'FK_saved_roadmaps_match_inputs_pair_id') THEN
+                      ALTER TABLE saved_roadmaps ADD CONSTRAINT "FK_saved_roadmaps_match_inputs_pair_id"
+                        FOREIGN KEY (pair_id) REFERENCES match_inputs (ai_job_id) ON DELETE CASCADE;
+                    END IF;
+                  END IF;
+                END $$;
+                """, conn);
+            await cmd.ExecuteNonQueryAsync(ct);
+        }, logger);
+
+        await SafeStepAsync("reconcile_account_identity_columns", async () =>
+        {
+            await using var conn = new NpgsqlConnection(connectionString);
+            await conn.OpenAsync(ct);
+            await using var cmd = new NpgsqlCommand("""
+                ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "AvatarImageId" uuid;
+                ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "DisplayName" character varying(150);
+                ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "NotifyCommunity" boolean NOT NULL DEFAULT TRUE;
+                ALTER TABLE "AspNetUsers" ADD COLUMN IF NOT EXISTS "NotifyRecruitment" boolean NOT NULL DEFAULT TRUE;
+                CREATE INDEX IF NOT EXISTS "IX_AspNetUsers_AvatarImageId" ON "AspNetUsers" ("AvatarImageId");
+                DO $$
+                BEGIN
+                  IF to_regclass('public.community_images') IS NOT NULL AND NOT EXISTS (
+                    SELECT 1 FROM pg_constraint WHERE conname = 'FK_AspNetUsers_community_images_AvatarImageId'
+                  ) THEN
+                    ALTER TABLE "AspNetUsers" ADD CONSTRAINT "FK_AspNetUsers_community_images_AvatarImageId"
+                      FOREIGN KEY ("AvatarImageId") REFERENCES community_images (id) ON DELETE SET NULL;
+                  END IF;
+                END $$;
+                INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion") VALUES
+                  ('20261126134034_NormalizeSavedRoadmapsAndCommunitySearches', '10.0.13'),
+                  ('20261127151343_AccountIdentityAndPreferences', '10.0.13')
+                ON CONFLICT DO NOTHING;
+                """, conn);
+            await cmd.ExecuteNonQueryAsync(ct);
+        }, logger);
     }
 
     private static async Task SafeStepAsync(string stepName, Func<Task> action, ILogger logger)

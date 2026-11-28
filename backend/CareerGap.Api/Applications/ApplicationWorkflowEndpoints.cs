@@ -53,7 +53,7 @@ public static partial class ApplicationEndpoints
             ActorUserId = recruiterId,
             ChangedAt = now
         });
-        if (await db.Users.AsNoTracking().Where(x => x.Id == application.CandidateId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
+        if (await db.IsNotifyRecruitmentEnabledAsync(application.CandidateId, ct))
         {
             db.Notifications.Add(new NotificationRecord
             {
@@ -101,7 +101,7 @@ public static partial class ApplicationEndpoints
         });
         var jobTitle = await db.JobVersions.Where(x => x.Id == application.SubmittedJobVersionId)
             .Select(x => x.Title).SingleAsync(ct);
-        if (await db.Users.AsNoTracking().Where(x => x.Id == recruiterId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
+        if (await db.IsNotifyRecruitmentEnabledAsync(recruiterId, ct))
         {
             db.Notifications.Add(new NotificationRecord
             {

@@ -3,11 +3,40 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 namespace CareerGap.Api.Data;
 
-public sealed partial class AppDb(DbContextOptions<AppDb> options) : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
+public sealed class AppDbSchemaOptions
 {
+    public bool HasExtendedUserColumns { get; set; } = true;
+}
+
+public sealed class AppDbModelCacheKeyFactory : IModelCacheKeyFactory
+{
+    public object Create(DbContext context, bool designTime) =>
+        context is AppDb appDb ? (context.GetType(), appDb.HasExtendedUserColumns, designTime) : (context.GetType(), designTime);
+}
+
+public sealed partial class AppDb(DbContextOptions<AppDb> options, AppDbSchemaOptions? schemaOptions = null) : IdentityDbContext<AppUser, IdentityRole<Guid>, Guid>(options), IDataProtectionKeyContext
+{
+    public bool HasExtendedUserColumns => schemaOptions?.HasExtendedUserColumns ?? true;
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ReplaceService<IModelCacheKeyFactory, AppDbModelCacheKeyFactory>();
+    }
+
+    public Task<bool> IsNotifyRecruitmentEnabledAsync(Guid userId, CancellationToken ct) =>
+        HasExtendedUserColumns
+            ? Users.AsNoTracking().Where(x => x.Id == userId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct)
+            : Users.AsNoTracking().AnyAsync(x => x.Id == userId && x.AccountStatus == "active", ct);
+
+    public Task<bool> IsNotifyCommunityEnabledAsync(Guid userId, CancellationToken ct) =>
+        HasExtendedUserColumns
+            ? Users.AsNoTracking().Where(x => x.Id == userId).Select(x => x.NotifyCommunity).SingleOrDefaultAsync(ct)
+            : Users.AsNoTracking().AnyAsync(x => x.Id == userId && x.AccountStatus == "active", ct);
     public DbSet<CareerGap.Api.Recruitment.BusinessIdentity> BusinessIdentities => Set<CareerGap.Api.Recruitment.BusinessIdentity>();
     public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
     public DbSet<AccountDeletionRequestRecord> AccountDeletionRequests => Set<AccountDeletionRequestRecord>();
@@ -73,10 +102,20 @@ public sealed partial class AppDb(DbContextOptions<AppDb> options) : IdentityDbC
         b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Property(x=>x.RowVersion).IsConcurrencyToken();
         foreach (var property in b.Entity<CareerGap.Api.Learning.SavedRoadmap>().Metadata.GetProperties()) property.SetColumnName(Snake(property.Name));
         b.Entity<AppUser>().Property(x => x.AccountStatus).HasMaxLength(24);
-        b.Entity<AppUser>().Property(x => x.DisplayName).HasMaxLength(150);
-        b.Entity<AppUser>().Property(x => x.NotifyRecruitment).HasDefaultValue(true);
-        b.Entity<AppUser>().Property(x => x.NotifyCommunity).HasDefaultValue(true);
-        b.Entity<AppUser>().HasOne<CommunityImage>().WithMany().HasForeignKey(x => x.AvatarImageId).OnDelete(DeleteBehavior.SetNull);
+        if (HasExtendedUserColumns)
+        {
+            b.Entity<AppUser>().Property(x => x.DisplayName).HasMaxLength(150);
+            b.Entity<AppUser>().Property(x => x.NotifyRecruitment).HasDefaultValue(true);
+            b.Entity<AppUser>().Property(x => x.NotifyCommunity).HasDefaultValue(true);
+            b.Entity<AppUser>().HasOne<CommunityImage>().WithMany().HasForeignKey(x => x.AvatarImageId).OnDelete(DeleteBehavior.SetNull);
+        }
+        else
+        {
+            b.Entity<AppUser>().Ignore(x => x.DisplayName);
+            b.Entity<AppUser>().Ignore(x => x.AvatarImageId);
+            b.Entity<AppUser>().Ignore(x => x.NotifyRecruitment);
+            b.Entity<AppUser>().Ignore(x => x.NotifyCommunity);
+        }
         b.Entity<AppUser>().HasIndex(x => x.NormalizedEmail).IsUnique().HasFilter("\"NormalizedEmail\" IS NOT NULL");
         b.Entity<CandidateProfile>().HasKey(x => x.UserId);
         b.Entity<CandidateProfile>().HasOne<AppUser>().WithOne().HasForeignKey<CandidateProfile>(x => x.UserId).OnDelete(DeleteBehavior.Restrict);

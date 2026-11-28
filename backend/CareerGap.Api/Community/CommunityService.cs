@@ -202,19 +202,33 @@ public sealed partial class CommunityService(AppDb db, TimeProvider clock)
     private async Task NotifyPublication(CommunityPost p, CancellationToken ct)
     {
         await MentionNotices(p.AuthorId, p.Id, p.Title + " " + p.Body, "post:" + p.Id, ct);
-        await db.Database.ExecuteSqlInterpolatedAsync($"""
-            INSERT INTO community_notices (id, recipient_id, actor_id, post_id, kind, message, dedup_key, created_at)
-            SELECT gen_random_uuid(), f.follower_id, {p.AuthorId}, {p.Id}, 'new_post', 'Người bạn theo dõi có bài viết mới.',
-                'new_post:' || {p.Id.ToString()} || ':' || f.follower_id::text, now()
-            FROM community_follows f JOIN "AspNetUsers" u ON u."Id" = f.follower_id
-            WHERE f.following_id = {p.AuthorId} AND u."AccountStatus" = 'active' AND u."NotifyCommunity" = true
-            ON CONFLICT (dedup_key) DO NOTHING
-            """, ct);
+        if (db.HasExtendedUserColumns)
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO community_notices (id, recipient_id, actor_id, post_id, kind, message, dedup_key, created_at)
+                SELECT gen_random_uuid(), f.follower_id, {p.AuthorId}, {p.Id}, 'new_post', 'Người bạn theo dõi có bài viết mới.',
+                    'new_post:' || {p.Id.ToString()} || ':' || f.follower_id::text, now()
+                FROM community_follows f JOIN "AspNetUsers" u ON u."Id" = f.follower_id
+                WHERE f.following_id = {p.AuthorId} AND u."AccountStatus" = 'active' AND u."NotifyCommunity" = true
+                ON CONFLICT (dedup_key) DO NOTHING
+                """, ct);
+        }
+        else
+        {
+            await db.Database.ExecuteSqlInterpolatedAsync($"""
+                INSERT INTO community_notices (id, recipient_id, actor_id, post_id, kind, message, dedup_key, created_at)
+                SELECT gen_random_uuid(), f.follower_id, {p.AuthorId}, {p.Id}, 'new_post', 'Người bạn theo dõi có bài viết mới.',
+                    'new_post:' || {p.Id.ToString()} || ':' || f.follower_id::text, now()
+                FROM community_follows f JOIN "AspNetUsers" u ON u."Id" = f.follower_id
+                WHERE f.following_id = {p.AuthorId} AND u."AccountStatus" = 'active'
+                ON CONFLICT (dedup_key) DO NOTHING
+                """, ct);
+        }
     }
     private async Task Notice(Guid recipient, Guid actor, Guid? post, string kind, string message, string key, CancellationToken ct)
     {
         if (recipient == actor || await db.CommunityNotices.AnyAsync(x => x.DedupKey == key, ct)) return;
-        if (!await db.Users.AsNoTracking().Where(x => x.Id == recipient).Select(x => x.NotifyCommunity).SingleOrDefaultAsync(ct)) return;
+        if (!await db.IsNotifyCommunityEnabledAsync(recipient, ct)) return;
         db.CommunityNotices.Add(new() { RecipientId = recipient, ActorId = actor, PostId = post, Kind = kind, Message = message, DedupKey = key, CreatedAt = clock.GetUtcNow() });
     }
 }

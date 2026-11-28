@@ -32,8 +32,10 @@ if (args.Length == 4 && args[0] == "--evaluate-cv-captures")
 var builder = WebApplication.CreateBuilder(args);
 builder.Logging.AddFilter("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
+builder.Services.AddSingleton<AppDbSchemaOptions>();
 builder.Services.AddDbContext<AppDb>(o => o.UseNpgsql(builder.Configuration.GetConnectionString("Database")
-    ?? throw new InvalidOperationException("Set ConnectionStrings__Database"), pg => pg.SetPostgresVersion(16, 0)));
+    ?? throw new InvalidOperationException("Set ConnectionStrings__Database"), pg => pg.SetPostgresVersion(16, 0))
+    .ReplaceService<Microsoft.EntityFrameworkCore.Infrastructure.IModelCacheKeyFactory, AppDbModelCacheKeyFactory>());
 builder.Services.AddIdentity<AppUser, IdentityRole<Guid>>(o =>
 {
     o.User.RequireUniqueEmail = true;
@@ -305,11 +307,11 @@ app.MapFallbackToFile("index.html");
 if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing") &&
     !string.Equals(app.Configuration["Database:AutoMigrate"], "false", StringComparison.OrdinalIgnoreCase))
 {
-    using var migrationScope = app.Services.CreateScope();
-    var db = migrationScope.ServiceProvider.GetRequiredService<AppDb>();
-    var logger = migrationScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
+    var connStr = app.Configuration.GetConnectionString("Database")!;
+    var schemaOptions = app.Services.GetRequiredService<AppDbSchemaOptions>();
+    var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
     var seedShowcase = !string.Equals(app.Configuration["Demo:SeedEmptyProduction"], "false", StringComparison.OrdinalIgnoreCase);
-    await ProductionSchemaReconciler.ReconcileAndSeedAsync(db, logger, seedShowcase);
+    await ProductionSchemaReconciler.PrepareDatabaseAsync(connStr, schemaOptions, app.Services, logger, seedShowcase);
 }
 app.Run();
 

@@ -120,7 +120,7 @@ public static partial class ApplicationEndpoints
             ActorUserId = candidateId,
             ChangedAt = now
         });
-        if (await db.Users.AsNoTracking().Where(x => x.Id == candidateId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
+        if (await db.IsNotifyRecruitmentEnabledAsync(candidateId, ct))
         {
             db.Notifications.Add(new NotificationRecord
             {
@@ -133,7 +133,7 @@ public static partial class ApplicationEndpoints
                 DeduplicationKey = $"application:{application.Id}:submitted:candidate"
             });
         }
-        if (await db.Users.AsNoTracking().Where(x => x.Id == job.Company!.OwnerUserId).Select(x => x.NotifyRecruitment).SingleOrDefaultAsync(ct))
+        if (await db.IsNotifyRecruitmentEnabledAsync(job.Company!.OwnerUserId, ct))
         {
             db.Notifications.Add(new NotificationRecord
             {
