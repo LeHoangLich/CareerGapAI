@@ -308,20 +308,8 @@ if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"
     using var migrationScope = app.Services.CreateScope();
     var db = migrationScope.ServiceProvider.GetRequiredService<AppDb>();
     var logger = migrationScope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseMigration");
-    try
-    {
-        var pending = (await db.Database.GetPendingMigrationsAsync()).ToArray();
-        if (pending.Length > 0)
-        {
-            logger.LogInformation("Applying {Count} pending EF Core migration(s).", pending.Length);
-            await db.Database.MigrateAsync();
-            logger.LogInformation("Database migrations applied successfully.");
-        }
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Automatic startup database migration failed.");
-    }
+    var seedShowcase = !string.Equals(app.Configuration["Demo:SeedEmptyProduction"], "false", StringComparison.OrdinalIgnoreCase);
+    await ProductionSchemaReconciler.ReconcileAndSeedAsync(db, logger, seedShowcase);
 }
 app.Run();
 
