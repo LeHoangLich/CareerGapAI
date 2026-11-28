@@ -25,7 +25,10 @@ public static class CompanyLogoEndpoints
                 (c.OwnerUserId==uid||db.BusinessIdentities.Any(b=>b.CompanyId==c.Id&&b.Status=="verified")&&db.Jobs.Any(j=>j.CompanyId==c.Id&&(j.Status=="published"||j.Status=="closed"))));
             var image=await (from c in eligible join i in db.CommunityImages on c.LogoImageId equals i.Id where i.OwnerId==c.OwnerUserId select i).AsNoTracking().SingleOrDefaultAsync(ct);
             if(image is null)return Results.NotFound();
-            var bytes=await storage.ReadAsync(image.ObjectKey,ct);
+            byte[] bytes;
+            try { bytes = await storage.ReadAsync(image.ObjectKey, ct); }
+            catch (StorageConfigurationException ex) { return Results.Problem(statusCode: 503, title: ex.Code); }
+            catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException or InvalidDataException) { return Results.Problem(statusCode: 503, title: "file_unavailable"); }
             if(!await eligible.AnyAsync(c=>c.LogoImageId==image.Id,ct))return Results.NotFound();
             http.Response.Headers.CacheControl="no-store";http.Response.Headers.XContentTypeOptions="nosniff";
             return Results.File(bytes,image.ContentType);

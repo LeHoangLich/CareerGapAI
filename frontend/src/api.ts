@@ -20,9 +20,24 @@ export async function refreshCsrf() {
   if (!response.ok) throw new ApiError('', response.status);
   csrf = (await response.json()).token;
 }
+const serverDiagnosticMessages: Record<string, string> = {
+  ai_disabled: 'AI đang tắt trong môi trường này. Yêu cầu mới chưa được tạo; bạn vẫn có thể xem, tải CV và thao tác thủ công.',
+  storage_not_configured: 'Hệ thống lưu trữ đám mây chưa được cấu hình khóa truy cập hợp lệ. Vui lòng liên hệ quản trị viên.',
+  storage_verification_failed: 'Không thể xác minh tệp vừa lưu trên hệ thống lưu trữ. Vui lòng thử lại sau.',
+  storage_unavailable: 'Hệ thống lưu trữ tệp hiện không khớp hoặc tạm thời không khả dụng.',
+  file_unavailable: 'Không thể đọc tệp từ hệ thống lưu trữ. Vui lòng thử lại sau.',
+  redacted_file_unavailable: 'Bản CV đã ẩn liên hệ chưa thể mở. File gốc vẫn được giữ riêng.',
+  upload_cleanup_conflict: 'Tệp đang tải lên bị gián đoạn khi đồng bộ lưu trữ. Vui lòng thử tải lại.',
+  community_image_decode_failed: 'Không thể xử lý tệp ảnh này. Hãy thử ảnh PNG hoặc JPEG khác.',
+  community_image_storage_failed: 'Không thể lưu ảnh lên hệ thống lưu trữ đám mây. Vui lòng thử lại sau.',
+  community_image_db_failed: 'Không thể lưu thông tin ảnh vào cơ sở dữ liệu. Vui lòng thử lại sau.',
+};
+
 export function errorMessage(code: string, status: number): string {
-  if ((status >= 500 && code !== 'ai_disabled') || status === 0)
+  if (status === 0)
     return 'Máy chủ gặp sự cố hoặc kết nối bị gián đoạn. Vui lòng thử lại sau.';
+  if (status >= 500)
+    return serverDiagnosticMessages[code] ?? 'Máy chủ gặp sự cố hoặc kết nối bị gián đoạn. Vui lòng thử lại sau.';
   const messages: Record<string,string> = {
     invalid_cover_letter:'Thư ứng tuyển tối đa 5.000 ký tự và không chứa ký tự không hợp lệ.',
     invalid_community_report_query: 'Bộ lọc báo cáo cộng đồng không hợp lệ.',
@@ -97,15 +112,9 @@ export function errorMessage(code: string, status: number): string {
   if (code === 'job_revision_data_unavailable') return 'Bản trích xuất yêu cầu JD này không còn đọc được.';
   if (code === 'job_revision_limit') return 'JD đã đạt giới hạn số revision.';
   if (code === 'job_requirement_limit') return 'JD có quá nhiều dòng yêu cầu cho bản thử nghiệm này. Hãy gộp các dòng liên quan rồi thử lại.';
-  if (code === 'redacted_file_unavailable') return 'Bản CV đã ẩn liên hệ chưa thể mở. File gốc vẫn được giữ riêng.';
   if (['file_format', 'file_unreadable', 'no_text'].includes(code)) return 'Không đọc được tài liệu. Hãy kiểm tra file PDF/DOCX.';
   if (['file_size', 'text_limit', 'page_limit', 'docx_expansion_limit'].includes(code)) return 'Tài liệu vượt giới hạn: 4 MB, 20 trang PDF hoặc lượng văn bản cho phép.';
-  if (code === 'storage_verification_failed') return 'Không thể xác minh tệp vừa lưu trên hệ thống lưu trữ. Vui lòng thử lại sau.';
-  if (code === 'storage_unavailable') return 'Hệ thống lưu trữ tệp hiện không khớp hoặc tạm thời không khả dụng.';
-  if (code === 'file_unavailable') return 'Không thể đọc tệp từ hệ thống lưu trữ. Vui lòng thử lại sau.';
-  if (code === 'community_image_decode_failed') return 'Không thể xử lý tệp ảnh này. Hãy thử ảnh PNG hoặc JPEG khác.';
-  if (code === 'community_image_storage_failed') return 'Không thể lưu ảnh lên hệ thống lưu trữ đám mây. Vui lòng thử lại sau.';
-  if (code === 'community_image_db_failed') return 'Không thể lưu thông tin ảnh vào cơ sở dữ liệu. Vui lòng thử lại sau.';
+  if (serverDiagnosticMessages[code]) return serverDiagnosticMessages[code];
   if (status === 429) return 'Bạn thao tác quá nhanh hoặc đã hết hạn mức. Hãy thử lại sau.';
   return 'Chưa xử lý được yêu cầu. Hãy thử lại sau.';
 }

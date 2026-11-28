@@ -48,9 +48,14 @@ public static class FileEndpoints
                 return Results.Problem(statusCode: 503, title: "file_unavailable");
             return Results.File(bytes, file.MimeType, file.OriginalName);
         }
-        catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception)
+        catch (StorageConfigurationException ex)
         {
-            logger?.LogError(ex, "ServeFileAsync failed (fileId={FileId}, provider={Provider}): {Message}", file.Id, storage.Provider, ex.Message);
+            logger?.LogError(ex, "ServeFileAsync storage misconfigured (fileId={FileId}, provider={Provider}): {Message}", file.Id, storage.Provider, ex.Message);
+            return Results.Problem(statusCode: 503, title: ex.Code);
+        }
+        catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException or InvalidDataException)
+        {
+            logger?.LogError(ex, "ServeFileAsync failed (fileId={FileId}, provider={Provider}): {Type} {Message}", file.Id, storage.Provider, ex.GetType().Name, ex.Message);
             return Results.Problem(statusCode: 503, title: "file_unavailable");
         }
     }
@@ -121,14 +126,25 @@ public static class FileEndpoints
             await storage.PutAsync(file.ObjectKey, bytes, file.MimeType, ct);
             stored = await storage.ReadAsync(file.ObjectKey, ct);
         }
-        catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception or InvalidDataException)
+        catch (StorageConfigurationException ex)
+        {
+            logger.LogError(ex, "Resume upload storage misconfigured ({Provider}): {Message}", storage.Provider, ex.Message);
+            await MarkFileFailedAsync(db, file);
+            return Results.Problem(statusCode: 503, title: ex.Code);
+        }
+        catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException or InvalidDataException
+            || (ex is OperationCanceledException && !ct.IsCancellationRequested))
         {
             logger.LogError(ex, "Resume storage verification failed ({Provider}): {Type} {Message}", storage.Provider, ex.GetType().Name, ex.Message);
+            await MarkFileFailedAsync(db, file);
             return Results.Problem(statusCode: 503, title: "storage_verification_failed");
         }
         var sourceHash = SHA256.HashData(bytes);
         if (!CryptographicOperations.FixedTimeEquals(SHA256.HashData(stored), sourceHash))
+        {
+            await MarkFileFailedAsync(db, file);
             return Results.Problem(statusCode: 503, title: "storage_verification_failed");
+        }
 
         var hash = Convert.ToHexStringLower(sourceHash);
         await using var transaction = await db.Database.BeginTransactionAsync(ct);
@@ -214,6 +230,19 @@ public static class FileEndpoints
                 .Select(version => new ResumeVersionDto(version.Id, version.FileId, version.VersionNo, version.DocumentHash, version.CreatedAt)).ToArray()))
             .ToArray();
         return Results.Ok(new { items = result, total, page = number, pageSize = 20 });
+    }
+
+    private static async Task MarkFileFailedAsync(AppDb db, StoredFile file)
+    {
+        try
+        {
+            file.Status = "failed";
+            await db.SaveChangesAsync(CancellationToken.None);
+        }
+        catch
+        {
+            // OrphanFileCleanupWorker still collects abandoned pending records after the grace period.
+        }
     }
 
     private static bool TryUserId(ClaimsPrincipal user, out Guid userId) =>

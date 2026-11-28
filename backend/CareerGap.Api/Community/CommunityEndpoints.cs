@@ -131,45 +131,66 @@ public static class CommunityEndpoints
         g.MapPost("/images", async (HttpContext http, AppDb db, IFileStorage storage, ILoggerFactory loggerFactory, CancellationToken ct) => {
             var log = loggerFactory.CreateLogger("CommunityImages");
             var uid = CommunityService.User(http.User)!.Value;
-            if (!http.Request.HasFormContentType) return Results.Problem(statusCode: 400, title: "community_image_invalid"); var form = await http.Request.ReadFormAsync(ct); var file = form.Files.GetFile("file");
+            if (!http.Request.HasFormContentType) return Results.Problem(statusCode: 400, title: "community_image_invalid");
+            var form = await http.Request.ReadFormAsync(ct);
+            var file = form.Files.GetFile("file");
             if (file is null || file.Length is <= 0 or > 2 * 1024 * 1024) return Results.Problem(statusCode: 400, title: "community_image_invalid");
-            await using var tx = await db.Database.BeginTransactionAsync(ct);
-            var account = await db.Users.FromSqlInterpolated($"SELECT * FROM \"AspNetUsers\" WHERE \"Id\"={uid} FOR UPDATE").AsNoTracking().SingleAsync(ct);
-            if (account.AccountStatus != "active") return Results.Unauthorized();
-            if (await db.CommunityImages.CountAsync(x => x.OwnerId == uid, ct) >= 30) return Results.Problem(statusCode: 422, title: "community_image_limit");
+
+            // Fast pre-checks outside any transaction so CPU image processing and R2/S3 I/O never hold a DB lock.
+            if (!await db.Users.AsNoTracking().AnyAsync(x => x.Id == uid && x.AccountStatus == "active", ct)) return Results.Unauthorized();
+            if (await db.CommunityImages.AsNoTracking().CountAsync(x => x.OwnerId == uid, ct) >= 30) return Results.Problem(statusCode: 422, title: "community_image_limit");
+
             byte[] output;
+            string outputContentType;
             try {
                 using var input = new MemoryStream(); await file.CopyToAsync(input, ct); input.Position = 0;
                 using var codec = SKCodec.Create(input);
                 if (codec is null || codec.EncodedFormat is not (SKEncodedImageFormat.Png or SKEncodedImageFormat.Jpeg) || codec.FrameCount > 1 ||
                     codec.Info.Width < 1 || codec.Info.Height < 1 || (long)codec.Info.Width * codec.Info.Height > 8_000_000) throw new InvalidDataException();
+                var isJpeg = codec.EncodedFormat == SKEncodedImageFormat.Jpeg;
                 using var bitmap = new SKBitmap(new SKImageInfo(codec.Info.Width, codec.Info.Height, SKColorType.Rgba8888, SKAlphaType.Premul));
                 if (codec.GetPixels(bitmap.Info, bitmap.GetPixels()) != SKCodecResult.Success) throw new InvalidDataException();
                 var ratio = Math.Min(1d, 1200d / Math.Max(bitmap.Width, bitmap.Height));
                 using var resized = new SKBitmap(new SKImageInfo(Math.Max(1, (int)(bitmap.Width * ratio)), Math.Max(1, (int)(bitmap.Height * ratio)), SKColorType.Rgba8888, SKAlphaType.Premul));
                 if (!bitmap.ScalePixels(resized, new SKSamplingOptions(SKFilterMode.Linear))) throw new InvalidDataException();
-                using var clean = SKImage.FromBitmap(resized); using var encoded = clean.Encode(SKEncodedImageFormat.Png, 100);
-                output = encoded.ToArray(); if (output.Length > 4 * 1024 * 1024) throw new InvalidDataException();
+                using var clean = SKImage.FromBitmap(resized);
+                using var encoded = isJpeg ? clean.Encode(SKEncodedImageFormat.Jpeg, 88) : clean.Encode(SKEncodedImageFormat.Png, 100);
+                if (encoded is null) throw new InvalidDataException();
+                output = encoded.ToArray();
+                outputContentType = isJpeg ? "image/jpeg" : "image/png";
+                if (output.Length is <= 0 or > 4 * 1024 * 1024) throw new InvalidDataException();
             } catch (Exception e) when (e is InvalidDataException or NotSupportedException) { return Results.Problem(statusCode: 400, title: "community_image_invalid"); }
             catch (Exception e) {
                 log.LogError(e, "Community image decode failed: {Type} {Message} {Inner}", e.GetType().Name, e.Message, e.InnerException?.Message);
                 return Results.Problem(statusCode: 500, title: "community_image_decode_failed");
             }
-            var row = new CommunityImage { OwnerId = uid, ObjectKey = Guid.NewGuid().ToString("N"), ContentType = "image/png", Provider = storage.Provider };
+
+            var row = new CommunityImage { OwnerId = uid, ObjectKey = Guid.NewGuid().ToString("N"), ContentType = outputContentType, Provider = storage.Provider };
             try { await storage.PutAsync(row.ObjectKey, output, row.ContentType, ct); }
+            catch (StorageConfigurationException e) {
+                log.LogError(e, "Community image storage misconfigured ({Provider}): {Message}", storage.Provider, e.Message);
+                return Results.Problem(statusCode: 503, title: e.Code);
+            }
             catch (Exception e) {
                 log.LogError(e, "Community image storage PutAsync failed ({Provider}): {Type} {Message} {Inner}", storage.Provider, e.GetType().Name, e.Message, e.InnerException?.Message);
                 return Results.Problem(statusCode: 500, title: "community_image_storage_failed");
             }
-            try { db.CommunityImages.Add(row); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); }
+
+            try {
+                await using var tx = await db.Database.BeginTransactionAsync(ct);
+                var account = await db.Users.FromSqlInterpolated($"SELECT * FROM \"AspNetUsers\" WHERE \"Id\"={uid} FOR UPDATE").AsNoTracking().SingleAsync(ct);
+                if (account.AccountStatus != "active") { await TryDeleteImageObjectAsync(storage, row.ObjectKey, log); return Results.Unauthorized(); }
+                if (await db.CommunityImages.CountAsync(x => x.OwnerId == uid, ct) >= 30) { await TryDeleteImageObjectAsync(storage, row.ObjectKey, log); return Results.Problem(statusCode: 422, title: "community_image_limit"); }
+                db.CommunityImages.Add(row); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct);
+            }
             catch (Exception e) {
                 log.LogError(e, "Community image DB save failed: {Type} {Message} {Inner}", e.GetType().Name, e.Message, e.InnerException?.Message);
-                await storage.DeleteAsync(row.ObjectKey, CancellationToken.None);
+                await TryDeleteImageObjectAsync(storage, row.ObjectKey, log);
                 return Results.Problem(statusCode: 500, title: "community_image_db_failed");
             }
             return Results.Created("/api/community/images/" + row.Id, new { row.Id });
         }).WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(2 * 1024 * 1024 + 64 * 1024)).RequireAuthorization().RequireRateLimiting("community");
-        g.MapGet("/images/{id:guid}", async (Guid id, HttpContext http, AppDb db, IFileStorage storage, CancellationToken ct) => {
+        g.MapGet("/images/{id:guid}", async (Guid id, HttpContext http, AppDb db, IFileStorage storage, ILoggerFactory loggerFactory, CancellationToken ct) => {
             var uid = CommunityService.User(http.User); var image = await db.CommunityImages.SingleOrDefaultAsync(x => x.Id == id, ct);
             if (image is null || !await db.Users.AnyAsync(x => x.Id == image.OwnerId && x.AccountStatus == "active", ct)) return Results.NotFound();
             var own = image.OwnerId == uid;
@@ -178,7 +199,16 @@ public static class CommunityEndpoints
                 || (db.HasExtendedUserColumns && await db.Users.AnyAsync(x => x.AvatarImageId == id && x.AccountStatus == "active", ct));
             var publication = await db.CommunityPosts.AnyAsync(x => (x.ThumbnailId == id || x.Body.Contains(imagePath)) && (x.Status == "published" || http.User.IsInRole("Admin") && x.Status != "draft"), ct);
             if (!own && !publicAvatar && !publication) return Results.NotFound();
-            var bytes = await storage.ReadAsync(image.ObjectKey, ct);
+            byte[] bytes;
+            try { bytes = await storage.ReadAsync(image.ObjectKey, ct); }
+            catch (StorageConfigurationException ex) {
+                loggerFactory.CreateLogger("CommunityImages").LogError(ex, "Community image read storage misconfigured: {Message}", ex.Message);
+                return Results.Problem(statusCode: 503, title: ex.Code);
+            }
+            catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException or InvalidDataException) {
+                loggerFactory.CreateLogger("CommunityImages").LogError(ex, "Community image read failed (imageId={ImageId}): {Type} {Message}", id, ex.GetType().Name, ex.Message);
+                return Results.Problem(statusCode: 503, title: "file_unavailable");
+            }
             // Recheck after storage I/O: a post may have been hidden or its owner suspended meanwhile.
             var activeUserAvatar = db.HasExtendedUserColumns && await db.Users.AnyAsync(u => u.AvatarImageId == id && u.AccountStatus == "active", ct);
             if (!await db.CommunityImages.AnyAsync(x => x.Id == id && db.Users.Any(u => u.Id == x.OwnerId && u.AccountStatus == "active") &&
@@ -186,7 +216,7 @@ public static class CommunityEndpoints
                 (p.Status == "published" || http.User.IsInRole("Admin") && p.Status != "draft"))), ct)) return Results.NotFound();
             http.Response.Headers.XContentTypeOptions = "nosniff"; return Results.File(bytes, image.ContentType);
         });
-        g.MapDelete("/images/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, IFileStorage storage, CancellationToken ct) => {
+        g.MapDelete("/images/{id:guid}", async (Guid id, ClaimsPrincipal user, AppDb db, IFileStorage storage, ILoggerFactory loggerFactory, CancellationToken ct) => {
             var uid = CommunityService.User(user);
             await using var tx = await db.Database.BeginTransactionAsync(ct);
             var account = await db.Users.FromSqlInterpolated($"SELECT * FROM \"AspNetUsers\" WHERE \"Id\"={uid} FOR UPDATE").AsNoTracking().SingleAsync(ct);
@@ -195,8 +225,23 @@ public static class CommunityEndpoints
             if (image is null) return Results.NotFound();
             var imagePath = "/api/community/images/" + id;
             if (await db.Companies.AnyAsync(x=>x.LogoImageId==id,ct) || await db.CommunityPosts.AnyAsync(x => x.ThumbnailId == id || x.Body.Contains(imagePath), ct) || await db.CommunityProfiles.AnyAsync(x => x.AvatarId == id, ct) || (db.HasExtendedUserColumns && await db.Users.AnyAsync(x => x.AvatarImageId == id, ct))) return Results.Problem(statusCode: 409, title: "community_image_in_use");
-            await storage.DeleteAsync(image.ObjectKey, ct); db.CommunityImages.Remove(image); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return Results.NoContent();
+            try { await storage.DeleteAsync(image.ObjectKey, ct); }
+            catch (StorageConfigurationException ex) {
+                loggerFactory.CreateLogger("CommunityImages").LogError(ex, "Community image delete storage misconfigured: {Message}", ex.Message);
+                return Results.Problem(statusCode: 503, title: ex.Code);
+            }
+            catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException) {
+                loggerFactory.CreateLogger("CommunityImages").LogError(ex, "Community image delete failed (imageId={ImageId}): {Type} {Message}", id, ex.GetType().Name, ex.Message);
+                return Results.Problem(statusCode: 503, title: "community_image_storage_failed");
+            }
+            db.CommunityImages.Remove(image); await db.SaveChangesAsync(ct); await tx.CommitAsync(ct); return Results.NoContent();
         }).RequireAuthorization();
+    }
+
+    private static async Task TryDeleteImageObjectAsync(IFileStorage storage, string objectKey, ILogger log)
+    {
+        try { await storage.DeleteAsync(objectKey, CancellationToken.None); }
+        catch (Exception ex) { log.LogWarning(ex, "Best-effort rollback delete for image object failed: {Type} {Message}", ex.GetType().Name, ex.Message); }
     }
     private static async Task StreamEvents(HttpContext http, IServiceScopeFactory scopes, CancellationToken ct)
     {

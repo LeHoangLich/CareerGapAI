@@ -160,6 +160,15 @@ public sealed class CommunityTests(FoundationFixture fixture) : IClassFixture<Fo
         await State(admin, p); var visible = await guest.GetAsync($"{Root}/images/{id}"); Assert.Equal("image/png", visible.Content.Headers.ContentType!.MediaType);
         await State(admin, await Read(a.Client, p.Id), "hide"); Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"{Root}/images/{id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await b.Client.DeleteAsync($"{Root}/images/{id}")).StatusCode);
+
+        // JPEG uploads are re-encoded cleanly as image/jpeg outside the DB transaction.
+        using var jpgEncoded = image.Encode(SkiaSharp.SKEncodedImageFormat.Jpeg, 90);
+        var jpgUpload = await Upload(jpgEncoded.ToArray(), "photo.jpg");
+        Assert.Equal(HttpStatusCode.Created, jpgUpload.StatusCode);
+        var jpgId = (await jpgUpload.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+        var jpgOwn = await a.Client.GetAsync($"{Root}/images/{jpgId}");
+        Assert.Equal(HttpStatusCode.OK, jpgOwn.StatusCode);
+        Assert.Equal("image/jpeg", jpgOwn.Content.Headers.ContentType!.MediaType);
     }
 
     [Fact] public async Task SuspensionAndAccountPurgeRemovePublicCommunityAndStorage()

@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Text;
 using CareerGap.Api.Files;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace CareerGap.Api.Tests;
@@ -34,10 +35,67 @@ public sealed class S3StorageAndMimeTests
     }
 
     [Fact]
-    public void NormalizeS3Endpoint_RejectsHttp()
+    public void NormalizeS3Endpoint_RejectsHttpAndR2PublicUrl()
     {
         Assert.Throws<InvalidOperationException>(() =>
             S3FileStorage.NormalizeS3Endpoint("http://localhost:9000", "bucket", null));
+        Assert.Throws<InvalidOperationException>(() =>
+            S3FileStorage.NormalizeS3Endpoint("https://pub-123456.r2.dev", "careergapai-private", null));
+    }
+
+    [Fact]
+    public async Task S3FileStorage_DetectsPlaceholderAndWrongLengthR2Credentials()
+    {
+        var placeholderConfig = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Storage:Bucket"] = "careergapai-private",
+            ["Storage:Endpoint"] = "https://01af696546bb46847cddb8cfdcd2af2e.r2.cloudflarestorage.com/",
+            ["Storage:AccessKey"] = "<R2_ACCESS_KEY_ID>",
+            ["Storage:SecretKey"] = "<R2_SECRET_ACCESS_KEY>",
+        }).Build();
+
+        var placeholderSettings = S3FileStorage.ResolveS3Settings(placeholderConfig);
+        Assert.NotNull(placeholderSettings.ConfigurationError);
+        Assert.Contains("placeholder", placeholderSettings.ConfigurationError, StringComparison.OrdinalIgnoreCase);
+
+        using var storage = new S3FileStorage(placeholderConfig);
+        var ex = await Assert.ThrowsAsync<StorageConfigurationException>(() =>
+            storage.PutAsync(Guid.NewGuid().ToString("N"), [1, 2, 3], "image/png", CancellationToken.None));
+        Assert.Equal("storage_not_configured", ex.Code);
+
+        var wrongLengthConfig = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Storage:Bucket"] = "careergapai-private",
+            ["Storage:Endpoint"] = "https://01af696546bb46847cddb8cfdcd2af2e.r2.cloudflarestorage.com",
+            ["Storage:AccessKey"] = "short-key-18-chars",
+            ["Storage:SecretKey"] = new string('b', 64),
+        }).Build();
+
+        var wrongLengthSettings = S3FileStorage.ResolveS3Settings(wrongLengthConfig);
+        Assert.NotNull(wrongLengthSettings.ConfigurationError);
+        Assert.Contains("length 18, expected 32", wrongLengthSettings.ConfigurationError);
+    }
+
+    [Fact]
+    public void S3FileStorage_CleansQuotesAndSupportsR2EnvAliases()
+    {
+        var validAccessKey = new string('a', 32);
+        var validSecretKey = new string('b', 64);
+        var config = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Storage:Bucket"] = "\"careergapai-private\"",
+            ["Storage:Endpoint"] = "\"https://01af696546bb46847cddb8cfdcd2af2e.r2.cloudflarestorage.com/careergapai-private\"",
+            ["R2_ACCESS_KEY_ID"] = $"'{validAccessKey}'",
+            ["R2_SECRET_ACCESS_KEY"] = $"\"{validSecretKey}\"",
+        }).Build();
+
+        var resolved = S3FileStorage.ResolveS3Settings(config);
+        Assert.Null(resolved.ConfigurationError);
+        Assert.Equal("careergapai-private", resolved.Bucket);
+        Assert.Equal("https://01af696546bb46847cddb8cfdcd2af2e.r2.cloudflarestorage.com/", resolved.ServiceUrl?.ToString());
+        Assert.Equal("auto", resolved.Region);
+        Assert.Equal(validAccessKey, resolved.AccessKey);
+        Assert.Equal(validSecretKey, resolved.SecretKey);
     }
 
     [Theory]

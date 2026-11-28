@@ -35,3 +35,17 @@ describe('password recovery errors', () => {
     await expect(api('/test')).rejects.toBe(abort);
   });
 });
+describe('upload and storage 5xx diagnostic messages', () => {
+  it('surfaces explicit storage and image diagnostic codes on 500/503 responses', () => {
+    expect(errorMessage('storage_not_configured', 503)).toContain('chưa được cấu hình khóa truy cập hợp lệ');
+    expect(errorMessage('storage_verification_failed', 503)).toContain('Không thể xác minh tệp');
+    expect(errorMessage('storage_unavailable', 503)).toContain('Hệ thống lưu trữ tệp');
+    expect(errorMessage('file_unavailable', 503)).toContain('Không thể đọc tệp');
+    expect(errorMessage('community_image_storage_failed', 500)).toContain('lưu trữ đám mây');
+    expect(errorMessage('community_image_decode_failed', 500)).toContain('xử lý tệp ảnh');
+    expect(errorMessage('community_image_db_failed', 500)).toContain('cơ sở dữ liệu');
+  });
+  it('keeps generic message when connection fails with status 0 even if a diagnostic code is passed', () => {
+    expect(errorMessage('community_image_storage_failed', 0)).toBe('Máy chủ gặp sự cố hoặc kết nối bị gián đoạn. Vui lòng thử lại sau.');
+  });
+});

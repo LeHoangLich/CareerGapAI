@@ -285,7 +285,7 @@ public static class AccountEndpoints
         var community = await db.CommunityProfiles.SingleOrDefaultAsync(x => x.UserId == uid, ct);
         if (community is not null)
         {
-            community.DisplayName = displayName;
+            community.DisplayName = displayName.Length > 100 ? displayName[..100] : displayName;
             community.AvatarId = input.AvatarImageId;
             community.UpdatedAt = now;
         }

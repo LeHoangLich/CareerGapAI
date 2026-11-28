@@ -30,7 +30,8 @@ if (args.Length == 4 && args[0] == "--evaluate-cv-captures")
     return;
 }
 var builder = WebApplication.CreateBuilder(args);
-builder.Logging.AddFilter("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
+if (builder.Environment.IsEnvironment("Testing"))
+    builder.Logging.AddFilter("Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true).AddEnvironmentVariables();
 builder.Services.AddSingleton<AppDbSchemaOptions>();
 builder.Services.AddDbContext<AppDb>(o => o.UseNpgsql(builder.Configuration.GetConnectionString("Database")
@@ -304,6 +305,11 @@ if (app.Environment.IsDevelopment() || app.Environment.IsEnvironment("Testing"))
 app.UseDefaultFiles(); app.UseStaticFiles();
 app.MapFallback("/api/{**path}", () => Results.NotFound());
 app.MapFallbackToFile("index.html");
+if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing"))
+{
+    // Eagerly resolve storage at boot so misconfigured R2/S3 credentials are logged immediately.
+    _ = app.Services.GetRequiredService<IFileStorage>();
+}
 if (!app.Environment.IsDevelopment() && !app.Environment.IsEnvironment("Testing") &&
     !string.Equals(app.Configuration["Database:AutoMigrate"], "false", StringComparison.OrdinalIgnoreCase))
 {

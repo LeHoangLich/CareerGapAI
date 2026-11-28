@@ -54,7 +54,8 @@ public static class PublicResumeEndpoints
 
         byte[] sourceBytes;
         try { sourceBytes = await storage.ReadAsync(source.File.ObjectKey, ct); }
-        catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception)
+        catch (StorageConfigurationException ex) { return Results.Problem(statusCode: 503, title: ex.Code); }
+        catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException)
         { return Results.Problem(statusCode: 503, title: "file_unavailable"); }
         var actualSourceHash = Convert.ToHexStringLower(SHA256.HashData(sourceBytes));
         if (source.File.Sha256 != actualSourceHash || source.Version.DocumentHash != actualSourceHash)
@@ -84,7 +85,11 @@ public static class PublicResumeEndpoints
                 if (Convert.ToHexStringLower(SHA256.HashData(storedBytes)) != derivedHash || !builder.Verify(storedBytes, ct))
                     return Results.Problem(statusCode: 503, title: "redacted_file_unavailable");
             }
-            catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception or InvalidDataException)
+            catch (StorageConfigurationException ex)
+            {
+                return Results.Problem(statusCode: 503, title: ex.Code);
+            }
+            catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException or InvalidDataException)
             {
                 return Results.Problem(statusCode: 503, title: "redacted_file_unavailable");
             }
@@ -236,7 +241,8 @@ public static class PublicResumeEndpoints
                 return Results.Problem(statusCode: 503, title: "redacted_file_unavailable");
             return Results.File(bytes, DocxMime, "resume-redacted.docx");
         }
-        catch (Exception ex) when (ex is IOException or Amazon.S3.AmazonS3Exception or InvalidDataException)
+        catch (StorageConfigurationException ex) { return Results.Problem(statusCode: 503, title: ex.Code); }
+        catch (Exception ex) when (ex is IOException or Amazon.Runtime.AmazonServiceException or Amazon.Runtime.AmazonClientException or HttpRequestException or InvalidDataException)
         { return Results.Problem(statusCode: 503, title: "redacted_file_unavailable"); }
     }
 

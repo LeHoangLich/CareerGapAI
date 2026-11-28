@@ -73,6 +73,17 @@ public sealed class AccountSettingsTests(FoundationFixture fixture) : IClassFixt
         // Image is readable while assigned and protected from deletion
         Assert.Equal(HttpStatusCode.OK, (await other.GetAsync($"/api/community/images/{imageId}")).StatusCode);
         Assert.Equal(HttpStatusCode.Conflict, (await user.DeleteAsync($"/api/community/images/{imageId}")).StatusCode);
+
+        // Long account display name (> 100 chars, <= 150 chars) safely clamps when synced to CommunityProfile (varchar(100))
+        var longName = new string('A', 125);
+        var longUpdate = await user.PutAsJsonAsync("/api/account/profile", new AccountProfileUpdateRequest(longName, imageId, false, false));
+        Assert.Equal(HttpStatusCode.OK, longUpdate.StatusCode);
+        using (var scope = fixture.App.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+            var communityProfile = await db.CommunityProfiles.AsNoTracking().SingleAsync(x => x.UserId == uid);
+            Assert.Equal(100, communityProfile.DisplayName.Length);
+        }
     }
 
     [Fact]

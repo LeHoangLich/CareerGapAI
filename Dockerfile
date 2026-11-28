@@ -18,7 +18,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0.12
 WORKDIR /app
 COPY --from=backend /out/ ./
 USER $APP_UID
-ENV ASPNETCORE_HTTP_PORTS=8080
+ENV ASPNETCORE_HTTP_PORTS=8080 \
+    DOTNET_gcServer=0 \
+    DOTNET_GCHeapHardLimitPercent=55
 EXPOSE 8080
 # Production requires private storage, database and DP certificate secrets; migrations run separately.
 ENTRYPOINT ["dotnet", "CareerGap.Api.dll"]
